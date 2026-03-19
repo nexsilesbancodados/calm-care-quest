@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { MedicationProvider } from "@/contexts/MedicationContext";
+import { AuditProvider } from "@/contexts/AuditContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Medicamentos from "./pages/Medicamentos";
 import Pacientes from "./pages/Pacientes";
@@ -21,31 +24,39 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const P = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>{children}</ProtectedRoute>
+);
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/medicamentos" element={<Medicamentos />} />
-              <Route path="/pacientes" element={<Pacientes />} />
-              <Route path="/alertas" element={<Alertas />} />
-              <Route path="/movimentacoes" element={<Movimentacoes />} />
-              <Route path="/estoque" element={<Estoque />} />
-              <Route path="/etiquetas" element={<Etiquetas />} />
-              <Route path="/transferencias" element={<Transferencias />} />
-              <Route path="/fornecedores" element={<Fornecedores />} />
-              <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <MedicationProvider>
+          <AuditProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/" element={<P><Dashboard /></P>} />
+                  <Route path="/medicamentos" element={<P><Medicamentos /></P>} />
+                  <Route path="/pacientes" element={<P><Pacientes /></P>} />
+                  <Route path="/alertas" element={<P><Alertas /></P>} />
+                  <Route path="/movimentacoes" element={<P><Movimentacoes /></P>} />
+                  <Route path="/estoque" element={<P><Estoque /></P>} />
+                  <Route path="/etiquetas" element={<P><Etiquetas /></P>} />
+                  <Route path="/transferencias" element={<P><Transferencias /></P>} />
+                  <Route path="/fornecedores" element={<P><Fornecedores /></P>} />
+                  <Route path="/relatorios" element={<P><Relatorios /></P>} />
+                  <Route path="/configuracoes" element={<P><Configuracoes /></P>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuditProvider>
+        </MedicationProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

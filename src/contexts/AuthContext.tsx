@@ -13,7 +13,7 @@ export interface AppUser {
 
 interface AuthContextType {
   user: AppUser | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   can: (action: Permission) => boolean;
   invitedUsers: AppUser[];
@@ -57,7 +57,7 @@ const mockUsers: Record<string, AppUser & { password: string }> = {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: async () => {},
+  login: async () => false,
   logout: () => {},
   can: () => false,
   invitedUsers: [],
@@ -77,24 +77,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     { id: "u4", name: "Enf. Ana Costa", email: "ana@hospital.com", role: "farma", initials: "AC" },
   ]);
 
-  const login = useCallback(async (email: string, _password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     const found = mockUsers[email.toLowerCase()];
-    if (!found) {
-      // Default: login as admin for any credentials (demo)
-      const demoUser: AppUser = {
-        id: "u-demo",
-        name: "Usuário Demo",
-        email,
-        role: "admin",
-        initials: email.substring(0, 2).toUpperCase(),
-      };
-      setUser(demoUser);
-      localStorage.setItem("psifarma-user", JSON.stringify(demoUser));
-      return;
+    if (!found || found.password !== password) {
+      return false;
     }
     const { password: _pw, ...userData } = found;
     setUser(userData);
     localStorage.setItem("psifarma-user", JSON.stringify(userData));
+    return true;
   }, []);
 
   const logout = useCallback(() => {
