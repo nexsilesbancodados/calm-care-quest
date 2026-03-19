@@ -75,8 +75,68 @@ const Relatorios = () => {
   const avgStock = Math.round(totalUnits / mockMedications.length);
   const controlled = mockMedications.filter((m) => m.controlledSubstance).length;
 
+  const handleExportPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const rows = mockMedications.map((m) => `
+      <tr>
+        <td>${m.name}</td>
+        <td>${m.dosage}</td>
+        <td>${m.category}</td>
+        <td style="text-align:center">${m.currentStock}</td>
+        <td style="text-align:center">${m.minimumStock}</td>
+        <td>${m.batchNumber}</td>
+        <td>${new Date(m.expirationDate).toLocaleDateString("pt-BR")}</td>
+        <td>${m.location}</td>
+        <td>${m.controlledSubstance ? "Sim" : "Não"}</td>
+      </tr>
+    `).join("");
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>Relatório PsiFarma</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:30px;color:#1a1a2e}
+        h1{font-size:18px;color:#0d9488;margin-bottom:4px}
+        h2{font-size:14px;font-weight:normal;color:#666;margin-top:0}
+        .summary{display:flex;gap:20px;margin:16px 0;flex-wrap:wrap}
+        .stat{background:#f0fdfa;padding:12px 16px;border-radius:8px;min-width:120px}
+        .stat .label{font-size:10px;text-transform:uppercase;color:#666;letter-spacing:1px}
+        .stat .val{font-size:20px;font-weight:bold;color:#0d9488}
+        table{width:100%;border-collapse:collapse;font-size:11px;margin-top:16px}
+        th{background:#0d9488;color:white;padding:8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+        td{padding:6px 8px;border-bottom:1px solid #eee}
+        tr:nth-child(even){background:#f9fafb}
+        .footer{margin-top:24px;font-size:10px;color:#999;text-align:center}
+        @media print{body{padding:10px}@page{margin:10mm}}
+      </style></head><body>
+      <h1>📋 Relatório Geral — PsiFarma</h1>
+      <h2>Farmácia Hospitalar • Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}</h2>
+      <div class="summary">
+        <div class="stat"><div class="label">Itens</div><div class="val">${mockMedications.length}</div></div>
+        <div class="stat"><div class="label">Estoque Total</div><div class="val">${totalUnits.toLocaleString("pt-BR")}</div></div>
+        <div class="stat"><div class="label">Controlados</div><div class="val">${controlled}</div></div>
+        <div class="stat"><div class="label">Média/Item</div><div class="val">${avgStock}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Medicamento</th><th>Dosagem</th><th>Categoria</th><th>Estoque</th><th>Mínimo</th><th>Lote</th><th>Validade</th><th>Local</th><th>Controlado</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="footer">PsiFarma — Sistema de Gestão Farmacêutica Hospitalar</div>
+      <script>window.onload=function(){window.print()}<\/script>
+    </body></html>`);
+    printWindow.document.close();
+  };
+
   return (
-    <AppLayout title="Relatórios & Análises" subtitle="Visão analítica da farmácia hospitalar">
+    <AppLayout
+      title="Relatórios & Análises"
+      subtitle="Visão analítica da farmácia hospitalar"
+      actions={
+        <Button onClick={handleExportPDF} variant="outline" size="sm" className="gap-2 text-xs">
+          <Download className="h-3.5 w-3.5" /> Exportar PDF
+        </Button>
+      }
+    >
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {[
