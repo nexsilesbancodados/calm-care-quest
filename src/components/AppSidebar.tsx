@@ -6,6 +6,7 @@ import {
   Package,
   Settings,
   Cross,
+  Barcode,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -29,6 +30,7 @@ const mainItems = [
   { title: "Alertas", url: "/alertas", icon: AlertTriangle },
   { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList },
   { title: "Estoque", url: "/estoque", icon: Package },
+  { title: "Etiquetas", url: "/etiquetas", icon: Barcode },
 ];
 
 const systemItems = [
