@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
 import { CATEGORIES, getStockStatus } from "@/types/medication";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,13 +21,14 @@ import {
 const COLORS = ["#0d9488", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1", "#ec4899"];
 
 const Relatorios = () => {
+  const { medications: allMedications } = useMedicationContext();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("6m");
 
   // Filtered medications
   const filteredMeds = useMemo(() => {
-    let meds = [...mockMedications];
+    let meds = [...allMedications];
     if (categoryFilter !== "all") {
       meds = meds.filter((m) => m.category === categoryFilter);
     }
@@ -280,7 +281,7 @@ ${xmlRows}
           {(categoryFilter !== "all" || stockFilter !== "all") && (
             <div className="mt-2 flex items-center gap-2">
               <span className="text-[11px] text-muted-foreground">Exibindo</span>
-              <Badge variant="secondary" className="text-[10px]">{filteredMeds.length} de {mockMedications.length} itens</Badge>
+              <Badge variant="secondary" className="text-[10px]">{filteredMeds.length} de {allMedications.length} itens</Badge>
             </div>
           )}
         </Card>

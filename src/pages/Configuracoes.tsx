@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
@@ -11,49 +11,55 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Bell, Shield, Database, Users, Save, Check, Plus, Trash2, Mail, UserPlus } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Building2, Bell, Shield, Database, Users, Save, Check, UserPlus, Mail, Trash2, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth, roleLabels, roleDescriptions, type UserRole } from "@/contexts/AuthContext";
+import { useAudit } from "@/contexts/AuditContext";
 import { cn } from "@/lib/utils";
+
+const SETTINGS_KEY = "psifarma-settings";
+
+const defaultSettings = {
+  hospitalName: "Hospital Psiquiátrico São Lucas",
+  pharmacyName: "Farmácia Interna Central",
+  cnpj: "12.345.678/0001-90",
+  responsiblePharmacist: "Dr. Carlos Alberto Mendes",
+  crf: "CRF-SP 12345",
+  lowStockAlert: true,
+  expiryAlert: true,
+  expiryDays: "60",
+  criticalStockAlert: true,
+  emailNotifications: false,
+  controlledSubstanceLog: true,
+  doubleCheck: true,
+  autoBackup: true,
+  backupFrequency: "diário",
+};
 
 const Configuracoes = () => {
   const { user, can, invitedUsers, inviteUser, removeUser } = useAuth();
+  const { entries } = useAudit();
   const [saved, setSaved] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [newUser, setNewUser] = useState({ name: "", email: "", role: "farma" as UserRole });
 
-  const [settings, setSettings] = useState({
-    hospitalName: "Hospital Psiquiátrico São Lucas",
-    pharmacyName: "Farmácia Interna Central",
-    cnpj: "12.345.678/0001-90",
-    responsiblePharmacist: "Dr. Carlos Alberto Mendes",
-    crf: "CRF-SP 12345",
-    lowStockAlert: true,
-    expiryAlert: true,
-    expiryDays: "60",
-    criticalStockAlert: true,
-    emailNotifications: false,
-    controlledSubstanceLog: true,
-    doubleCheck: true,
-    autoBackup: true,
-    backupFrequency: "diário",
+  const [settings, setSettings] = useState(() => {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
   });
 
   const handleSave = () => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     setSaved(true);
     toast.success("Configurações salvas com sucesso!");
     setTimeout(() => setSaved(false), 2000);
   };
 
   const handleInvite = () => {
-    if (!newUser.name || !newUser.email) {
-      toast.error("Preencha nome e e-mail");
-      return;
-    }
+    if (!newUser.name || !newUser.email) { toast.error("Preencha nome e e-mail"); return; }
     inviteUser({
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
+      name: newUser.name, email: newUser.email, role: newUser.role,
       initials: newUser.name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase(),
     });
     toast.success(`Convite enviado para ${newUser.email}`);
@@ -61,9 +67,12 @@ const Configuracoes = () => {
     setNewUser({ name: "", email: "", role: "farma" });
   };
 
-  const handleRemoveUser = (id: string, name: string) => {
-    removeUser(id);
-    toast.success(`${name} removido da equipe`);
+  const handleRemoveUser = (id: string, name: string) => { removeUser(id); toast.success(`${name} removido da equipe`); };
+
+  const severityConfig = {
+    info: "bg-info/10 text-info",
+    warning: "bg-warning/10 text-warning",
+    critical: "bg-destructive/10 text-destructive",
   };
 
   return (
@@ -72,14 +81,13 @@ const Configuracoes = () => {
         <Tabs defaultValue="geral" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="geral">Geral</TabsTrigger>
-            <TabsTrigger value="usuarios">
-              <Users className="h-3.5 w-3.5 mr-1.5" />
-              Usuários & Acessos
-            </TabsTrigger>
+            <TabsTrigger value="usuarios"><Users className="h-3.5 w-3.5 mr-1.5" />Usuários & Acessos</TabsTrigger>
+            {can("manage_settings") && (
+              <TabsTrigger value="auditoria"><ScrollText className="h-3.5 w-3.5 mr-1.5" />Log de Auditoria</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="geral" className="space-y-6">
-            {/* Hospital Info */}
             <SettingsSection icon={Building2} title="Informações do Hospital" delay={0}>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Nome do Hospital" value={settings.hospitalName} onChange={(v) => setSettings({ ...settings, hospitalName: v })} />
@@ -88,7 +96,6 @@ const Configuracoes = () => {
               </div>
             </SettingsSection>
 
-            {/* Notifications */}
             <SettingsSection icon={Bell} title="Alertas e Notificações" delay={0.05}>
               <div className="space-y-4">
                 <ToggleField label="Alerta de estoque baixo" description="Notificar quando medicamento atingir estoque mínimo" checked={settings.lowStockAlert} onChange={(v) => setSettings({ ...settings, lowStockAlert: v })} />
@@ -112,7 +119,6 @@ const Configuracoes = () => {
               </div>
             </SettingsSection>
 
-            {/* Security */}
             <SettingsSection icon={Shield} title="Segurança e Controle" delay={0.1}>
               <div className="space-y-4">
                 <ToggleField label="Log de substâncias controladas" description="Registrar todas as movimentações de controlados automaticamente" checked={settings.controlledSubstanceLog} onChange={(v) => setSettings({ ...settings, controlledSubstanceLog: v })} />
@@ -120,7 +126,6 @@ const Configuracoes = () => {
               </div>
             </SettingsSection>
 
-            {/* Backup */}
             <SettingsSection icon={Database} title="Backup e Dados" delay={0.15}>
               <div className="space-y-4">
                 <ToggleField label="Backup automático" description="Realizar backup dos dados periodicamente" checked={settings.autoBackup} onChange={(v) => setSettings({ ...settings, autoBackup: v })} />
@@ -140,7 +145,6 @@ const Configuracoes = () => {
               </div>
             </SettingsSection>
 
-            {/* Save */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex justify-end pt-2 pb-8">
               <Button onClick={handleSave} className="gradient-primary text-primary-foreground gap-2 px-6">
                 {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
@@ -153,22 +157,14 @@ const Configuracoes = () => {
             {/* Role Descriptions */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               <Card className="p-5 shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Shield className="h-4 w-4" />
-                    </div>
-                    <h3 className="text-sm font-semibold">Níveis de Acesso</h3>
-                  </div>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Shield className="h-4 w-4" /></div>
+                  <h3 className="text-sm font-semibold">Níveis de Acesso</h3>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-3">
                   {(["admin", "farma"] as UserRole[]).map((role) => (
                     <div key={role} className={cn("rounded-lg border p-3", role === "admin" ? "border-primary/20 bg-primary/5" : "border-info/20 bg-info/5")}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className={cn("text-[10px]", role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>
-                          {roleLabels[role]}
-                        </Badge>
-                      </div>
+                      <Badge variant="outline" className={cn("text-[10px] mb-1", role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[role]}</Badge>
                       <p className="text-xs text-muted-foreground">{roleDescriptions[role]}</p>
                     </div>
                   ))}
@@ -176,122 +172,106 @@ const Configuracoes = () => {
               </Card>
             </motion.div>
 
-            {/* Team Members */}
+            {/* Team */}
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
               <Card className="p-5 shadow-card">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Users className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-semibold">Equipe</h3>
-                      <p className="text-[11px] text-muted-foreground">{invitedUsers.length + 1} membros</p>
-                    </div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Users className="h-4 w-4" /></div>
+                    <div><h3 className="text-sm font-semibold">Equipe</h3><p className="text-[11px] text-muted-foreground">{invitedUsers.length + 1} membros</p></div>
                   </div>
                   {can("invite_users") && (
-                    <Button onClick={() => setInviteOpen(true)} size="sm" className="gradient-primary text-primary-foreground gap-1.5 text-xs">
-                      <UserPlus className="h-3.5 w-3.5" /> Convidar
-                    </Button>
+                    <Button onClick={() => setInviteOpen(true)} size="sm" className="gradient-primary text-primary-foreground gap-1.5 text-xs"><UserPlus className="h-3.5 w-3.5" /> Convidar</Button>
                   )}
                 </div>
-
                 <div className="space-y-2">
-                  {/* Current User */}
                   {user && (
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/20 border">
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{user.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{user.name}</p>
-                        <p className="text-[11px] text-muted-foreground">{user.email}</p>
-                      </div>
-                      <Badge variant="outline" className={cn("text-[10px]", user.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>
-                        {roleLabels[user.role]}
-                      </Badge>
+                      <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{user.initials}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0"><p className="text-sm font-medium">{user.name}</p><p className="text-[11px] text-muted-foreground">{user.email}</p></div>
+                      <Badge variant="outline" className={cn("text-[10px]", user.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[user.role]}</Badge>
                       <Badge variant="outline" className="text-[10px] text-muted-foreground">Você</Badge>
                     </div>
                   )}
-
-                  {/* Other Members */}
                   {invitedUsers.map((member) => (
                     <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/10 transition-colors">
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback className="bg-muted text-muted-foreground text-xs font-bold">{member.initials}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{member.name}</p>
-                        <p className="text-[11px] text-muted-foreground">{member.email}</p>
-                      </div>
-                      <Badge variant="outline" className={cn("text-[10px]", member.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>
-                        {roleLabels[member.role]}
-                      </Badge>
+                      <Avatar className="h-9 w-9"><AvatarFallback className="bg-muted text-muted-foreground text-xs font-bold">{member.initials}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0"><p className="text-sm font-medium">{member.name}</p><p className="text-[11px] text-muted-foreground">{member.email}</p></div>
+                      <Badge variant="outline" className={cn("text-[10px]", member.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[member.role]}</Badge>
                       {can("invite_users") && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleRemoveUser(member.id, member.name)}
-                        >
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveUser(member.id, member.name)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
                   ))}
                 </div>
-
                 {!can("invite_users") && (
-                  <div className="mt-4 pt-3 border-t">
-                    <p className="text-[11px] text-muted-foreground text-center">
-                      Apenas administradores podem gerenciar a equipe
-                    </p>
-                  </div>
+                  <div className="mt-4 pt-3 border-t"><p className="text-[11px] text-muted-foreground text-center">Apenas administradores podem gerenciar a equipe</p></div>
                 )}
               </Card>
             </motion.div>
           </TabsContent>
+
+          {can("manage_settings") && (
+            <TabsContent value="auditoria" className="space-y-4">
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="p-5 shadow-card">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><ScrollText className="h-4 w-4" /></div>
+                    <div>
+                      <h3 className="text-sm font-semibold">Log de Auditoria</h3>
+                      <p className="text-[11px] text-muted-foreground">{entries.length} registros — visível apenas para administradores</p>
+                    </div>
+                  </div>
+                  <div className="rounded-lg border overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                          <TableHead className="text-xs font-semibold">Data/Hora</TableHead>
+                          <TableHead className="text-xs font-semibold">Usuário</TableHead>
+                          <TableHead className="text-xs font-semibold">Ação</TableHead>
+                          <TableHead className="text-xs font-semibold">Módulo</TableHead>
+                          <TableHead className="text-xs font-semibold">Detalhes</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {entries.map((entry) => (
+                          <TableRow key={entry.id} className="hover:bg-accent/20">
+                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                              {new Date(entry.timestamp).toLocaleDateString("pt-BR")} {new Date(entry.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            </TableCell>
+                            <TableCell className="text-xs font-medium">{entry.userName}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className={cn("text-[10px]", severityConfig[entry.severity])}>{entry.action}</Badge>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{entry.module}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground max-w-[250px] truncate">{entry.details}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              </motion.div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
       {/* Invite Dialog */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5 text-primary" />
-              Convidar Usuário
-            </DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="h-5 w-5 text-primary" />Convidar Usuário</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Nome Completo</Label>
-              <Input value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} placeholder="Nome do profissional" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">E-mail</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@hospital.com" className="pl-10" />
-              </div>
-            </div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Nome Completo</Label><Input value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} placeholder="Nome do profissional" /></div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">E-mail</Label><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@hospital.com" className="pl-10" /></div></div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Nível de Acesso</Label>
               <div className="grid grid-cols-2 gap-2">
                 {(["admin", "farma"] as UserRole[]).map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => setNewUser({ ...newUser, role })}
-                    className={cn(
-                      "rounded-lg border p-3 text-left transition-all",
-                      newUser.role === role
-                        ? role === "admin" ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-info bg-info/5 ring-1 ring-info/30"
-                        : "hover:bg-accent/30"
-                    )}
-                  >
-                    <Badge variant="outline" className={cn("text-[10px] mb-1", role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>
-                      {roleLabels[role]}
-                    </Badge>
+                  <button key={role} onClick={() => setNewUser({ ...newUser, role })} className={cn("rounded-lg border p-3 text-left transition-all", newUser.role === role ? role === "admin" ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-info bg-info/5 ring-1 ring-info/30" : "hover:bg-accent/30")}>
+                    <Badge variant="outline" className={cn("text-[10px] mb-1", role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[role]}</Badge>
                     <p className="text-[10px] text-muted-foreground leading-snug">{roleDescriptions[role]}</p>
                   </button>
                 ))}
@@ -299,9 +279,7 @@ const Configuracoes = () => {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-              <Button onClick={handleInvite} className="gradient-primary text-primary-foreground gap-2">
-                <UserPlus className="h-4 w-4" /> Enviar Convite
-              </Button>
+              <Button onClick={handleInvite} className="gradient-primary text-primary-foreground gap-2"><UserPlus className="h-4 w-4" /> Enviar Convite</Button>
             </div>
           </div>
         </DialogContent>
@@ -315,9 +293,7 @@ function SettingsSection({ icon: Icon, title, children, delay = 0 }: { icon: any
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}>
       <Card className="p-5 shadow-card">
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Icon className="h-4 w-4" />
-          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
           <h3 className="text-sm font-semibold">{title}</h3>
         </div>
         {children}
@@ -327,24 +303,14 @@ function SettingsSection({ icon: Icon, title, children, delay = 0 }: { icon: any
 }
 
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs font-medium">{label}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
-    </div>
-  );
+  return (<div className="space-y-1.5"><Label className="text-xs font-medium">{label}</Label><Input value={value} onChange={(e) => onChange(e.target.value)} /></div>);
 }
 
-function ToggleField({ label, description, checked, onChange, badge }: {
-  label: string; description: string; checked: boolean; onChange: (v: boolean) => void; badge?: string;
-}) {
+function ToggleField({ label, description, checked, onChange, badge }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void; badge?: string }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium">{label}</p>
-          {badge && <Badge variant="outline" className="text-[10px] text-muted-foreground">{badge}</Badge>}
-        </div>
+        <div className="flex items-center gap-2"><p className="text-sm font-medium">{label}</p>{badge && <Badge variant="outline" className="text-[10px] text-muted-foreground">{badge}</Badge>}</div>
         <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onChange} disabled={!!badge} />

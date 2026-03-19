@@ -1,19 +1,27 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { MedicationTable } from "@/components/MedicationTable";
 import { MedicationDialog } from "@/components/MedicationDialog";
 import { MedicationDetail } from "@/components/MedicationDetail";
-import { useMedications } from "@/hooks/useMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
+import { getStockStatus, type MedicationCategory } from "@/types/medication";
 import type { Medication } from "@/types/medication";
 
 const Medicamentos = () => {
-  const {
-    medications, stats,
-    searchQuery, setSearchQuery,
-    categoryFilter, setCategoryFilter,
-    stockFilter, setStockFilter,
-    addMedication, updateMedication, deleteMedication,
-  } = useMedications();
+  const { medications, addMedication, updateMedication, deleteMedication } = useMedicationContext();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<MedicationCategory | "all">("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "normal" | "baixo" | "crítico" | "esgotado">("all");
+
+  const filtered = useMemo(() => {
+    return medications.filter((med) => {
+      const matchesSearch = !searchQuery || med.name.toLowerCase().includes(searchQuery.toLowerCase()) || med.genericName.toLowerCase().includes(searchQuery.toLowerCase()) || med.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || med.category === categoryFilter;
+      const matchesStock = stockFilter === "all" || getStockStatus(med.currentStock, med.minimumStock) === stockFilter;
+      return matchesSearch && matchesCategory && matchesStock;
+    });
+  }, [medications, searchQuery, categoryFilter, stockFilter]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
@@ -28,9 +36,9 @@ const Medicamentos = () => {
   };
 
   return (
-    <AppLayout title="Medicamentos" subtitle={`${medications.length} medicamentos cadastrados`}>
+    <AppLayout title="Medicamentos" subtitle={`${filtered.length} medicamentos cadastrados`}>
       <MedicationTable
-        medications={medications}
+        medications={filtered}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         categoryFilter={categoryFilter}
@@ -41,13 +49,7 @@ const Medicamentos = () => {
         onEdit={handleRowClick}
       />
 
-      <MedicationDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        medication={editingMed}
-        onSave={handleSave}
-        onDelete={deleteMedication}
-      />
+      <MedicationDialog open={dialogOpen} onOpenChange={setDialogOpen} medication={editingMed} onSave={handleSave} onDelete={deleteMedication} />
 
       <MedicationDetail
         medication={detailMed}
