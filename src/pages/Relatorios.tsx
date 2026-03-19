@@ -21,6 +21,7 @@ import {
 const COLORS = ["#0d9488", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1", "#ec4899"];
 
 const Relatorios = () => {
+  const { medications: allMedications } = useMedicationContext();
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [periodFilter, setPeriodFilter] = useState<string>("6m");
