@@ -15,6 +15,7 @@ import Etiquetas from "./pages/Etiquetas";
 import Transferencias from "./pages/Transferencias";
 import Fornecedores from "./pages/Fornecedores";
 import Relatorios from "./pages/Relatorios";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Dashboard />} />
             <Route path="/medicamentos" element={<Medicamentos />} />
             <Route path="/pacientes" element={<Pacientes />} />

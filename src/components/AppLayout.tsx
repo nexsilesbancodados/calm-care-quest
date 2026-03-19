@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Bell, Moon, Sun, AlertTriangle, ArrowDownCircle, Repeat, Truck, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { CommandPalette } from "@/components/CommandPalette";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
