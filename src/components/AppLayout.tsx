@@ -41,6 +41,7 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              <CommandPalette />
               {actions}
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
                 {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
