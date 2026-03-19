@@ -30,6 +30,7 @@ const mainItems = [
   { title: "Alertas", url: "/alertas", icon: AlertTriangle },
   { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList },
   { title: "Estoque", url: "/estoque", icon: Package },
+  { title: "Etiquetas", url: "/etiquetas", icon: Barcode },
 ];
 
 const systemItems = [
