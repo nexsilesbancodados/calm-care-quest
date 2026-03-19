@@ -1,14 +1,15 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { mockMedications } from "@/data/mockMedications";
 import { CATEGORIES, getStockStatus } from "@/types/medication";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area } from "recharts";
-import { TrendingUp, Pill, AlertTriangle, Package, FileText, Calendar } from "lucide-react";
+import { TrendingUp, Pill, AlertTriangle, Package, FileText, Calendar, Download } from "lucide-react";
 
 const COLORS = ["#0d9488", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444", "#6366f1", "#ec4899"];
 
