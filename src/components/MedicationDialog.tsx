@@ -20,6 +20,7 @@ interface MedicationDialogProps {
 
 export function MedicationDialog({ open, onOpenChange, medication, onSave, onDelete }: MedicationDialogProps) {
   const isEdit = !!medication;
+  const { can } = useAuth();
 
   const [form, setForm] = useState(() => getDefaults(medication));
 
