@@ -1,11 +1,16 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Bell, Moon, Sun, AlertTriangle, ArrowDownCircle, Repeat, Truck, XCircle } from "lucide-react";
+import { Bell, Moon, Sun, AlertTriangle, ArrowDownCircle, Repeat, Truck, XCircle, LogOut, User, Settings, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const notifications = [
   { id: 1, icon: XCircle, text: "Zolpidem 10mg esgotado", time: "Há 12 min", className: "bg-destructive/10 text-destructive", unread: true },
@@ -14,6 +19,20 @@ const notifications = [
   { id: 4, icon: Truck, text: "Transferência concluída — Un. Norte", time: "Há 3h", className: "bg-primary/10 text-primary", unread: false },
   { id: 5, icon: Repeat, text: "Dispensação Clonazepam — Pac. #0987", time: "Há 4h", className: "bg-info/10 text-info", unread: false },
 ];
+
+const pageTitles: Record<string, string> = {
+  "/": "Dashboard",
+  "/medicamentos": "Medicamentos",
+  "/pacientes": "Pacientes",
+  "/alertas": "Alertas",
+  "/movimentacoes": "Movimentações",
+  "/estoque": "Estoque",
+  "/etiquetas": "Etiquetas",
+  "/transferencias": "Transferências",
+  "/fornecedores": "Fornecedores",
+  "/relatorios": "Relatórios",
+  "/configuracoes": "Configurações",
+};
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,7 +43,16 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps) {
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
   const unreadCount = notifications.filter((n) => n.unread).length;
+
+  const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
+
+  const handleLogout = () => {
+    toast.success("Sessão encerrada");
+    navigate("/login");
+  };
 
   return (
     <SidebarProvider>
@@ -36,8 +64,16 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
               <SidebarTrigger className="text-muted-foreground" />
               <div className="h-5 w-px bg-border hidden sm:block" />
               <div className="min-w-0">
+                {/* Breadcrumb */}
+                {breadcrumb && (
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-0.5">
+                    <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors">Dashboard</button>
+                    <ChevronRight className="h-3 w-3" />
+                    <span className="text-foreground font-medium">{breadcrumb}</span>
+                  </div>
+                )}
                 <h1 className="text-sm font-semibold text-foreground leading-tight truncate">{title}</h1>
-                {subtitle && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
+                {subtitle && !breadcrumb && <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>}
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
@@ -91,10 +127,56 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                   </div>
                 </PopoverContent>
               </Popover>
+
+              {/* User Profile */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-accent/50 transition-colors ml-1">
+                    <Avatar className="h-7 w-7">
+                      <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">CM</AvatarFallback>
+                    </Avatar>
+                    <div className="hidden sm:block text-left">
+                      <p className="text-xs font-medium text-foreground leading-tight">Dr. Carlos Mendes</p>
+                      <p className="text-[10px] text-muted-foreground">Farmacêutico</p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">CM</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">Dr. Carlos Mendes</p>
+                        <p className="text-[11px] text-muted-foreground">CRF-SP 12345</p>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-2 text-xs cursor-pointer">
+                    <User className="h-3.5 w-3.5" /> Meu Perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-2 text-xs cursor-pointer">
+                    <Settings className="h-3.5 w-3.5" /> Configurações
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="gap-2 text-xs cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="h-3.5 w-3.5" /> Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
           <main className="flex-1 p-3 sm:p-6 overflow-auto">
-            {children}
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              {children}
+            </motion.div>
           </main>
         </div>
       </div>
