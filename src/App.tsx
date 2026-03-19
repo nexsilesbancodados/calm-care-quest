@@ -5,12 +5,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Dashboard from "./pages/Dashboard";
 import Medicamentos from "./pages/Medicamentos";
+import Pacientes from "./pages/Pacientes";
 import Alertas from "./pages/Alertas";
 import Movimentacoes from "./pages/Movimentacoes";
 import Estoque from "./pages/Estoque";
 import Configuracoes from "./pages/Configuracoes";
 import Etiquetas from "./pages/Etiquetas";
 import Transferencias from "./pages/Transferencias";
+import Fornecedores from "./pages/Fornecedores";
+import Relatorios from "./pages/Relatorios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,11 +27,14 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/medicamentos" element={<Medicamentos />} />
+          <Route path="/pacientes" element={<Pacientes />} />
           <Route path="/alertas" element={<Alertas />} />
           <Route path="/movimentacoes" element={<Movimentacoes />} />
           <Route path="/estoque" element={<Estoque />} />
           <Route path="/etiquetas" element={<Etiquetas />} />
           <Route path="/transferencias" element={<Transferencias />} />
+          <Route path="/fornecedores" element={<Fornecedores />} />
+          <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/configuracoes" element={<Configuracoes />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
