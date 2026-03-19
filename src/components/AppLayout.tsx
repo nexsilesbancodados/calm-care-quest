@@ -45,15 +45,23 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps) {
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
 
+  const displayName = user?.name || "Usuário";
+  const displayInitials = user?.initials || "U";
+  const displayRole = user ? roleLabels[user.role] : "—";
+  const displayCrf = user?.crf || "";
+
   const handleLogout = () => {
+    logout();
     toast.success("Sessão encerrada");
     navigate("/login");
+  };
   };
 
   return (
