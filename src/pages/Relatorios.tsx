@@ -466,6 +466,89 @@ ${xmlRows}
             </div>
           </Card>
         </TabsContent>
+
+        <TabsContent value="pacientes">
+          <Card className="p-5 shadow-card">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-primary" /> Consumo por Paciente (Últimos 30 dias)
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Paciente</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Ala</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Medicamentos</th>
+                    <th className="text-center p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Total Un.</th>
+                    <th className="text-center p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Prescrições Ativas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { name: "Carlos Eduardo Santos", ward: "Ala B", meds: "Risperidona 2mg, Clonazepam 2mg", total: 40, rxActive: 2 },
+                    { name: "Maria Aparecida Lima", ward: "Ala A", meds: "Carbonato de Lítio 300mg, Quetiapina 100mg", total: 60, rxActive: 2 },
+                    { name: "José Antônio Ferreira", ward: "Ala C", meds: "Sertralina 50mg, Diazepam 10mg", total: 35, rxActive: 2 },
+                    { name: "Ana Beatriz Souza", ward: "Ala B", meds: "Fluoxetina 20mg", total: 30, rxActive: 1 },
+                    { name: "Roberto Carlos Pereira", ward: "Ambulatório", meds: "Carbamazepina 200mg", total: 60, rxActive: 1 },
+                  ].map((p) => (
+                    <tr key={p.name} className="border-b last:border-0 hover:bg-accent/30 transition-colors">
+                      <td className="p-3 font-medium">{p.name}</td>
+                      <td className="p-3 text-muted-foreground">{p.ward}</td>
+                      <td className="p-3 text-muted-foreground">{p.meds}</td>
+                      <td className="p-3 text-center font-semibold">{p.total}</td>
+                      <td className="p-3 text-center">
+                        <Badge variant="outline" className="text-[10px]">{p.rxActive}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="vencimentos">
+          <Card className="p-5 shadow-card">
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" /> Cronograma de Vencimentos
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Medicamento</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Lote</th>
+                    <th className="text-center p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Estoque</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Validade</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Dias Restantes</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground uppercase tracking-wider text-[10px]">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...filteredMeds]
+                    .sort((a, b) => new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime())
+                    .map((m) => {
+                      const daysLeft = Math.floor((new Date(m.expirationDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                      const urgency = daysLeft < 0 ? "bg-destructive/10 text-destructive" : daysLeft <= 30 ? "bg-warning/10 text-warning" : daysLeft <= 90 ? "bg-info/10 text-info" : "bg-muted text-muted-foreground";
+                      const label = daysLeft < 0 ? "VENCIDO" : daysLeft <= 30 ? "Urgente" : daysLeft <= 90 ? "Próximo" : "OK";
+                      return (
+                        <tr key={m.id} className="border-b last:border-0 hover:bg-accent/30 transition-colors">
+                          <td className="p-3 font-medium">{m.name} {m.dosage}</td>
+                          <td className="p-3 font-mono text-muted-foreground">{m.batchNumber}</td>
+                          <td className="p-3 text-center font-semibold">{m.currentStock}</td>
+                          <td className="p-3 text-muted-foreground">{new Date(m.expirationDate).toLocaleDateString("pt-BR")}</td>
+                          <td className="p-3 font-semibold">{daysLeft < 0 ? `${Math.abs(daysLeft)}d atrás` : `${daysLeft}d`}</td>
+                          <td className="p-3">
+                            <Badge variant="outline" className={cn("text-[10px]", urgency)}>{label}</Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
       </Tabs>
     </AppLayout>
   );
