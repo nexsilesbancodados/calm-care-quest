@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
 import { CATEGORIES, getStockStatus } from "@/types/medication";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
