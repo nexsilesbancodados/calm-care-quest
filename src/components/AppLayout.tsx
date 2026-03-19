@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { Bell, Moon, Sun, AlertTriangle, ArrowDownCircle, Repeat, Truck, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/ThemeProvider";
+import { CommandPalette } from "@/components/CommandPalette";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
               </div>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              <CommandPalette />
               {actions}
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground">
                 {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
