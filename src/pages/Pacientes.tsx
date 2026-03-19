@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAudit } from "@/contexts/AuditContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,15 +14,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import {
   Search, Plus, Users, User, FileText, Calendar, Pill,
-  Activity, AlertCircle, Clock, Heart, Brain,
+  Activity, AlertCircle, Clock, Heart, Brain, UserPlus,
+  Syringe, ClipboardCheck, ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
 type PatientStatus = "internado" | "ambulatorial" | "alta";
+
+interface EvolutionEntry {
+  id: string;
+  date: string;
+  type: "clinica" | "medicacao" | "intercorrencia" | "alta";
+  description: string;
+  author: string;
+}
 
 interface Prescription {
   id: string;
@@ -49,12 +59,21 @@ interface Patient {
   prescriptions: Prescription[];
   allergies: string;
   notes: string;
+  evolution: EvolutionEntry[];
+  dispensations: { date: string; medicationName: string; quantity: number }[];
 }
 
 const statusConfig: Record<PatientStatus, { label: string; className: string }> = {
   internado: { label: "Internado", className: "bg-info/10 text-info border-info/20" },
   ambulatorial: { label: "Ambulatorial", className: "bg-warning/10 text-warning border-warning/20" },
   alta: { label: "Alta", className: "bg-success/10 text-success border-success/20" },
+};
+
+const evolutionTypeConfig: Record<string, { label: string; className: string }> = {
+  clinica: { label: "Avaliação Clínica", className: "bg-info/10 text-info" },
+  medicacao: { label: "Alteração de Medicação", className: "bg-warning/10 text-warning" },
+  intercorrencia: { label: "Intercorrência", className: "bg-destructive/10 text-destructive" },
+  alta: { label: "Alta / Transferência", className: "bg-success/10 text-success" },
 };
 
 const initialPatients: Patient[] = [
@@ -66,6 +85,15 @@ const initialPatients: Patient[] = [
       { id: "RX001", medicationName: "Risperidona", dosage: "2mg", frequency: "2x ao dia", startDate: "2026-01-10", prescribedBy: "Dr. Ricardo Mendes", notes: "Dose ajustada em 15/02", active: true },
       { id: "RX002", medicationName: "Clonazepam", dosage: "2mg", frequency: "1x à noite", startDate: "2026-01-10", prescribedBy: "Dr. Ricardo Mendes", notes: "SOS em caso de agitação", active: true },
     ],
+    evolution: [
+      { id: "E001", date: "2026-03-18T10:00:00", type: "clinica", description: "Paciente orientado, sem alucinações nas últimas 48h. Mantém medicação atual.", author: "Dr. Ricardo Mendes" },
+      { id: "E002", date: "2026-03-10T14:30:00", type: "medicacao", description: "Ajuste de Risperidona de 1mg para 2mg 2x/dia.", author: "Dr. Ricardo Mendes" },
+      { id: "E003", date: "2026-02-20T08:00:00", type: "intercorrencia", description: "Episódio de agitação psicomotora. Administrado Clonazepam 2mg SOS.", author: "Enf. Maria Silva" },
+    ],
+    dispensations: [
+      { date: "2026-03-18", medicationName: "Risperidona 2mg", quantity: 30 },
+      { date: "2026-03-10", medicationName: "Clonazepam 2mg", quantity: 10 },
+    ],
   },
   {
     id: "P002", name: "Maria Aparecida Lima", registrationNumber: "2026-0987", dateOfBirth: "1972-11-22", gender: "Feminino",
@@ -76,6 +104,13 @@ const initialPatients: Patient[] = [
       { id: "RX004", medicationName: "Quetiapina", dosage: "100mg", frequency: "1x à noite", startDate: "2026-02-22", prescribedBy: "Dra. Fernanda Oliveira", notes: "", active: true },
       { id: "RX005", medicationName: "Olanzapina", dosage: "10mg", frequency: "1x ao dia", startDate: "2026-02-20", endDate: "2026-03-05", prescribedBy: "Dra. Fernanda Oliveira", notes: "Substituída por Quetiapina", active: false },
     ],
+    evolution: [
+      { id: "E004", date: "2026-03-15T09:00:00", type: "clinica", description: "Humor mais estável, aceitando medicação oral. Sem ideias de grandiosidade.", author: "Dra. Fernanda Oliveira" },
+      { id: "E005", date: "2026-03-05T11:00:00", type: "medicacao", description: "Substituição de Olanzapina por Quetiapina 100mg noturna.", author: "Dra. Fernanda Oliveira" },
+    ],
+    dispensations: [
+      { date: "2026-03-15", medicationName: "Carbonato de Lítio 300mg", quantity: 60 },
+    ],
   },
   {
     id: "P003", name: "José Antônio Ferreira", registrationNumber: "2026-1103", dateOfBirth: "1990-03-08", gender: "Masculino",
@@ -84,6 +119,12 @@ const initialPatients: Patient[] = [
     prescriptions: [
       { id: "RX006", medicationName: "Sertralina", dosage: "50mg", frequency: "1x pela manhã", startDate: "2026-03-05", prescribedBy: "Dr. Ricardo Mendes", notes: "", active: true },
       { id: "RX007", medicationName: "Diazepam", dosage: "10mg", frequency: "SOS", startDate: "2026-03-05", prescribedBy: "Dr. Ricardo Mendes", notes: "Máx 3x ao dia", active: true },
+    ],
+    evolution: [
+      { id: "E006", date: "2026-03-17T16:00:00", type: "clinica", description: "Melhora dos sintomas ansiosos. Previsão de alta em 48h.", author: "Dr. Ricardo Mendes" },
+    ],
+    dispensations: [
+      { date: "2026-03-17", medicationName: "Diazepam 10mg", quantity: 5 },
     ],
   },
   {
@@ -94,6 +135,8 @@ const initialPatients: Patient[] = [
       { id: "RX008", medicationName: "Fluoxetina", dosage: "20mg", frequency: "1x pela manhã", startDate: "2025-12-15", prescribedBy: "Dra. Fernanda Oliveira", notes: "", active: true },
       { id: "RX009", medicationName: "Risperidona", dosage: "2mg", frequency: "1x à noite", startDate: "2025-12-15", endDate: "2026-02-28", prescribedBy: "Dra. Fernanda Oliveira", notes: "Suspensa após remissão dos sintomas psicóticos", active: false },
     ],
+    evolution: [],
+    dispensations: [],
   },
   {
     id: "P005", name: "Roberto Carlos Pereira", registrationNumber: "2026-0750", dateOfBirth: "1968-01-12", gender: "Masculino",
@@ -102,6 +145,8 @@ const initialPatients: Patient[] = [
     prescriptions: [
       { id: "RX010", medicationName: "Carbamazepina", dosage: "200mg", frequency: "2x ao dia", startDate: "2026-02-01", prescribedBy: "Dr. Paulo Guedes", notes: "Prevenção de convulsões", active: true },
     ],
+    evolution: [],
+    dispensations: [],
   },
   {
     id: "P006", name: "Luciana de Almeida", registrationNumber: "2025-0412", dateOfBirth: "1988-07-19", gender: "Feminino",
@@ -110,19 +155,29 @@ const initialPatients: Patient[] = [
     prescriptions: [
       { id: "RX011", medicationName: "Sertralina", dosage: "50mg", frequency: "1x pela manhã", startDate: "2025-08-10", endDate: "2026-01-10", prescribedBy: "Dra. Fernanda Oliveira", notes: "", active: false },
     ],
+    evolution: [],
+    dispensations: [],
   },
 ];
 
 const Pacientes = () => {
+  const { medications, adjustStock, getMedicationById } = useMedicationContext();
+  const { user } = useAuth();
+  const { log } = useAudit();
   const [patients, setPatients] = useState(initialPatients);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PatientStatus | "all">("all");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [rxDialogOpen, setRxDialogOpen] = useState(false);
+  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
+  const [evoDialogOpen, setEvoDialogOpen] = useState(false);
+  const [dispDialogOpen, setDispDialogOpen] = useState(false);
 
-  const [newRx, setNewRx] = useState({
-    medicationName: "", dosage: "", frequency: "", prescribedBy: "", notes: "",
-  });
+  const [newRx, setNewRx] = useState({ medicationName: "", dosage: "", frequency: "", prescribedBy: "", notes: "" });
+  const [newPatient, setNewPatient] = useState({ name: "", dateOfBirth: "", gender: "Masculino", ward: "", bed: "", diagnosis: "", status: "internado" as PatientStatus, attendingDoctor: "", allergies: "", notes: "" });
+  const [newEvo, setNewEvo] = useState({ type: "clinica" as EvolutionEntry["type"], description: "" });
+  const [dispMedId, setDispMedId] = useState("");
+  const [dispQty, setDispQty] = useState(0);
 
   const filtered = useMemo(() =>
     patients.filter((p) => {
@@ -138,6 +193,24 @@ const Pacientes = () => {
     totalRx: patients.reduce((s, p) => s + p.prescriptions.filter((r) => r.active).length, 0),
   }), [patients]);
 
+  const handleAddPatient = () => {
+    if (!newPatient.name || !newPatient.diagnosis) { toast.error("Preencha nome e diagnóstico"); return; }
+    const p: Patient = {
+      id: `P${String(patients.length + 1).padStart(3, "0")}`,
+      ...newPatient,
+      registrationNumber: `2026-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`,
+      admissionDate: new Date().toISOString().split("T")[0],
+      prescriptions: [],
+      evolution: [],
+      dispensations: [],
+    };
+    setPatients((prev) => [p, ...prev]);
+    log({ userId: user?.id || "", userName: user?.name || "", action: "Cadastro de Paciente", module: "Pacientes", details: `${p.name} — ${p.diagnosis}`, severity: "info" });
+    toast.success(`Paciente ${p.name} cadastrado!`);
+    setPatientDialogOpen(false);
+    setNewPatient({ name: "", dateOfBirth: "", gender: "Masculino", ward: "", bed: "", diagnosis: "", status: "internado", attendingDoctor: "", allergies: "", notes: "" });
+  };
+
   const handleAddRx = () => {
     if (!selectedPatient || !newRx.medicationName) return;
     const rx: Prescription = {
@@ -146,25 +219,56 @@ const Pacientes = () => {
       startDate: new Date().toISOString().split("T")[0],
       active: true,
     };
-    setPatients((prev) => prev.map((p) => p.id === selectedPatient.id
-      ? { ...p, prescriptions: [rx, ...p.prescriptions] }
-      : p
-    ));
-    setSelectedPatient((prev) => prev ? { ...prev, prescriptions: [rx, ...prev.prescriptions] } : prev);
+    const update = (p: Patient) => p.id === selectedPatient.id ? { ...p, prescriptions: [rx, ...p.prescriptions] } : p;
+    setPatients((prev) => prev.map(update));
+    setSelectedPatient((prev) => prev ? update(prev) : prev);
     setRxDialogOpen(false);
     setNewRx({ medicationName: "", dosage: "", frequency: "", prescribedBy: "", notes: "" });
     toast.success("Prescrição adicionada!");
   };
 
   const toggleRxActive = (patientId: string, rxId: string) => {
-    setPatients((prev) => prev.map((p) => p.id === patientId
+    const update = (p: Patient) => p.id === patientId
       ? { ...p, prescriptions: p.prescriptions.map((r) => r.id === rxId ? { ...r, active: !r.active, endDate: r.active ? new Date().toISOString().split("T")[0] : undefined } : r) }
-      : p
-    ));
-    setSelectedPatient((prev) => prev && prev.id === patientId
-      ? { ...prev, prescriptions: prev.prescriptions.map((r) => r.id === rxId ? { ...r, active: !r.active, endDate: r.active ? new Date().toISOString().split("T")[0] : undefined } : r) }
-      : prev
-    );
+      : p;
+    setPatients((prev) => prev.map(update));
+    setSelectedPatient((prev) => prev && prev.id === patientId ? update(prev) : prev);
+  };
+
+  const handleAddEvolution = () => {
+    if (!selectedPatient || !newEvo.description) { toast.error("Preencha a descrição"); return; }
+    const entry: EvolutionEntry = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      type: newEvo.type,
+      description: newEvo.description,
+      author: user?.name || "—",
+    };
+    const update = (p: Patient) => p.id === selectedPatient.id ? { ...p, evolution: [entry, ...p.evolution] } : p;
+    setPatients((prev) => prev.map(update));
+    setSelectedPatient((prev) => prev ? update(prev) : prev);
+    log({ userId: user?.id || "", userName: user?.name || "", action: "Evolução Clínica", module: "Pacientes", details: `${selectedPatient.name} — ${evolutionTypeConfig[newEvo.type].label}`, severity: "info" });
+    toast.success("Evolução registrada!");
+    setEvoDialogOpen(false);
+    setNewEvo({ type: "clinica", description: "" });
+  };
+
+  const handleDispense = () => {
+    if (!selectedPatient || !dispMedId || dispQty <= 0) { toast.error("Selecione medicamento e quantidade"); return; }
+    const med = getMedicationById(dispMedId);
+    if (!med) return;
+    if (med.currentStock < dispQty) { toast.error(`Estoque insuficiente! Disponível: ${med.currentStock} un.`); return; }
+
+    adjustStock(dispMedId, -dispQty);
+    const disp = { date: new Date().toISOString().split("T")[0], medicationName: `${med.name} ${med.dosage}`, quantity: dispQty };
+    const update = (p: Patient) => p.id === selectedPatient.id ? { ...p, dispensations: [disp, ...p.dispensations] } : p;
+    setPatients((prev) => prev.map(update));
+    setSelectedPatient((prev) => prev ? update(prev) : prev);
+    log({ userId: user?.id || "", userName: user?.name || "", action: "Dispensação p/ Paciente", module: "Pacientes", details: `${dispQty} un. ${med.name} → ${selectedPatient.name}`, severity: "info" });
+    toast.success(`${dispQty} un. de ${med.name} dispensadas para ${selectedPatient.name}`);
+    setDispDialogOpen(false);
+    setDispMedId("");
+    setDispQty(0);
   };
 
   const age = (dob: string) => Math.floor((Date.now() - new Date(dob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
@@ -215,7 +319,11 @@ const Pacientes = () => {
             </Select>
           </div>
 
-          <div className="space-y-2 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+          <Button onClick={() => setPatientDialogOpen(true)} className="w-full gradient-primary text-primary-foreground gap-2 text-sm">
+            <UserPlus className="h-4 w-4" /> Novo Paciente
+          </Button>
+
+          <div className="space-y-2 max-h-[calc(100vh-340px)] overflow-y-auto pr-1">
             {filtered.map((p, i) => (
               <motion.div key={p.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
                 <Card
@@ -227,10 +335,8 @@ const Pacientes = () => {
                       {p.name.split(" ").slice(0, 2).map((n) => n[0]).join("")}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium truncate">{p.name}</p>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">Reg: {p.registrationNumber} • {age(p.dateOfBirth)} anos</p>
+                      <p className="text-sm font-medium truncate">{p.name}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">Reg: {p.registrationNumber} • {p.dateOfBirth ? `${age(p.dateOfBirth)} anos` : "—"}</p>
                       <div className="flex items-center gap-2 mt-1.5">
                         <Badge variant="outline" className={cn("text-[9px]", statusConfig[p.status].className)}>{statusConfig[p.status].label}</Badge>
                         {p.ward !== "—" && <span className="text-[10px] text-muted-foreground">{p.ward}{p.bed ? ` / ${p.bed}` : ""}</span>}
@@ -272,7 +378,7 @@ const Pacientes = () => {
                 <Separator className="my-3" />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div><span className="text-xs text-muted-foreground block">Registro</span><span className="font-mono font-medium">{selectedPatient.registrationNumber}</span></div>
-                  <div><span className="text-xs text-muted-foreground block">Idade</span><span className="font-medium">{age(selectedPatient.dateOfBirth)} anos ({selectedPatient.gender})</span></div>
+                  <div><span className="text-xs text-muted-foreground block">Idade</span><span className="font-medium">{selectedPatient.dateOfBirth ? `${age(selectedPatient.dateOfBirth)} anos (${selectedPatient.gender})` : "—"}</span></div>
                   <div><span className="text-xs text-muted-foreground block">Médico</span><span className="font-medium">{selectedPatient.attendingDoctor}</span></div>
                   <div><span className="text-xs text-muted-foreground block">Admissão</span><span className="font-medium">{new Date(selectedPatient.admissionDate).toLocaleDateString("pt-BR")}</span></div>
                   <div><span className="text-xs text-muted-foreground block">Ala / Leito</span><span className="font-medium">{selectedPatient.ward}{selectedPatient.bed ? ` / ${selectedPatient.bed}` : ""}</span></div>
@@ -289,54 +395,166 @@ const Pacientes = () => {
                 )}
               </Card>
 
-              {/* Prescriptions */}
+              {/* Tabs: Prescrições / Evolução / Dispensações */}
               <Card className="p-5 shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold">Prescrições</h3>
-                    <Badge variant="outline" className="text-[10px]">{selectedPatient.prescriptions.filter((r) => r.active).length} ativas</Badge>
-                  </div>
-                  <Button size="sm" onClick={() => setRxDialogOpen(true)} className="gradient-primary text-primary-foreground gap-1.5 text-xs">
-                    <Plus className="h-3.5 w-3.5" /> Nova Prescrição
-                  </Button>
-                </div>
+                <Tabs defaultValue="prescricoes">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="prescricoes" className="text-xs gap-1"><FileText className="h-3 w-3" /> Prescrições</TabsTrigger>
+                    <TabsTrigger value="evolucao" className="text-xs gap-1"><Activity className="h-3 w-3" /> Evolução</TabsTrigger>
+                    <TabsTrigger value="dispensacoes" className="text-xs gap-1"><Syringe className="h-3 w-3" /> Dispensações</TabsTrigger>
+                  </TabsList>
 
-                <div className="space-y-2">
-                  {selectedPatient.prescriptions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">Nenhuma prescrição registrada</p>
-                  ) : selectedPatient.prescriptions.map((rx) => (
-                    <div key={rx.id} className={cn("rounded-lg border p-3 transition-colors", rx.active ? "bg-card" : "bg-muted/30 opacity-60")}>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <Pill className={cn("h-4 w-4", rx.active ? "text-primary" : "text-muted-foreground")} />
-                          <div>
-                            <p className={cn("text-sm font-medium", !rx.active && "line-through")}>{rx.medicationName} {rx.dosage}</p>
-                            <p className="text-xs text-muted-foreground">{rx.frequency} • {rx.prescribedBy}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={cn("text-[9px]", rx.active ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground")}>
-                            {rx.active ? "Ativa" : "Suspensa"}
-                          </Badge>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => toggleRxActive(selectedPatient.id, rx.id)}>
-                            {rx.active ? "Suspender" : "Reativar"}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
-                        <span><Clock className="h-3 w-3 inline mr-0.5" /> Início: {new Date(rx.startDate).toLocaleDateString("pt-BR")}</span>
-                        {rx.endDate && <span>Fim: {new Date(rx.endDate).toLocaleDateString("pt-BR")}</span>}
-                      </div>
-                      {rx.notes && <p className="text-[11px] text-muted-foreground mt-1.5 italic">{rx.notes}</p>}
+                  <TabsContent value="prescricoes">
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge variant="outline" className="text-[10px]">{selectedPatient.prescriptions.filter((r) => r.active).length} ativas</Badge>
+                      <Button size="sm" onClick={() => setRxDialogOpen(true)} className="gradient-primary text-primary-foreground gap-1.5 text-xs">
+                        <Plus className="h-3.5 w-3.5" /> Nova Prescrição
+                      </Button>
                     </div>
-                  ))}
-                </div>
+                    <div className="space-y-2">
+                      {selectedPatient.prescriptions.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-8">Nenhuma prescrição registrada</p>
+                      ) : selectedPatient.prescriptions.map((rx) => (
+                        <div key={rx.id} className={cn("rounded-lg border p-3 transition-colors", rx.active ? "bg-card" : "bg-muted/30 opacity-60")}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-2">
+                              <Pill className={cn("h-4 w-4", rx.active ? "text-primary" : "text-muted-foreground")} />
+                              <div>
+                                <p className={cn("text-sm font-medium", !rx.active && "line-through")}>{rx.medicationName} {rx.dosage}</p>
+                                <p className="text-xs text-muted-foreground">{rx.frequency} • {rx.prescribedBy}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className={cn("text-[9px]", rx.active ? "bg-success/10 text-success border-success/20" : "bg-muted text-muted-foreground")}>
+                                {rx.active ? "Ativa" : "Suspensa"}
+                              </Badge>
+                              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => toggleRxActive(selectedPatient.id, rx.id)}>
+                                {rx.active ? "Suspender" : "Reativar"}
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
+                            <span><Clock className="h-3 w-3 inline mr-0.5" /> Início: {new Date(rx.startDate).toLocaleDateString("pt-BR")}</span>
+                            {rx.endDate && <span>Fim: {new Date(rx.endDate).toLocaleDateString("pt-BR")}</span>}
+                          </div>
+                          {rx.notes && <p className="text-[11px] text-muted-foreground mt-1.5 italic">{rx.notes}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="evolucao">
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge variant="outline" className="text-[10px]">{selectedPatient.evolution.length} registros</Badge>
+                      <Button size="sm" onClick={() => setEvoDialogOpen(true)} className="gradient-primary text-primary-foreground gap-1.5 text-xs">
+                        <Plus className="h-3.5 w-3.5" /> Nova Evolução
+                      </Button>
+                    </div>
+                    {selectedPatient.evolution.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">Nenhuma evolução registrada</p>
+                    ) : (
+                      <div className="relative space-y-0">
+                        {/* Timeline line */}
+                        <div className="absolute left-4 top-2 bottom-2 w-px bg-border" />
+                        {selectedPatient.evolution.map((evo, i) => {
+                          const config = evolutionTypeConfig[evo.type];
+                          return (
+                            <motion.div key={evo.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="relative pl-10 pb-5">
+                              <div className={cn("absolute left-2 top-1 h-5 w-5 rounded-full flex items-center justify-center border-2 border-background z-10", config.className)}>
+                                <div className="h-2 w-2 rounded-full bg-current" />
+                              </div>
+                              <div className="rounded-lg border bg-card p-3">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge variant="outline" className={cn("text-[9px]", config.className)}>{config.label}</Badge>
+                                  <span className="text-[10px] text-muted-foreground">{new Date(evo.date).toLocaleDateString("pt-BR")} {new Date(evo.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</span>
+                                </div>
+                                <p className="text-sm text-foreground">{evo.description}</p>
+                                <p className="text-[11px] text-muted-foreground mt-1">— {evo.author}</p>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="dispensacoes">
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge variant="outline" className="text-[10px]">{selectedPatient.dispensations.length} dispensações</Badge>
+                      <Button size="sm" onClick={() => setDispDialogOpen(true)} className="gradient-primary text-primary-foreground gap-1.5 text-xs">
+                        <Syringe className="h-3.5 w-3.5" /> Dispensar Medicamento
+                      </Button>
+                    </div>
+                    {selectedPatient.dispensations.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">Nenhuma dispensação registrada</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {selectedPatient.dispensations.map((d, i) => (
+                          <div key={i} className="flex items-center gap-3 rounded-lg border p-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-info/10 text-info">
+                              <Pill className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{d.medicationName}</p>
+                              <p className="text-[11px] text-muted-foreground">{new Date(d.date).toLocaleDateString("pt-BR")} • {d.quantity} unidades</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </Card>
             </motion.div>
           )}
         </div>
       </div>
+
+      {/* New Patient Dialog */}
+      <Dialog open={patientDialogOpen} onOpenChange={setPatientDialogOpen}>
+        <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="h-5 w-5 text-primary" /> Cadastrar Paciente</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5 col-span-2"><Label className="text-xs font-medium">Nome Completo</Label><Input value={newPatient.name} onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs font-medium">Data de Nascimento</Label><Input type="date" value={newPatient.dateOfBirth} onChange={(e) => setNewPatient({ ...newPatient, dateOfBirth: e.target.value })} /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Gênero</Label>
+                <Select value={newPatient.gender} onValueChange={(v) => setNewPatient({ ...newPatient, gender: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Masculino">Masculino</SelectItem>
+                    <SelectItem value="Feminino">Feminino</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Diagnóstico (CID)</Label><Input value={newPatient.diagnosis} onChange={(e) => setNewPatient({ ...newPatient, diagnosis: e.target.value })} placeholder="Ex: Esquizofrenia Paranoide (F20.0)" /></div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs font-medium">Ala</Label><Input value={newPatient.ward} onChange={(e) => setNewPatient({ ...newPatient, ward: e.target.value })} placeholder="Ala A" /></div>
+              <div className="space-y-1.5"><Label className="text-xs font-medium">Leito</Label><Input value={newPatient.bed} onChange={(e) => setNewPatient({ ...newPatient, bed: e.target.value })} placeholder="A-01" /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Status</Label>
+                <Select value={newPatient.status} onValueChange={(v) => setNewPatient({ ...newPatient, status: v as PatientStatus })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="internado">Internado</SelectItem>
+                    <SelectItem value="ambulatorial">Ambulatorial</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Médico Responsável</Label><Input value={newPatient.attendingDoctor} onChange={(e) => setNewPatient({ ...newPatient, attendingDoctor: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Alergias</Label><Input value={newPatient.allergies} onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })} placeholder="Nenhuma conhecida" /></div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Observações</Label><Textarea value={newPatient.notes} onChange={(e) => setNewPatient({ ...newPatient, notes: e.target.value })} rows={2} /></div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setPatientDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleAddPatient} className="gradient-primary text-primary-foreground">Cadastrar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Prescription Dialog */}
       <Dialog open={rxDialogOpen} onOpenChange={setRxDialogOpen}>
@@ -346,34 +564,79 @@ const Pacientes = () => {
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Medicamento</Label>
               <Select value={newRx.medicationName} onValueChange={(v) => {
-                const med = mockMedications.find((m) => m.name === v);
+                const med = medications.find((m) => m.name === v);
                 setNewRx({ ...newRx, medicationName: v, dosage: med?.dosage || "" });
               }}>
                 <SelectTrigger><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
-                <SelectContent>{mockMedications.map((m) => <SelectItem key={m.id} value={m.name}>{m.name} {m.dosage}</SelectItem>)}</SelectContent>
+                <SelectContent>{medications.map((m) => <SelectItem key={m.id} value={m.name}>{m.name} {m.dosage}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Dosagem</Label>
-                <Input value={newRx.dosage} onChange={(e) => setNewRx({ ...newRx, dosage: e.target.value })} placeholder="Ex: 2mg" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Frequência</Label>
-                <Input value={newRx.frequency} onChange={(e) => setNewRx({ ...newRx, frequency: e.target.value })} placeholder="Ex: 2x ao dia" />
-              </div>
+              <div className="space-y-1.5"><Label className="text-xs font-medium">Dosagem</Label><Input value={newRx.dosage} onChange={(e) => setNewRx({ ...newRx, dosage: e.target.value })} placeholder="Ex: 2mg" /></div>
+              <div className="space-y-1.5"><Label className="text-xs font-medium">Frequência</Label><Input value={newRx.frequency} onChange={(e) => setNewRx({ ...newRx, frequency: e.target.value })} placeholder="Ex: 2x ao dia" /></div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Prescrito por</Label>
-              <Input value={newRx.prescribedBy} onChange={(e) => setNewRx({ ...newRx, prescribedBy: e.target.value })} placeholder="Nome do médico" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Observações</Label>
-              <Textarea value={newRx.notes} onChange={(e) => setNewRx({ ...newRx, notes: e.target.value })} rows={2} />
-            </div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Prescrito por</Label><Input value={newRx.prescribedBy} onChange={(e) => setNewRx({ ...newRx, prescribedBy: e.target.value })} placeholder="Nome do médico" /></div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Observações</Label><Textarea value={newRx.notes} onChange={(e) => setNewRx({ ...newRx, notes: e.target.value })} rows={2} /></div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setRxDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleAddRx} className="gradient-primary text-primary-foreground">Prescrever</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Evolution Dialog */}
+      <Dialog open={evoDialogOpen} onOpenChange={setEvoDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader><DialogTitle>Nova Evolução — {selectedPatient?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Tipo</Label>
+              <Select value={newEvo.type} onValueChange={(v) => setNewEvo({ ...newEvo, type: v as EvolutionEntry["type"] })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="clinica">Avaliação Clínica</SelectItem>
+                  <SelectItem value="medicacao">Alteração de Medicação</SelectItem>
+                  <SelectItem value="intercorrencia">Intercorrência</SelectItem>
+                  <SelectItem value="alta">Alta / Transferência</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs font-medium">Descrição</Label><Textarea value={newEvo.description} onChange={(e) => setNewEvo({ ...newEvo, description: e.target.value })} rows={4} placeholder="Descreva a evolução clínica..." /></div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setEvoDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleAddEvolution} className="gradient-primary text-primary-foreground">Registrar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dispense Dialog */}
+      <Dialog open={dispDialogOpen} onOpenChange={setDispDialogOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Syringe className="h-5 w-5 text-primary" /> Dispensar para {selectedPatient?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Medicamento</Label>
+              <Select value={dispMedId} onValueChange={setDispMedId}>
+                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                <SelectContent>
+                  {medications.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name} {m.dosage} — Estoque: {m.currentStock}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Quantidade</Label>
+              <Input type="number" min={1} value={dispQty || ""} onChange={(e) => setDispQty(Number(e.target.value))} />
+              {dispMedId && (
+                <p className="text-[11px] text-muted-foreground">Disponível: <span className="font-semibold">{getMedicationById(dispMedId)?.currentStock || 0} un.</span></p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setDispDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleDispense} className="gradient-primary text-primary-foreground">Dispensar</Button>
             </div>
           </div>
         </DialogContent>
