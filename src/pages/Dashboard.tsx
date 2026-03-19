@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
 import { MedicationTable } from "@/components/MedicationTable";
 import { MedicationDialog } from "@/components/MedicationDialog";
-import { useMedications } from "@/hooks/useMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
+import { getStockStatus, type MedicationCategory } from "@/types/medication";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import {
 import {
   Pill, AlertTriangle, XCircle, Clock, Package, ShieldCheck,
   ArrowDownCircle, ArrowUpCircle, Repeat, UserCheck, Truck, FileCheck,
-  Plus, Barcode, ArrowLeftRight, ClipboardList, BarChart3, CalendarClock,
+  ClipboardList, Barcode, ArrowLeftRight, BarChart3, CalendarClock,
 } from "lucide-react";
 import type { Medication } from "@/types/medication";
 
@@ -41,14 +42,16 @@ const severityConfig = {
   critical: "border-destructive/30 bg-destructive/5",
 };
 
-// Simulated 7-day data
-const weekDays = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-const weeklyFlow = weekDays.map((d, i) => ({
-  day: d,
-  entradas: Math.round(60 + Math.random() * 80 + (i < 5 ? 40 : 0)),
-  dispensações: Math.round(40 + Math.random() * 60 + (i < 5 ? 30 : 0)),
-  saídas: Math.round(10 + Math.random() * 30),
-}));
+// Fixed 7-day data (no more Math.random on each render)
+const weeklyFlow = [
+  { day: "Seg", entradas: 124, dispensações: 89, saídas: 22 },
+  { day: "Ter", entradas: 108, dispensações: 95, saídas: 31 },
+  { day: "Qua", entradas: 142, dispensações: 78, saídas: 18 },
+  { day: "Qui", entradas: 95, dispensações: 112, saídas: 27 },
+  { day: "Sex", entradas: 136, dispensações: 101, saídas: 35 },
+  { day: "Sáb", entradas: 72, dispensações: 48, saídas: 15 },
+  { day: "Dom", entradas: 64, dispensações: 42, saídas: 12 },
+];
 
 const topDispensed = [
   { name: "Risperidona", qty: 48 },
@@ -66,14 +69,21 @@ const quickActions = [
 ];
 
 const Dashboard = () => {
-  const {
-    medications, stats,
-    searchQuery, setSearchQuery,
-    categoryFilter, setCategoryFilter,
-    stockFilter, setStockFilter,
-    addMedication, updateMedication, deleteMedication,
-  } = useMedications();
+  const { medications, stats, addMedication, updateMedication, deleteMedication } = useMedicationContext();
   const navigate = useNavigate();
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<MedicationCategory | "all">("all");
+  const [stockFilter, setStockFilter] = useState<"all" | "normal" | "baixo" | "crítico" | "esgotado">("all");
+
+  const filtered = useMemo(() => {
+    return medications.filter((med) => {
+      const matchesSearch = !searchQuery || med.name.toLowerCase().includes(searchQuery.toLowerCase()) || med.genericName.toLowerCase().includes(searchQuery.toLowerCase()) || med.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || med.category === categoryFilter;
+      const matchesStock = stockFilter === "all" || getStockStatus(med.currentStock, med.minimumStock) === stockFilter;
+      return matchesSearch && matchesCategory && matchesStock;
+    });
+  }, [medications, searchQuery, categoryFilter, stockFilter]);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
@@ -87,11 +97,8 @@ const Dashboard = () => {
   const handleAdd = () => { setEditingMed(null); setDialogOpen(true); };
   const handleEdit = (med: Medication) => { setEditingMed(med); setDialogOpen(true); };
   const handleSave = (data: Omit<Medication, "id" | "lastUpdated">) => {
-    if (editingMed) {
-      updateMedication(editingMed.id, data);
-    } else {
-      addMedication(data);
-    }
+    if (editingMed) updateMedication(editingMed.id, data);
+    else addMedication(data);
   };
 
   return (
@@ -147,23 +154,13 @@ const Dashboard = () => {
         {/* Quick Actions + Clock */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
           <Card className="p-4 sm:p-5 shadow-card h-full flex flex-col">
-            {/* Clock */}
             <div className="text-center mb-4 pb-3 border-b">
-              <p className="text-2xl font-bold text-foreground tabular-nums">
-                {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-              </p>
-              <p className="text-[11px] text-muted-foreground">
-                {now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-              </p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className="text-[11px] text-muted-foreground">{now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</p>
             </div>
-            {/* Actions */}
             <div className="grid grid-cols-2 gap-2 flex-1">
               {quickActions.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={() => navigate(action.path)}
-                  className="flex flex-col items-center justify-center gap-1.5 rounded-lg border p-3 hover:shadow-card-hover transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
+                <button key={action.label} onClick={() => navigate(action.path)} className="flex flex-col items-center justify-center gap-1.5 rounded-lg border p-3 hover:shadow-card-hover transition-all hover:scale-[1.02] active:scale-[0.98]">
                   <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", action.color)}>
                     <action.icon className="h-4 w-4" />
                   </div>
@@ -177,22 +174,14 @@ const Dashboard = () => {
 
       {/* Activity + Alerts Row */}
       <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        {/* Recent Activity */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="lg:col-span-2">
           <Card className="p-4 sm:p-5 shadow-card h-full">
             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" />
-              Atividade Recente
+              <Clock className="h-4 w-4 text-primary" /> Atividade Recente
             </h3>
             <div className="space-y-1">
               {recentActivity.map((item, i) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.45 + i * 0.04 }}
-                  className="flex items-start gap-3 py-2.5 px-2 rounded-lg hover:bg-accent/30 transition-colors"
-                >
+                <motion.div key={item.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.45 + i * 0.04 }} className="flex items-start gap-3 py-2.5 px-2 rounded-lg hover:bg-accent/30 transition-colors">
                   <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-md mt-0.5", item.className)}>
                     <item.icon className="h-3.5 w-3.5" />
                   </div>
@@ -210,31 +199,21 @@ const Dashboard = () => {
           </Card>
         </motion.div>
 
-        {/* Quick Alerts */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
           <Card className="p-4 sm:p-5 shadow-card h-full">
             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              Alertas Urgentes
+              <AlertTriangle className="h-4 w-4 text-destructive" /> Alertas Urgentes
             </h3>
             <div className="space-y-3">
               {quickAlerts.map((alert, i) => (
-                <motion.div
-                  key={alert.label}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + i * 0.06 }}
-                  className={cn("rounded-lg border p-3", severityConfig[alert.severity])}
-                >
+                <motion.div key={alert.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} className={cn("rounded-lg border p-3", severityConfig[alert.severity])}>
                   <p className="text-sm font-medium text-foreground">{alert.label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{alert.detail}</p>
                 </motion.div>
               ))}
             </div>
             <div className="mt-4 pt-3 border-t">
-              <a href="/alertas" className="text-xs text-primary hover:underline font-medium">
-                Ver todos os alertas →
-              </a>
+              <a href="/alertas" className="text-xs text-primary hover:underline font-medium">Ver todos os alertas →</a>
             </div>
           </Card>
         </motion.div>
@@ -242,7 +221,7 @@ const Dashboard = () => {
 
       {/* Medication Table */}
       <MedicationTable
-        medications={medications}
+        medications={filtered}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         categoryFilter={categoryFilter}
@@ -253,14 +232,7 @@ const Dashboard = () => {
         onEdit={handleEdit}
       />
 
-      {/* Dialog */}
-      <MedicationDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        medication={editingMed}
-        onSave={handleSave}
-        onDelete={deleteMedication}
-      />
+      <MedicationDialog open={dialogOpen} onOpenChange={setDialogOpen} medication={editingMed} onSave={handleSave} onDelete={deleteMedication} />
     </AppLayout>
   );
 };

@@ -1,7 +1,9 @@
 import { useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAudit } from "@/contexts/AuditContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, ArrowDownCircle, ArrowUpCircle, Repeat, Package } from "lucide-react";
+import { Search, Plus, ArrowDownCircle, ArrowUpCircle, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type MovementType = "entrada" | "saída" | "dispensação";
 
@@ -46,14 +49,17 @@ const initialMovements: Movement[] = [
 ];
 
 const Movimentacoes = () => {
+  const { medications, adjustStock, getMedicationById } = useMedicationContext();
+  const { user } = useAuth();
+  const { log } = useAudit();
   const [movements, setMovements] = useState<Movement[]>(initialMovements);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<MovementType | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [newMov, setNewMov] = useState({
-    medicationId: "", medicationName: "", type: "entrada" as MovementType,
-    quantity: 0, responsiblePerson: "", patient: "", ward: "", notes: "",
+    medicationId: "", type: "entrada" as MovementType,
+    quantity: 0, responsiblePerson: "", patient: "", ward: "", notes: "", date: new Date().toISOString().split("T")[0],
   });
 
   const filtered = useMemo(() => {
@@ -64,15 +70,57 @@ const Movimentacoes = () => {
     });
   }, [movements, search, typeFilter]);
 
+  const selectedMed = newMov.medicationId ? getMedicationById(newMov.medicationId) : undefined;
+
   const handleAdd = () => {
-    if (!newMov.medicationName || !newMov.quantity) return;
-    setMovements((prev) => [{
-      ...newMov,
+    if (!newMov.medicationId || !newMov.quantity) {
+      toast.error("Selecione um medicamento e informe a quantidade");
+      return;
+    }
+
+    const med = getMedicationById(newMov.medicationId);
+    if (!med) return;
+
+    // Validate stock for outgoing movements
+    if (newMov.type !== "entrada" && med.currentStock < newMov.quantity) {
+      toast.error(`Estoque insuficiente! Disponível: ${med.currentStock} un. de ${med.name}`);
+      return;
+    }
+
+    const medLabel = `${med.name} ${med.dosage}`;
+    const delta = newMov.type === "entrada" ? newMov.quantity : -newMov.quantity;
+
+    // Update stock
+    adjustStock(newMov.medicationId, delta);
+
+    // Add movement
+    const movement: Movement = {
       id: crypto.randomUUID(),
-      date: new Date().toISOString().split("T")[0],
-    }, ...prev]);
+      medicationId: newMov.medicationId,
+      medicationName: medLabel,
+      type: newMov.type,
+      quantity: newMov.quantity,
+      date: newMov.date,
+      responsiblePerson: newMov.responsiblePerson || user?.name || "—",
+      patient: newMov.patient,
+      ward: newMov.ward,
+      notes: newMov.notes,
+    };
+    setMovements((prev) => [movement, ...prev]);
+
+    // Audit log
+    log({
+      userId: user?.id || "",
+      userName: user?.name || "",
+      action: typeConfig[newMov.type].label,
+      module: "Movimentações",
+      details: `${newMov.quantity} un. ${medLabel} — ${newMov.notes || "sem observações"}`,
+      severity: "info",
+    });
+
+    toast.success(`${typeConfig[newMov.type].label} registrada: ${newMov.quantity} un. de ${med.name}`);
     setDialogOpen(false);
-    setNewMov({ medicationId: "", medicationName: "", type: "entrada", quantity: 0, responsiblePerson: "", patient: "", ward: "", notes: "" });
+    setNewMov({ medicationId: "", type: "entrada", quantity: 0, responsiblePerson: "", patient: "", ward: "", notes: "", date: new Date().toISOString().split("T")[0] });
   };
 
   const todayCount = movements.filter((m) => m.date === new Date().toISOString().split("T")[0]).length;
@@ -86,13 +134,7 @@ const Movimentacoes = () => {
           const count = movements.filter((m) => m.type === type).length;
           const totalQty = movements.filter((m) => m.type === type).reduce((sum, m) => sum + m.quantity, 0);
           return (
-            <motion.div
-              key={type}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className="rounded-xl border bg-card p-4 shadow-card"
-            >
+            <motion.div key={type} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }} className="rounded-xl border bg-card p-4 shadow-card">
               <div className="flex items-center gap-3">
                 <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", config.className)}>
                   <config.icon className="h-4 w-4" />
@@ -190,26 +232,39 @@ const Movimentacoes = () => {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Quantidade</Label>
-                <Input type="number" min={1} value={newMov.quantity || ""} onChange={(e) => setNewMov({ ...newMov, quantity: Number(e.target.value) })} />
+                <Label className="text-xs font-medium">Data</Label>
+                <Input type="date" value={newMov.date} onChange={(e) => setNewMov({ ...newMov, date: e.target.value })} />
               </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Medicamento</Label>
-              <Select value={newMov.medicationName} onValueChange={(v) => setNewMov({ ...newMov, medicationName: v })}>
+              <Select value={newMov.medicationId} onValueChange={(v) => setNewMov({ ...newMov, medicationId: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
                 <SelectContent>
-                  {mockMedications.map((m) => (
-                    <SelectItem key={m.id} value={`${m.name} ${m.dosage}`}>{m.name} {m.dosage}</SelectItem>
+                  {medications.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name} {m.dosage} — Estoque: {m.currentStock}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {selectedMed && newMov.type !== "entrada" && (
+                <p className="text-[11px] text-muted-foreground">
+                  Disponível: <span className="font-semibold">{selectedMed.currentStock} un.</span>
+                </p>
+              )}
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Responsável</Label>
-              <Input value={newMov.responsiblePerson} onChange={(e) => setNewMov({ ...newMov, responsiblePerson: e.target.value })} placeholder="Nome do farmacêutico/enfermeiro" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Quantidade</Label>
+                <Input type="number" min={1} value={newMov.quantity || ""} onChange={(e) => setNewMov({ ...newMov, quantity: Number(e.target.value) })} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Responsável</Label>
+                <Input value={newMov.responsiblePerson} onChange={(e) => setNewMov({ ...newMov, responsiblePerson: e.target.value })} placeholder={user?.name || "Nome"} />
+              </div>
             </div>
-            {newMov.type === "dispensação" && (
+            {(newMov.type === "dispensação" || newMov.type === "saída") && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-medium">Paciente</Label>
