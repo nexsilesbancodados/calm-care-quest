@@ -1,14 +1,16 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Bell, Moon, Sun, AlertTriangle, ArrowDownCircle, Repeat, Truck, XCircle, LogOut, User, Settings, ChevronRight } from "lucide-react";
+import { Bell, Moon, Sun, AlertTriangle, ArrowDownCircle, Repeat, Truck, XCircle, LogOut, User, Settings, ChevronRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/ThemeProvider";
+import { useAuth, roleLabels } from "@/contexts/AuthContext";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -43,15 +45,23 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps) {
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const unreadCount = notifications.filter((n) => n.unread).length;
 
   const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
 
+  const displayName = user?.name || "Usuário";
+  const displayInitials = user?.initials || "U";
+  const displayRole = user ? roleLabels[user.role] : "—";
+  const displayCrf = user?.crf || "";
+
   const handleLogout = () => {
+    logout();
     toast.success("Sessão encerrada");
     navigate("/login");
+  };
   };
 
   return (
@@ -133,11 +143,14 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-accent/50 transition-colors ml-1">
                     <Avatar className="h-7 w-7">
-                      <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">CM</AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary text-[11px] font-bold">{displayInitials}</AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:block text-left">
-                      <p className="text-xs font-medium text-foreground leading-tight">Dr. Carlos Mendes</p>
-                      <p className="text-[10px] text-muted-foreground">Farmacêutico</p>
+                      <p className="text-xs font-medium text-foreground leading-tight">{displayName}</p>
+                      <div className="flex items-center gap-1">
+                        <p className="text-[10px] text-muted-foreground">{displayRole}</p>
+                        {user?.role === "admin" && <Shield className="h-2.5 w-2.5 text-primary" />}
+                      </div>
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -145,11 +158,14 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">CM</AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">{displayInitials}</AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">Dr. Carlos Mendes</p>
-                        <p className="text-[11px] text-muted-foreground">CRF-SP 12345</p>
+                        <p className="text-sm font-medium">{displayName}</p>
+                        <p className="text-[11px] text-muted-foreground">{displayCrf}</p>
+                        <Badge variant="outline" className={cn("text-[9px] mt-0.5", user?.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>
+                          {displayRole}
+                        </Badge>
                       </div>
                     </div>
                   </DropdownMenuLabel>

@@ -6,10 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,8 +26,8 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    // Simulate auth
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 1000));
+    await login(email, password);
     setLoading(false);
     toast.success("Login realizado com sucesso!");
     navigate("/");
@@ -177,11 +180,26 @@ const Login = () => {
             </Button>
           </form>
 
-          <div className="mt-8 pt-6 border-t">
-            <p className="text-[11px] text-center text-muted-foreground">
-              Acesso restrito a profissionais autorizados.<br />
-              Em caso de problemas, contate o suporte técnico.
-            </p>
+          <div className="mt-6 pt-5 border-t space-y-3">
+            <p className="text-[11px] text-center text-muted-foreground font-medium">Credenciais de demonstração</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => { setEmail("admin@hospital.com"); setPassword("admin123"); }}
+                className="rounded-lg border p-2.5 text-left hover:bg-accent/30 transition-colors"
+              >
+                <Badge className="bg-primary/10 text-primary border-0 text-[10px] mb-1">Admin</Badge>
+                <p className="text-[10px] text-muted-foreground">admin@hospital.com</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail("farma@hospital.com"); setPassword("farma123"); }}
+                className="rounded-lg border p-2.5 text-left hover:bg-accent/30 transition-colors"
+              >
+                <Badge className="bg-info/10 text-info border-0 text-[10px] mb-1">Farmacêutico</Badge>
+                <p className="text-[10px] text-muted-foreground">farma@hospital.com</p>
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>

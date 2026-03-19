@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/AuthContext";
 import { CATEGORIES, FORMS, type Medication, type MedicationCategory } from "@/types/medication";
 
 interface MedicationDialogProps {
@@ -18,6 +20,7 @@ interface MedicationDialogProps {
 
 export function MedicationDialog({ open, onOpenChange, medication, onSave, onDelete }: MedicationDialogProps) {
   const isEdit = !!medication;
+  const { can } = useAuth();
 
   const [form, setForm] = useState(() => getDefaults(medication));
 
@@ -140,9 +143,18 @@ export function MedicationDialog({ open, onOpenChange, medication, onSave, onDel
 
           <div className="flex justify-between pt-2">
             {isEdit && onDelete ? (
-              <Button type="button" variant="destructive" size="sm" onClick={() => { onDelete(medication!.id); onOpenChange(false); }}>
-                Excluir
-              </Button>
+              can("delete") ? (
+                <Button type="button" variant="destructive" size="sm" onClick={() => { onDelete(medication!.id); onOpenChange(false); }}>
+                  Excluir
+                </Button>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="destructive" size="sm" disabled>Excluir</Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p className="text-xs">Apenas administradores podem excluir</p></TooltipContent>
+                </Tooltip>
+              )
             ) : <div />}
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
