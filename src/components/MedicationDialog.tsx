@@ -143,9 +143,18 @@ export function MedicationDialog({ open, onOpenChange, medication, onSave, onDel
 
           <div className="flex justify-between pt-2">
             {isEdit && onDelete ? (
-              <Button type="button" variant="destructive" size="sm" onClick={() => { onDelete(medication!.id); onOpenChange(false); }}>
-                Excluir
-              </Button>
+              can("delete") ? (
+                <Button type="button" variant="destructive" size="sm" onClick={() => { onDelete(medication!.id); onOpenChange(false); }}>
+                  Excluir
+                </Button>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="button" variant="destructive" size="sm" disabled>Excluir</Button>
+                  </TooltipTrigger>
+                  <TooltipContent><p className="text-xs">Apenas administradores podem excluir</p></TooltipContent>
+                </Tooltip>
+              )
             ) : <div />}
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
