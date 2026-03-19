@@ -32,7 +32,7 @@ const Dashboard = () => {
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral da farmácia hospitalar">
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard title="Total" value={stats.total} icon={Pill} variant="info" delay={0} />
         <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.05} />
         <StatCard title="Estoque Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.1} />
