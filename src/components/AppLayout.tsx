@@ -62,7 +62,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
     toast.success("Sessão encerrada");
     navigate("/login");
   };
-  };
 
   return (
     <SidebarProvider>
