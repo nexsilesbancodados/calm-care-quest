@@ -8,6 +8,9 @@ import {
   Cross,
   Barcode,
   ArrowLeftRight,
+  Users,
+  BarChart3,
+  Factory,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
