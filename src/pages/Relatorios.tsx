@@ -28,7 +28,7 @@ const Relatorios = () => {
 
   // Filtered medications
   const filteredMeds = useMemo(() => {
-    let meds = [...mockMedications];
+    let meds = [...allMedications];
     if (categoryFilter !== "all") {
       meds = meds.filter((m) => m.category === categoryFilter);
     }
