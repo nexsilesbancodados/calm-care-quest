@@ -310,6 +310,8 @@ ${xmlRows}
         <TabsList className="mb-4">
           <TabsTrigger value="charts" className="text-xs">Gráficos</TabsTrigger>
           <TabsTrigger value="table" className="text-xs">Tabela Detalhada</TabsTrigger>
+          <TabsTrigger value="pacientes" className="text-xs">Consumo por Paciente</TabsTrigger>
+          <TabsTrigger value="vencimentos" className="text-xs">Vencimentos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="charts">
