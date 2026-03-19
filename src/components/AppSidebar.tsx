@@ -31,11 +31,14 @@ import {
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Medicamentos", url: "/medicamentos", icon: Pill },
+  { title: "Pacientes", url: "/pacientes", icon: Users },
   { title: "Alertas", url: "/alertas", icon: AlertTriangle },
   { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList },
   { title: "Estoque", url: "/estoque", icon: Package },
-  { title: "Etiquetas", url: "/etiquetas", icon: Barcode },
   { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight },
+  { title: "Etiquetas", url: "/etiquetas", icon: Barcode },
+  { title: "Fornecedores", url: "/fornecedores", icon: Factory },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3 },
 ];
 
 const systemItems = [
