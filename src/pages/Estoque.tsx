@@ -45,7 +45,7 @@ const Estoque = () => {
   return (
     <AppLayout title="Estoque" subtitle={`${totalUnits.toLocaleString("pt-BR")} unidades em ${mockMedications.length} itens`}>
       {/* Status Summary */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {statusBreakdown.map((s, i) => {
           const config = getStockStatusConfig(s.status as any);
           const icons = [CheckCircle, TrendingDown, AlertTriangle, Package];
