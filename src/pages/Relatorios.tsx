@@ -281,7 +281,7 @@ ${xmlRows}
           {(categoryFilter !== "all" || stockFilter !== "all") && (
             <div className="mt-2 flex items-center gap-2">
               <span className="text-[11px] text-muted-foreground">Exibindo</span>
-              <Badge variant="secondary" className="text-[10px]">{filteredMeds.length} de {mockMedications.length} itens</Badge>
+              <Badge variant="secondary" className="text-[10px]">{filteredMeds.length} de {allMedications.length} itens</Badge>
             </div>
           )}
         </Card>
