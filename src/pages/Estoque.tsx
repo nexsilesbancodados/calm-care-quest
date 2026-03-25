@@ -180,7 +180,7 @@ const Estoque = () => {
                         </TableRow>
                       );
                     })}
-                  </>
+                  </React.Fragment>
                 );
               })}
             </TableBody>
