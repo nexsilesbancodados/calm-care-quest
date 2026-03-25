@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { useMedicationContext } from "@/contexts/MedicationContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -75,69 +76,7 @@ const directionConfig: Record<TransferDirection, { label: string; icon: any; cla
   recebimento: { label: "Recebimento", icon: ArrowDownCircle, className: "bg-success/10 text-success border-success/20" },
 };
 
-const initialTransfers: Transfer[] = [
-  {
-    id: "T001", direction: "envio", originBranch: "hq", destinationBranch: "fil-norte",
-    status: "concluído",
-    items: [
-      { medicationName: "Risperidona", dosage: "2mg", quantity: 100, batchNumber: "RP2024-001" },
-      { medicationName: "Fluoxetina", dosage: "20mg", quantity: 200, batchNumber: "FX2024-112" },
-    ],
-    date: "2026-03-15", expectedDate: "2026-03-16", responsiblePerson: "Farm. João Santos",
-    receivedBy: "Farm. Lucia Almeida", transportDoc: "GT-2026-0045",
-    notes: "Reposição mensal programada",
-  },
-  {
-    id: "T002", direction: "envio", originBranch: "hq", destinationBranch: "caps",
-    status: "em_trânsito",
-    items: [
-      { medicationName: "Haloperidol", dosage: "5mg/ml", quantity: 20, batchNumber: "HP2024-045" },
-      { medicationName: "Clonazepam", dosage: "2mg", quantity: 30, batchNumber: "CZ2024-078" },
-      { medicationName: "Diazepam", dosage: "10mg", quantity: 15, batchNumber: "DZ2024-134" },
-    ],
-    date: "2026-03-18", expectedDate: "2026-03-19", responsiblePerson: "Farm. Pedro Lima",
-    transportDoc: "GT-2026-0052", notes: "Urgência — solicitação CAPS III",
-  },
-  {
-    id: "T003", direction: "recebimento", originBranch: "fil-sul", destinationBranch: "hq",
-    status: "pendente",
-    items: [
-      { medicationName: "Carbonato de Lítio", dosage: "300mg", quantity: 150, batchNumber: "LT2024-033" },
-    ],
-    date: "2026-03-18", expectedDate: "2026-03-20", responsiblePerson: "Farm. Ana Ribeiro",
-    notes: "Devolução de excedente da Unidade Sul",
-  },
-  {
-    id: "T004", direction: "envio", originBranch: "hq", destinationBranch: "fil-leste",
-    status: "concluído",
-    items: [
-      { medicationName: "Sertralina", dosage: "50mg", quantity: 100, batchNumber: "SR2024-201" },
-      { medicationName: "Olanzapina", dosage: "10mg", quantity: 40, batchNumber: "OZ2024-067" },
-    ],
-    date: "2026-03-12", expectedDate: "2026-03-13", responsiblePerson: "Farm. João Santos",
-    receivedBy: "Farm. Roberto Nunes", transportDoc: "GT-2026-0038",
-    notes: "",
-  },
-  {
-    id: "T005", direction: "recebimento", originBranch: "ambulatorio", destinationBranch: "hq",
-    status: "cancelado",
-    items: [
-      { medicationName: "Quetiapina", dosage: "100mg", quantity: 50, batchNumber: "QT2024-089" },
-    ],
-    date: "2026-03-10", expectedDate: "2026-03-11", responsiblePerson: "Farm. Carlos Dias",
-    notes: "Cancelado — medicamento utilizado no local",
-  },
-  {
-    id: "T006", direction: "envio", originBranch: "hq", destinationBranch: "ambulatorio",
-    status: "pendente",
-    items: [
-      { medicationName: "Carbamazepina", dosage: "200mg", quantity: 80, batchNumber: "CB2024-090" },
-      { medicationName: "Fluoxetina", dosage: "20mg", quantity: 100, batchNumber: "FX2024-112" },
-    ],
-    date: "2026-03-19", expectedDate: "2026-03-21", responsiblePerson: "Farm. Pedro Lima",
-    notes: "Agendado para próximo embarque",
-  },
-];
+const initialTransfers: Transfer[] = [];
 
 const Transferencias = () => {
   const { medications } = useMedicationContext();
