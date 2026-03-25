@@ -21,46 +21,7 @@ import {
 } from "lucide-react";
 import type { Medication } from "@/types/medication";
 
-const recentActivity = [
-  { id: 1, type: "dispensação", icon: Repeat, text: "Risperidona 2mg dispensada para Paciente #1042", time: "Há 12 min", user: "Enf. Maria Silva", className: "bg-info/10 text-info" },
-  { id: 2, type: "entrada", icon: ArrowDownCircle, text: "Entrada de 100 un. Haloperidol 5mg/ml — NF 45892", time: "Há 45 min", user: "Farm. João Santos", className: "bg-success/10 text-success" },
-  { id: 3, type: "alerta", icon: AlertTriangle, text: "Clorpromazina 25mg/5ml — validade em 27 dias", time: "Há 1h", user: "Sistema", className: "bg-warning/10 text-warning" },
-  { id: 4, type: "transferência", icon: Truck, text: "40 un. Zolpidem transferidas para Farmácia Central", time: "Há 2h", user: "Farm. Pedro Lima", className: "bg-primary/10 text-primary" },
-  { id: 5, type: "dispensação", icon: Repeat, text: "Clonazepam 2mg — uso SOS Paciente #0987", time: "Há 3h", user: "Enf. Ana Costa", className: "bg-info/10 text-info" },
-  { id: 6, type: "auditoria", icon: FileCheck, text: "Conferência dupla aprovada — Diazepam 10mg", time: "Há 4h", user: "Farm. Carlos Mendes", className: "bg-accent text-accent-foreground" },
-];
-
-const quickAlerts = [
-  { label: "Zolpidem 10mg", detail: "Esgotado — aguardando reposição", severity: "critical" as const },
-  { label: "Clorpromazina 25mg", detail: "Vence em 27 dias", severity: "warning" as const },
-  { label: "Clonazepam 2mg", detail: "Estoque crítico: 15/80 un.", severity: "critical" as const },
-  { label: "Diazepam 10mg", detail: "Estoque baixo: 45/60 un.", severity: "warning" as const },
-];
-
-const severityConfig = {
-  warning: "border-warning/30 bg-warning/5",
-  critical: "border-destructive/30 bg-destructive/5",
-};
-
-// Fixed 7-day data (no more Math.random on each render)
-const weeklyFlow = [
-  { day: "Seg", entradas: 124, dispensações: 89, saídas: 22 },
-  { day: "Ter", entradas: 108, dispensações: 95, saídas: 31 },
-  { day: "Qua", entradas: 142, dispensações: 78, saídas: 18 },
-  { day: "Qui", entradas: 95, dispensações: 112, saídas: 27 },
-  { day: "Sex", entradas: 136, dispensações: 101, saídas: 35 },
-  { day: "Sáb", entradas: 72, dispensações: 48, saídas: 15 },
-  { day: "Dom", entradas: 64, dispensações: 42, saídas: 12 },
-];
-
-const topDispensed = [
-  { name: "Risperidona", qty: 48 },
-  { name: "Clonazepam", qty: 42 },
-  { name: "Fluoxetina", qty: 38 },
-  { name: "Sertralina", qty: 31 },
-  { name: "Haloperidol", qty: 27 },
-];
-
+// Dashboard now derives all data from context — no hardcoded data
 const quickActions = [
   { label: "Nova Movimentação", icon: ClipboardList, path: "/movimentacoes", color: "bg-info/10 text-info" },
   { label: "Gerar Etiquetas", icon: Barcode, path: "/etiquetas", color: "bg-primary/10 text-primary" },

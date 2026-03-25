@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { useMedicationContext } from "@/contexts/MedicationContext";
@@ -52,10 +52,33 @@ const Movimentacoes = () => {
   const { medications, adjustStock, getMedicationById } = useMedicationContext();
   const { user } = useAuth();
   const { log } = useAudit();
-  const [movements, setMovements] = useState<Movement[]>(initialMovements);
+  const [movements, setMovements] = useState<Movement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<MovementType | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const fetchMovements = useCallback(async () => {
+    const { data } = await (await import("@/integrations/supabase/client")).supabase
+      .from("movements").select("*").order("created_at", { ascending: false });
+    if (data) {
+      setMovements(data.map((r: any) => ({
+        id: r.id,
+        medicationId: r.medication_id || "",
+        medicationName: r.medication_name,
+        type: r.type as MovementType,
+        quantity: r.quantity,
+        date: r.created_at?.split("T")[0] || "",
+        responsiblePerson: r.responsible_person,
+        patient: r.patient,
+        ward: r.ward,
+        notes: r.notes,
+      })));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchMovements(); }, [fetchMovements]);
 
   const [newMov, setNewMov] = useState({
     medicationId: "", type: "entrada" as MovementType,
