@@ -1,132 +1,136 @@
-import { createContext, useContext, useState, useCallback } from "react";
-
-export type UserRole = "admin" | "farma";
-
-export interface AppUser {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  crf?: string;
-  initials: string;
-}
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session, User } from "@supabase/supabase-js";
+import type { AppRole, Profile } from "@/types/database";
+import { ROLE_PERMISSIONS } from "@/types/database";
 
 interface AuthContextType {
-  user: AppUser | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  can: (action: Permission) => boolean;
-  invitedUsers: AppUser[];
-  inviteUser: (user: Omit<AppUser, "id">) => void;
-  removeUser: (id: string) => void;
+  session: Session | null;
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  signup: (email: string, password: string, nome: string) => Promise<{ error: string | null }>;
+  logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
+  can: (permission: string) => boolean;
+  hasRole: (role: AppRole) => boolean;
+  isAdmin: boolean;
+  refreshProfile: () => Promise<void>;
 }
 
-export type Permission =
-  | "edit"
-  | "delete"
-  | "undo"
-  | "invite_users"
-  | "manage_settings"
-  | "view_all";
-
-const rolePermissions: Record<UserRole, Permission[]> = {
-  admin: ["edit", "delete", "undo", "invite_users", "manage_settings", "view_all"],
-  farma: ["view_all", "edit"],
-};
-
-const mockUsers: Record<string, AppUser & { password: string }> = {
-  "admin@hospital.com": {
-    id: "u1",
-    name: "Dr. Carlos Mendes",
-    email: "admin@hospital.com",
-    role: "admin",
-    crf: "CRF-SP 12345",
-    initials: "CM",
-    password: "admin123",
-  },
-  "farma@hospital.com": {
-    id: "u2",
-    name: "Farm. João Santos",
-    email: "farma@hospital.com",
-    role: "farma",
-    crf: "CRF-SP 67890",
-    initials: "JS",
-    password: "farma123",
-  },
-};
-
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  login: async () => false,
-  logout: () => {},
-  can: () => false,
-  invitedUsers: [],
-  inviteUser: () => {},
-  removeUser: () => {},
-});
+const AuthContext = createContext<AuthContextType>(null!);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AppUser | null>(() => {
-    const stored = localStorage.getItem("psifarma-user");
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [invitedUsers, setInvitedUsers] = useState<AppUser[]>([
-    { id: "u2", name: "Farm. João Santos", email: "farma@hospital.com", role: "farma", crf: "CRF-SP 67890", initials: "JS" },
-    { id: "u3", name: "Enf. Maria Silva", email: "maria@hospital.com", role: "farma", initials: "MS" },
-    { id: "u4", name: "Enf. Ana Costa", email: "ana@hospital.com", role: "farma", initials: "AC" },
-  ]);
+  const loadProfile = useCallback(async (userId: string) => {
+    try {
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
-    const found = mockUsers[email.toLowerCase()];
-    if (!found || found.password !== password) {
-      return false;
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .single();
+
+      if (profileData) {
+        setProfile({
+          ...profileData,
+          role: (roleData?.role as AppRole) || "visualizador",
+        } as Profile);
+      }
+    } catch (e) {
+      console.error("Error loading profile:", e);
     }
-    const { password: _pw, ...userData } = found;
-    setUser(userData);
-    localStorage.setItem("psifarma-user", JSON.stringify(userData));
-    return true;
   }, []);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem("psifarma-user");
-  }, []);
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        if (session?.user) {
+          setTimeout(() => loadProfile(session.user.id), 0);
+        } else {
+          setProfile(null);
+        }
+        setLoading(false);
+      }
+    );
 
-  const can = useCallback(
-    (action: Permission) => {
-      if (!user) return false;
-      return rolePermissions[user.role].includes(action);
-    },
-    [user]
-  );
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        loadProfile(session.user.id);
+      }
+      setLoading(false);
+    });
 
-  const inviteUser = useCallback((newUser: Omit<AppUser, "id">) => {
-    setInvitedUsers((prev) => [
-      ...prev,
-      { ...newUser, id: crypto.randomUUID() },
-    ]);
-  }, []);
+    return () => subscription.unsubscribe();
+  }, [loadProfile]);
 
-  const removeUser = useCallback((id: string) => {
-    setInvitedUsers((prev) => prev.filter((u) => u.id !== id));
-  }, []);
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error?.message || null };
+  };
+
+  const signup = async (email: string, password: string, nome: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { nome }, emailRedirectTo: window.location.origin },
+    });
+    return { error: error?.message || null };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setProfile(null);
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error?.message || null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error?.message || null };
+  };
+
+  const can = (permission: string) => {
+    if (!profile) return false;
+    const perms = ROLE_PERMISSIONS[profile.role];
+    return perms.includes("*") || perms.includes(permission);
+  };
+
+  const hasRole = (role: AppRole) => profile?.role === role;
+  const isAdmin = profile?.role === "admin";
+
+  const refreshProfile = async () => {
+    if (session?.user) await loadProfile(session.user.id);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, can, invitedUsers, inviteUser, removeUser }}>
+    <AuthContext.Provider
+      value={{
+        session, user: session?.user || null, profile, loading,
+        login, signup, logout, resetPassword, updatePassword,
+        can, hasRole, isAdmin, refreshProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export const useAuth = () => useContext(AuthContext);
-
-export const roleLabels: Record<UserRole, string> = {
-  admin: "Administrador",
-  farma: "Farmacêutico",
-};
-
-export const roleDescriptions: Record<UserRole, string> = {
-  admin: "Acesso total: editar, excluir, desfazer e convidar usuários",
-  farma: "Visualizar tudo, editar registros, sem desfazer ações",
-};
