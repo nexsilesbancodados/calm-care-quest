@@ -97,9 +97,13 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                   ⌘K
                 </kbd>
               </button>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => navigate("/alertas")}>
-                <Bell className="h-4 w-4" />
-              </Button>
+              <NotificationCenter
+                notifications={notifications}
+                unreadCount={unreadCount}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead}
+                clearAll={clearAll}
+              />
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground h-8 w-8">
                 {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
