@@ -377,6 +377,55 @@ const Usuarios = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {confirmAction?.type === "delete" && <Trash2 className="h-5 w-5 text-destructive" />}
+              {confirmAction?.type === "block" && <Ban className="h-5 w-5 text-warning" />}
+              {confirmAction?.type === "unblock" && <UserCheck className="h-5 w-5 text-success" />}
+              {confirmAction?.type === "delete" && "Excluir Usuário"}
+              {confirmAction?.type === "block" && "Bloquear Usuário"}
+              {confirmAction?.type === "unblock" && "Desbloquear Usuário"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "delete" && (
+                <>Tem certeza que deseja excluir permanentemente o usuário <strong>{confirmAction.nome}</strong>? Esta ação não pode ser desfeita. Todos os dados do usuário serão removidos.</>
+              )}
+              {confirmAction?.type === "block" && (
+                <>Deseja bloquear o acesso de <strong>{confirmAction?.nome}</strong>? O usuário não conseguirá fazer login até ser desbloqueado.</>
+              )}
+              {confirmAction?.type === "unblock" && (
+                <>Deseja restaurar o acesso de <strong>{confirmAction?.nome}</strong>? O usuário poderá fazer login novamente.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={manageUser}
+              disabled={actionLoading}
+              className={cn(
+                confirmAction?.type === "delete" && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                confirmAction?.type === "block" && "bg-warning text-warning-foreground hover:bg-warning/90",
+                confirmAction?.type === "unblock" && "bg-success text-success-foreground hover:bg-success/90"
+              )}
+            >
+              {actionLoading ? (
+                <div className="h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+              ) : (
+                <>
+                  {confirmAction?.type === "delete" && "Excluir"}
+                  {confirmAction?.type === "block" && "Bloquear"}
+                  {confirmAction?.type === "unblock" && "Desbloquear"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };
