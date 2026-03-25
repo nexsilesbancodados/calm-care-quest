@@ -224,14 +224,18 @@ const Pacientes = () => {
     setNewEvo({ type: "clinica", description: "" });
   };
 
-  const handleDispense = () => {
+  const handleDispense = async () => {
     if (!selectedPatient || !dispMedId || dispQty <= 0) { toast.error("Selecione medicamento e quantidade"); return; }
     const med = getMedicationById(dispMedId);
     if (!med) return;
     if (med.currentStock < dispQty) { toast.error(`Estoque insuficiente! Disponível: ${med.currentStock} un.`); return; }
 
     adjustStock(dispMedId, -dispQty);
-    const disp = { date: new Date().toISOString().split("T")[0], medicationName: `${med.name} ${med.dosage}`, quantity: dispQty };
+    const medName = `${med.name} ${med.dosage}`;
+    await supabase.from("dispensations").insert({ patient_id: selectedPatient.id, medication_name: medName, quantity: dispQty });
+    await supabase.from("movements").insert({ medication_id: dispMedId, medication_name: medName, type: "dispensação", quantity: dispQty, responsible_person: user?.name || "—", patient: selectedPatient.name, notes: `Dispensação p/ paciente ${selectedPatient.registrationNumber}` });
+
+    const disp = { date: new Date().toISOString().split("T")[0], medicationName: medName, quantity: dispQty };
     const update = (p: Patient) => p.id === selectedPatient.id ? { ...p, dispensations: [disp, ...p.dispensations] } : p;
     setPatients((prev) => prev.map(update));
     setSelectedPatient((prev) => prev ? update(prev) : prev);
