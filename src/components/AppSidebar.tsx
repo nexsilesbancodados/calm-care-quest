@@ -7,6 +7,8 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -15,23 +17,23 @@ import {
 import { cn } from "@/lib/utils";
 
 const allItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: null },
-  { title: "Medicamentos", url: "/medicamentos", icon: Pill, roles: null },
-  { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"] },
-  { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"] },
-  { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null },
-  { title: "Estoque", url: "/estoque", icon: Package, roles: null },
-  { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"] },
-  { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null },
-  { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"] },
-  { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: null, badge: true },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null },
-  { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: null, badgeKey: null },
+  { title: "Medicamentos", url: "/medicamentos", icon: Pill, roles: null, badgeKey: null },
+  { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"], badgeKey: null },
+  { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
+  { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null, badgeKey: null },
+  { title: "Estoque", url: "/estoque", icon: Package, roles: null, badgeKey: null },
+  { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"], badgeKey: "transfers" as const },
+  { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null, badgeKey: null },
+  { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"], badgeKey: null },
+  { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: null, badgeKey: "alerts" as const },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null, badgeKey: null },
+  { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
 ];
 
 const systemItems = [
-  { title: "Usuários", url: "/usuarios", icon: Users, roles: ["admin"] },
-  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"] },
+  { title: "Usuários", url: "/usuarios", icon: Users, roles: ["admin"], badgeKey: null },
+  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"], badgeKey: null },
 ];
 
 export function AppSidebar() {
@@ -40,10 +42,79 @@ export function AppSidebar() {
   const location = useLocation();
   const { profile } = useAuth();
   const isActive = (path: string) => location.pathname === path;
+  const [badgeCounts, setBadgeCounts] = useState<{ alerts: number; transfers: number }>({ alerts: 0, transfers: 0 });
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const [{ data: medsData }, { data: lotesData }, { count: transCount }] = await Promise.all([
+        supabase.from("medicamentos").select("id, estoque_minimo").eq("ativo", true),
+        supabase.from("lotes").select("id, medicamento_id, quantidade_atual, validade").eq("ativo", true),
+        supabase.from("transferencias").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+      ]);
+
+      const now = new Date();
+      let alertCount = 0;
+      (medsData || []).forEach((m: any) => {
+        const mLotes = (lotesData || []).filter((l: any) => l.medicamento_id === m.id);
+        const total = mLotes.reduce((s: number, l: any) => s + l.quantidade_atual, 0);
+        if (total === 0) alertCount++;
+        else if (m.estoque_minimo > 0 && total <= m.estoque_minimo * 0.25) alertCount++;
+        mLotes.forEach((l: any) => {
+          const diff = (new Date(l.validade).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          if (diff <= 0 || (diff > 0 && diff <= 60)) alertCount++;
+        });
+      });
+
+      setBadgeCounts({ alerts: alertCount, transfers: transCount || 0 });
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const role = profile?.role;
   const filterByRole = (items: typeof allItems) =>
     items.filter((item) => !item.roles || (role && item.roles.includes(role)));
+
+  const getBadgeCount = (key: string | null) => {
+    if (key === "alerts") return badgeCounts.alerts;
+    if (key === "transfers") return badgeCounts.transfers;
+    return 0;
+  };
+
+  const renderMenuItem = (item: typeof allItems[0], active: boolean) => (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+        <NavLink
+          to={item.url}
+          end={item.url === "/"}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 transition-all duration-200 group relative",
+            "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
+            active && "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
+          )}
+          activeClassName=""
+        >
+          {active && (
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary" />
+          )}
+          <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground")} />
+          {!collapsed && (
+            <span className="text-[13px] flex-1">{item.title}</span>
+          )}
+          {!collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
+            <Badge variant="outline" className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-destructive/15 text-destructive border-destructive/20 tabular-nums">
+              {getBadgeCount(item.badgeKey)}
+            </Badge>
+          )}
+          {collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
+            <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
+          )}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -68,36 +139,7 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filterByRole(allItems).map((item) => {
-                const active = isActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                      <NavLink
-                        to={item.url}
-                        end={item.url === "/"}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 transition-all duration-200 group relative",
-                          "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
-                          active && "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
-                        )}
-                        activeClassName=""
-                      >
-                        {active && (
-                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary" />
-                        )}
-                        <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground")} />
-                        {!collapsed && (
-                          <span className="text-[13px] flex-1">{item.title}</span>
-                        )}
-                        {!collapsed && (item as any).badge && (
-                          <div className="h-2 w-2 rounded-full bg-destructive animate-pulse-soft" />
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {filterByRole(allItems).map((item) => renderMenuItem(item, isActive(item.url)))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -109,30 +151,7 @@ export function AppSidebar() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {filterByRole(systemItems).map((item) => {
-                  const active = isActive(item.url);
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                        <NavLink
-                          to={item.url}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 transition-all duration-200 group relative",
-                            "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
-                            active && "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
-                          )}
-                          activeClassName=""
-                        >
-                          {active && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary" />
-                          )}
-                          <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground")} />
-                          {!collapsed && <span className="text-[13px]">{item.title}</span>}
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {filterByRole(systemItems).map((item) => renderMenuItem(item as any, isActive(item.url)))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
