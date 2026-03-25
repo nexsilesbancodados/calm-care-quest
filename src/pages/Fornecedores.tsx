@@ -98,19 +98,41 @@ const Fornecedores = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name) return;
     if (editSupplier) {
+      await supabase.from("suppliers").update({
+        name: form.name, cnpj: form.cnpj, contact: form.contact, phone: form.phone, email: form.email,
+        address: form.address, category: form.category, rating: form.rating, notes: form.notes, avg_delivery_days: form.avgDeliveryDays,
+      }).eq("id", editSupplier.id);
+      // Update medication links
+      await supabase.from("supplier_medications").delete().eq("supplier_id", editSupplier.id);
+      if (selectedMedIds.length > 0) {
+        await supabase.from("supplier_medications").insert(selectedMedIds.map((mid) => ({ supplier_id: editSupplier.id, medication_id: mid })));
+      }
       setSuppliers((prev) => prev.map((s) => s.id === editSupplier.id ? { ...s, ...form, medicationIds: selectedMedIds, active: true } : s));
       toast.success("Fornecedor atualizado!");
     } else {
-      setSuppliers((prev) => [{ id: `S${String(prev.length + 1).padStart(3, "0")}`, ...form, medicationIds: selectedMedIds, active: true, lastOrder: "—", orders: [] }, ...prev]);
+      const { data, error } = await supabase.from("suppliers").insert({
+        name: form.name, cnpj: form.cnpj, contact: form.contact, phone: form.phone, email: form.email,
+        address: form.address, category: form.category, rating: form.rating, notes: form.notes, avg_delivery_days: form.avgDeliveryDays,
+      }).select().single();
+      if (error) { toast.error("Erro ao cadastrar fornecedor"); return; }
+      if (selectedMedIds.length > 0) {
+        await supabase.from("supplier_medications").insert(selectedMedIds.map((mid) => ({ supplier_id: data.id, medication_id: mid })));
+      }
+      setSuppliers((prev) => [{ id: data.id, ...form, medicationIds: selectedMedIds, active: true, lastOrder: "—", orders: [] }, ...prev]);
       toast.success("Fornecedor cadastrado!");
     }
     setDialogOpen(false);
   };
 
-  const toggleActive = (id: string) => setSuppliers((prev) => prev.map((s) => s.id === id ? { ...s, active: !s.active } : s));
+  const toggleActive = async (id: string) => {
+    const s = suppliers.find((s) => s.id === id);
+    if (!s) return;
+    await supabase.from("suppliers").update({ active: !s.active }).eq("id", id);
+    setSuppliers((prev) => prev.map((s) => s.id === id ? { ...s, active: !s.active } : s));
+  };
 
   const toggleMedId = (id: string) => {
     setSelectedMedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
