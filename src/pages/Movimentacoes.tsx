@@ -85,7 +85,7 @@ const Movimentacoes = () => {
 
   const selectedMed = newMov.medicationId ? getMedicationById(newMov.medicationId) : undefined;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newMov.medicationId || !newMov.quantity) {
       toast.error("Selecione um medicamento e informe a quantidade");
       return;
@@ -106,14 +106,28 @@ const Movimentacoes = () => {
     // Update stock
     adjustStock(newMov.medicationId, delta);
 
-    // Add movement
+    // Save movement to Supabase
+    const { data: movData, error: movError } = await (await import("@/integrations/supabase/client")).supabase
+      .from("movements").insert({
+        medication_id: newMov.medicationId,
+        medication_name: medLabel,
+        type: newMov.type,
+        quantity: newMov.quantity,
+        responsible_person: newMov.responsiblePerson || user?.name || "—",
+        patient: newMov.patient || null,
+        ward: newMov.ward || null,
+        notes: newMov.notes,
+      }).select().single();
+
+    if (movError) { toast.error("Erro ao registrar movimentação"); return; }
+
     const movement: Movement = {
-      id: crypto.randomUUID(),
+      id: movData.id,
       medicationId: newMov.medicationId,
       medicationName: medLabel,
       type: newMov.type,
       quantity: newMov.quantity,
-      date: newMov.date,
+      date: movData.created_at?.split("T")[0] || newMov.date,
       responsiblePerson: newMov.responsiblePerson || user?.name || "—",
       patient: newMov.patient,
       ward: newMov.ward,
