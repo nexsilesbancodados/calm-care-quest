@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, resetPassword, session, loading: authLoading } = useAuth();
+  const { login, signup, resetPassword, session, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +34,21 @@ const Login = () => {
     } else {
       toast.success("Login realizado com sucesso!");
       navigate("/");
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password || !nome) { toast.error("Preencha todos os campos"); return; }
+    if (password.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres"); return; }
+    setLoading(true);
+    const { error } = await signup(email, password, nome);
+    setLoading(false);
+    if (error) {
+      toast.error(error);
+    } else {
+      toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar.");
+      setIsSignUp(false);
     }
   };
 
