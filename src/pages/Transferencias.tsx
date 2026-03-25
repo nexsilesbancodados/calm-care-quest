@@ -140,6 +140,7 @@ const initialTransfers: Transfer[] = [
 ];
 
 const Transferencias = () => {
+  const { medications } = useMedicationContext();
   const [transfers, setTransfers] = useState<Transfer[]>(initialTransfers);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<TransferStatus | "all">("all");
