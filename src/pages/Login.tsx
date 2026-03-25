@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Cross, Eye, EyeOff, Mail, Lock, ArrowRight } from "lucide-react";
+import { Cross, Eye, EyeOff, Mail, Lock, ArrowRight, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -134,6 +134,43 @@ const Login = () => {
                 <button type="button" onClick={() => setForgotOpen(false)} className="text-sm text-primary hover:underline w-full text-center">← Voltar ao login</button>
               </form>
             </>
+          ) : isSignUp ? (
+            <>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-foreground">Criar Conta</h2>
+                <p className="text-sm text-muted-foreground mt-1">Cadastre-se no sistema PharmaControl</p>
+              </div>
+              <form onSubmit={handleSignUp} className="space-y-5">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Nome completo</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="text" placeholder="Seu nome" value={nome} onChange={(e) => setNome(e.target.value)} className="pl-10" autoComplete="name" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">E-mail</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" autoComplete="email" />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium">Senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 pr-10" autoComplete="new-password" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground gap-2 h-11">
+                  {loading ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <><span>Criar Conta</span> <ArrowRight className="h-4 w-4" /></>}
+                </Button>
+                <button type="button" onClick={() => setIsSignUp(false)} className="text-sm text-primary hover:underline w-full text-center">← Já tenho conta</button>
+              </form>
+            </>
           ) : (
             <>
               <div className="mb-8">
@@ -164,6 +201,7 @@ const Login = () => {
                 <Button type="submit" disabled={loading} className="w-full gradient-primary text-primary-foreground gap-2 h-11">
                   {loading ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <><span>Entrar</span> <ArrowRight className="h-4 w-4" /></>}
                 </Button>
+                <button type="button" onClick={() => setIsSignUp(true)} className="text-sm text-primary hover:underline w-full text-center">Criar uma conta</button>
               </form>
             </>
           )}
