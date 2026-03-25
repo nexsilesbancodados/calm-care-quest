@@ -37,16 +37,6 @@ const typeConfig: Record<MovementType, { label: string; icon: any; className: st
   dispensação: { label: "Dispensação", icon: Repeat, className: "bg-info/10 text-info border-info/20" },
 };
 
-const initialMovements: Movement[] = [
-  { id: "1", medicationId: "1", medicationName: "Risperidona 2mg", type: "dispensação", quantity: 30, date: "2026-03-18", responsiblePerson: "Enf. Maria Silva", patient: "Paciente #1042", ward: "Ala B", notes: "Prescrição médica #4521" },
-  { id: "2", medicationId: "2", medicationName: "Haloperidol 5mg/ml", type: "entrada", quantity: 100, date: "2026-03-17", responsiblePerson: "Farm. João Santos", notes: "NF 45892 - Cristália" },
-  { id: "3", medicationId: "4", medicationName: "Clonazepam 2mg", type: "dispensação", quantity: 10, date: "2026-03-17", responsiblePerson: "Enf. Ana Costa", patient: "Paciente #0987", ward: "Ala A", notes: "Uso SOS conforme prescrição" },
-  { id: "4", medicationId: "7", medicationName: "Zolpidem 10mg", type: "saída", quantity: 40, date: "2026-03-16", responsiblePerson: "Farm. Pedro Lima", notes: "Transferência para farmácia central" },
-  { id: "5", medicationId: "3", medicationName: "Fluoxetina 20mg", type: "entrada", quantity: 500, date: "2026-03-15", responsiblePerson: "Farm. João Santos", notes: "NF 45670 - Medley" },
-  { id: "6", medicationId: "10", medicationName: "Diazepam 10mg", type: "dispensação", quantity: 5, date: "2026-03-15", responsiblePerson: "Enf. Carla Mendes", patient: "Paciente #1103", ward: "Ala C", notes: "Protocolo de contenção" },
-  { id: "7", medicationId: "5", medicationName: "Carbonato de Lítio 300mg", type: "dispensação", quantity: 60, date: "2026-03-14", responsiblePerson: "Enf. Maria Silva", patient: "Paciente #0856", ward: "Ala B", notes: "Dosagem ajustada após litemia" },
-  { id: "8", medicationId: "9", medicationName: "Olanzapina 10mg", type: "entrada", quantity: 200, date: "2026-03-13", responsiblePerson: "Farm. Pedro Lima", notes: "NF 45512 - Lilly" },
-];
 
 const Movimentacoes = () => {
   const { medications, adjustStock, getMedicationById } = useMedicationContext();
