@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
 import {
   CommandDialog,
   CommandInput,
@@ -76,7 +76,7 @@ export function CommandPalette() {
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Medicamentos">
-            {mockMedications.slice(0, 8).map((med) => (
+            {(() => { const { medications } = useMedicationContext(); return medications.slice(0, 8).map((med) => (
               <CommandItem key={med.id} onSelect={() => goTo("/medicamentos")} className="gap-3">
                 <Pill className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -84,7 +84,7 @@ export function CommandPalette() {
                   <span className="text-[11px] text-muted-foreground ml-2">Lote {med.batchNumber}</span>
                 </div>
               </CommandItem>
-            ))}
+            )); })()}
           </CommandGroup>
         </CommandList>
       </CommandDialog>

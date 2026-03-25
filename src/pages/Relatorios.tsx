@@ -58,25 +58,14 @@ const Relatorios = () => {
   const now = new Date();
   const consumptionData = Array.from({ length: monthCount }, (_, i) => {
     const idx = (now.getMonth() - monthCount + 1 + i + 12) % 12;
-    return {
-      month: allMonths[idx],
-      entradas: Math.round(800 + Math.random() * 400 + i * 50),
-      saídas: Math.round(600 + Math.random() * 300 + i * 30),
-      dispensações: Math.round(400 + Math.random() * 200 + i * 40),
-    };
+    return { month: allMonths[idx], entradas: 0, saídas: 0, dispensações: 0 };
   });
 
-  // Top consumed
-  const topConsumed = [
-    { name: "Risperidona 2mg", qty: 320 },
-    { name: "Clonazepam 2mg", qty: 280 },
-    { name: "Fluoxetina 20mg", qty: 245 },
-    { name: "Sertralina 50mg", qty: 210 },
-    { name: "Haloperidol 5mg/ml", qty: 185 },
-    { name: "Olanzapina 10mg", qty: 160 },
-    { name: "Diazepam 10mg", qty: 140 },
-    { name: "Carbonato de Lítio", qty: 130 },
-  ];
+  // Top by stock (derived from real data)
+  const topConsumed = useMemo(() =>
+    [...filteredMeds].sort((a, b) => b.currentStock - a.currentStock).slice(0, 8)
+      .map((m) => ({ name: `${m.name} ${m.dosage}`, qty: m.currentStock })),
+  [filteredMeds]);
 
   // Expiration timeline
   const expiryData = useMemo(() => {

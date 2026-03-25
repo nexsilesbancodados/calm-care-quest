@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { useMedicationContext } from "@/contexts/MedicationContext";
@@ -37,25 +37,38 @@ const typeConfig: Record<MovementType, { label: string; icon: any; className: st
   dispensação: { label: "Dispensação", icon: Repeat, className: "bg-info/10 text-info border-info/20" },
 };
 
-const initialMovements: Movement[] = [
-  { id: "1", medicationId: "1", medicationName: "Risperidona 2mg", type: "dispensação", quantity: 30, date: "2026-03-18", responsiblePerson: "Enf. Maria Silva", patient: "Paciente #1042", ward: "Ala B", notes: "Prescrição médica #4521" },
-  { id: "2", medicationId: "2", medicationName: "Haloperidol 5mg/ml", type: "entrada", quantity: 100, date: "2026-03-17", responsiblePerson: "Farm. João Santos", notes: "NF 45892 - Cristália" },
-  { id: "3", medicationId: "4", medicationName: "Clonazepam 2mg", type: "dispensação", quantity: 10, date: "2026-03-17", responsiblePerson: "Enf. Ana Costa", patient: "Paciente #0987", ward: "Ala A", notes: "Uso SOS conforme prescrição" },
-  { id: "4", medicationId: "7", medicationName: "Zolpidem 10mg", type: "saída", quantity: 40, date: "2026-03-16", responsiblePerson: "Farm. Pedro Lima", notes: "Transferência para farmácia central" },
-  { id: "5", medicationId: "3", medicationName: "Fluoxetina 20mg", type: "entrada", quantity: 500, date: "2026-03-15", responsiblePerson: "Farm. João Santos", notes: "NF 45670 - Medley" },
-  { id: "6", medicationId: "10", medicationName: "Diazepam 10mg", type: "dispensação", quantity: 5, date: "2026-03-15", responsiblePerson: "Enf. Carla Mendes", patient: "Paciente #1103", ward: "Ala C", notes: "Protocolo de contenção" },
-  { id: "7", medicationId: "5", medicationName: "Carbonato de Lítio 300mg", type: "dispensação", quantity: 60, date: "2026-03-14", responsiblePerson: "Enf. Maria Silva", patient: "Paciente #0856", ward: "Ala B", notes: "Dosagem ajustada após litemia" },
-  { id: "8", medicationId: "9", medicationName: "Olanzapina 10mg", type: "entrada", quantity: 200, date: "2026-03-13", responsiblePerson: "Farm. Pedro Lima", notes: "NF 45512 - Lilly" },
-];
 
 const Movimentacoes = () => {
   const { medications, adjustStock, getMedicationById } = useMedicationContext();
   const { user } = useAuth();
   const { log } = useAudit();
-  const [movements, setMovements] = useState<Movement[]>(initialMovements);
+  const [movements, setMovements] = useState<Movement[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<MovementType | "all">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const fetchMovements = useCallback(async () => {
+    const { data } = await (await import("@/integrations/supabase/client")).supabase
+      .from("movements").select("*").order("created_at", { ascending: false });
+    if (data) {
+      setMovements(data.map((r: any) => ({
+        id: r.id,
+        medicationId: r.medication_id || "",
+        medicationName: r.medication_name,
+        type: r.type as MovementType,
+        quantity: r.quantity,
+        date: r.created_at?.split("T")[0] || "",
+        responsiblePerson: r.responsible_person,
+        patient: r.patient,
+        ward: r.ward,
+        notes: r.notes,
+      })));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchMovements(); }, [fetchMovements]);
 
   const [newMov, setNewMov] = useState({
     medicationId: "", type: "entrada" as MovementType,
@@ -72,7 +85,7 @@ const Movimentacoes = () => {
 
   const selectedMed = newMov.medicationId ? getMedicationById(newMov.medicationId) : undefined;
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newMov.medicationId || !newMov.quantity) {
       toast.error("Selecione um medicamento e informe a quantidade");
       return;
@@ -93,14 +106,28 @@ const Movimentacoes = () => {
     // Update stock
     adjustStock(newMov.medicationId, delta);
 
-    // Add movement
+    // Save movement to Supabase
+    const { data: movData, error: movError } = await (await import("@/integrations/supabase/client")).supabase
+      .from("movements").insert({
+        medication_id: newMov.medicationId,
+        medication_name: medLabel,
+        type: newMov.type,
+        quantity: newMov.quantity,
+        responsible_person: newMov.responsiblePerson || user?.name || "—",
+        patient: newMov.patient || null,
+        ward: newMov.ward || null,
+        notes: newMov.notes,
+      }).select().single();
+
+    if (movError) { toast.error("Erro ao registrar movimentação"); return; }
+
     const movement: Movement = {
-      id: crypto.randomUUID(),
+      id: movData.id,
       medicationId: newMov.medicationId,
       medicationName: medLabel,
       type: newMov.type,
       quantity: newMov.quantity,
-      date: newMov.date,
+      date: movData.created_at?.split("T")[0] || newMov.date,
       responsiblePerson: newMov.responsiblePerson || user?.name || "—",
       patient: newMov.patient,
       ward: newMov.ward,

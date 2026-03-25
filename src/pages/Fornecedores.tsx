@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { useMedicationContext } from "@/contexts/MedicationContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,35 +53,37 @@ const orderStatusConfig: Record<string, { label: string; className: string }> = 
   "em_trânsito": { label: "Em Trânsito", className: "bg-info/10 text-info border-info/20" },
 };
 
-const initialSuppliers: Supplier[] = [
-  { id: "S001", name: "Cristália Produtos Químicos", cnpj: "44.734.671/0001-51", contact: "Roberto Faria", phone: "(11) 4835-5000", email: "vendas@cristalia.com.br", address: "Itapira, SP", category: "Injetáveis / Psicotrópicos", rating: 5, active: true, lastOrder: "2026-03-17", notes: "Fornecedor principal de Haloperidol e Clorpromazina", medicationIds: ["2", "6"], avgDeliveryDays: 3, orders: [
-    { id: "O1", date: "2026-03-17", items: "Haloperidol 5mg/ml", quantity: 100, status: "entregue", nf: "NF 45892" },
-    { id: "O2", date: "2026-02-20", items: "Clorpromazina 25mg/5ml", quantity: 50, status: "entregue", nf: "NF 44521" },
-  ] },
-  { id: "S002", name: "EMS S/A", cnpj: "57.507.378/0001-65", contact: "Mariana Lopes", phone: "(19) 3887-9800", email: "institucional@ems.com.br", address: "Hortolândia, SP", category: "Genéricos", rating: 4, active: true, lastOrder: "2026-03-10", notes: "Risperidona genérica - melhor preço", medicationIds: ["1"], avgDeliveryDays: 5, orders: [
-    { id: "O3", date: "2026-03-10", items: "Risperidona 2mg", quantity: 500, status: "entregue", nf: "NF 12340" },
-  ] },
-  { id: "S003", name: "Medley Farmacêutica", cnpj: "10.588.595/0001-89", contact: "Paulo Andrade", phone: "(19) 3876-5000", email: "vendas@medley.com.br", address: "Campinas, SP", category: "Genéricos / Antidepressivos", rating: 4, active: true, lastOrder: "2026-03-15", notes: "Fluoxetina, Sertralina", medicationIds: ["3", "8"], avgDeliveryDays: 4, orders: [
-    { id: "O4", date: "2026-03-15", items: "Fluoxetina 20mg", quantity: 500, status: "entregue", nf: "NF 45670" },
-  ] },
-  { id: "S004", name: "Roche Brasil", cnpj: "33.009.945/0002-04", contact: "Fernanda Costa", phone: "(11) 3719-7000", email: "vendas@roche.com.br", address: "São Paulo, SP", category: "Ansiolíticos", rating: 5, active: true, lastOrder: "2026-03-12", notes: "Clonazepam (Rivotril), Diazepam", medicationIds: ["4", "10"], avgDeliveryDays: 2, orders: [
-    { id: "O5", date: "2026-03-12", items: "Clonazepam 2mg, Diazepam 10mg", quantity: 300, status: "entregue", nf: "NF 33210" },
-    { id: "O6", date: "2026-03-20", items: "Clonazepam 2mg", quantity: 200, status: "em_trânsito" },
-  ] },
-  { id: "S005", name: "Eurofarma", cnpj: "61.190.096/0001-92", contact: "André Silveira", phone: "(11) 5908-4000", email: "vendas@eurofarma.com.br", address: "Itapevi, SP", category: "Estabilizadores", rating: 4, active: true, lastOrder: "2026-03-08", notes: "Carbonato de Lítio - contrato anual", medicationIds: ["5"], avgDeliveryDays: 6, orders: [] },
-  { id: "S006", name: "Sanofi-Aventis", cnpj: "02.685.377/0001-57", contact: "Lucia Mendes", phone: "(11) 3759-6000", email: "vendas@sanofi.com.br", address: "São Paulo, SP", category: "Hipnóticos", rating: 3, active: false, lastOrder: "2026-01-20", notes: "Zolpidem - atraso na última entrega, avaliar continuidade", medicationIds: ["7"], avgDeliveryDays: 12, orders: [] },
-  { id: "S007", name: "Novartis Brasil", cnpj: "56.994.502/0001-30", contact: "Ricardo Lima", phone: "(11) 5532-7000", email: "vendas@novartis.com.br", address: "São Paulo, SP", category: "Anticonvulsivantes", rating: 4, active: true, lastOrder: "2026-02-28", notes: "Carbamazepina (Tegretol)", medicationIds: ["11"], avgDeliveryDays: 5, orders: [] },
-];
-
 const Fornecedores = () => {
   const { medications } = useMedicationContext();
-  const [suppliers, setSuppliers] = useState(initialSuppliers);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [detailSupplier, setDetailSupplier] = useState<Supplier | null>(null);
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
   const [form, setForm] = useState({ name: "", cnpj: "", contact: "", phone: "", email: "", address: "", category: "", rating: 4, notes: "", avgDeliveryDays: 5 });
   const [selectedMedIds, setSelectedMedIds] = useState<string[]>([]);
+
+  const fetchSuppliers = useCallback(async () => {
+    const { data: suppData } = await supabase.from("suppliers").select("*").order("name");
+    if (!suppData) { setLoading(false); return; }
+    const list: Supplier[] = [];
+    for (const s of suppData) {
+      const { data: medLinks } = await supabase.from("supplier_medications").select("medication_id").eq("supplier_id", s.id);
+      const { data: orders } = await supabase.from("supplier_orders").select("*").eq("supplier_id", s.id).order("created_at", { ascending: false });
+      list.push({
+        id: s.id, name: s.name, cnpj: s.cnpj, contact: s.contact, phone: s.phone, email: s.email,
+        address: s.address, category: s.category, rating: s.rating, active: s.active, lastOrder: s.last_order || "—",
+        notes: s.notes, avgDeliveryDays: s.avg_delivery_days,
+        medicationIds: (medLinks || []).map((l: any) => l.medication_id),
+        orders: (orders || []).map((o: any) => ({ id: o.id, date: o.created_at?.split("T")[0] || "", items: o.items, quantity: o.quantity, status: o.status, nf: o.nf })),
+      });
+    }
+    setSuppliers(list);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchSuppliers(); }, [fetchSuppliers]);
 
   const filtered = useMemo(() => suppliers.filter((s) =>
     !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.category.toLowerCase().includes(search.toLowerCase()) || s.contact.toLowerCase().includes(search.toLowerCase())
@@ -95,19 +98,41 @@ const Fornecedores = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name) return;
     if (editSupplier) {
+      await supabase.from("suppliers").update({
+        name: form.name, cnpj: form.cnpj, contact: form.contact, phone: form.phone, email: form.email,
+        address: form.address, category: form.category, rating: form.rating, notes: form.notes, avg_delivery_days: form.avgDeliveryDays,
+      }).eq("id", editSupplier.id);
+      // Update medication links
+      await supabase.from("supplier_medications").delete().eq("supplier_id", editSupplier.id);
+      if (selectedMedIds.length > 0) {
+        await supabase.from("supplier_medications").insert(selectedMedIds.map((mid) => ({ supplier_id: editSupplier.id, medication_id: mid })));
+      }
       setSuppliers((prev) => prev.map((s) => s.id === editSupplier.id ? { ...s, ...form, medicationIds: selectedMedIds, active: true } : s));
       toast.success("Fornecedor atualizado!");
     } else {
-      setSuppliers((prev) => [{ id: `S${String(prev.length + 1).padStart(3, "0")}`, ...form, medicationIds: selectedMedIds, active: true, lastOrder: "—", orders: [] }, ...prev]);
+      const { data, error } = await supabase.from("suppliers").insert({
+        name: form.name, cnpj: form.cnpj, contact: form.contact, phone: form.phone, email: form.email,
+        address: form.address, category: form.category, rating: form.rating, notes: form.notes, avg_delivery_days: form.avgDeliveryDays,
+      }).select().single();
+      if (error) { toast.error("Erro ao cadastrar fornecedor"); return; }
+      if (selectedMedIds.length > 0) {
+        await supabase.from("supplier_medications").insert(selectedMedIds.map((mid) => ({ supplier_id: data.id, medication_id: mid })));
+      }
+      setSuppliers((prev) => [{ id: data.id, ...form, medicationIds: selectedMedIds, active: true, lastOrder: "—", orders: [] }, ...prev]);
       toast.success("Fornecedor cadastrado!");
     }
     setDialogOpen(false);
   };
 
-  const toggleActive = (id: string) => setSuppliers((prev) => prev.map((s) => s.id === id ? { ...s, active: !s.active } : s));
+  const toggleActive = async (id: string) => {
+    const s = suppliers.find((s) => s.id === id);
+    if (!s) return;
+    await supabase.from("suppliers").update({ active: !s.active }).eq("id", id);
+    setSuppliers((prev) => prev.map((s) => s.id === id ? { ...s, active: !s.active } : s));
+  };
 
   const toggleMedId = (id: string) => {
     setSelectedMedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);

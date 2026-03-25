@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { BarcodeCanvas } from "@/components/BarcodeCanvas";
 import { QRCodeCanvas } from "@/components/QRCodeCanvas";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
 import { CATEGORIES, type Medication } from "@/types/medication";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -38,7 +38,8 @@ const Etiquetas = () => {
   const [showPreview, setShowPreview] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const filteredMeds = mockMedications.filter((m) =>
+  const { medications: allMeds } = useMedicationContext();
+  const filteredMeds = allMeds.filter((m) =>
     !search || m.name.toLowerCase().includes(search.toLowerCase()) || m.batchNumber.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -58,7 +59,7 @@ const Etiquetas = () => {
     }
   };
 
-  const selectedMeds = mockMedications.filter((m) => selectedIds.has(m.id));
+  const selectedMeds = allMeds.filter((m) => selectedIds.has(m.id));
 
   const generateCodeValue = (med: Medication) => {
     return `${med.batchNumber}-${med.name.replace(/\s/g, "").substring(0, 10)}`;
@@ -365,10 +366,11 @@ function LabelPreview({ med, codeType, labelSize }: { med: Medication; codeType:
 function ScannerCard() {
   const [scanInput, setScanInput] = useState("");
   const [scannedMed, setScannedMed] = useState<Medication | null>(null);
+  const { medications } = useMedicationContext();
 
   const handleScan = () => {
     if (!scanInput.trim()) return;
-    const found = mockMedications.find(
+    const found = medications.find(
       (m) => m.batchNumber.toLowerCase() === scanInput.toLowerCase() ||
         `${m.batchNumber}-${m.name.replace(/\s/g, "").substring(0, 10)}`.toLowerCase() === scanInput.toLowerCase()
     );
