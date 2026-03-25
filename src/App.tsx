@@ -21,6 +21,7 @@ import Entrada from "./pages/Entrada";
 import Dispensacao from "./pages/Dispensacao";
 import LeitorBarcode from "./pages/LeitorBarcode";
 import Usuarios from "./pages/Usuarios";
+import AdminPanel from "./pages/AdminPanel";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,7 @@ const App = () => (
                 <Route path="/fornecedores" element={<P><Fornecedores /></P>} />
                 <Route path="/relatorios" element={<P><Relatorios /></P>} />
                 <Route path="/usuarios" element={<P><Usuarios /></P>} />
+                <Route path="/admin" element={<P><AdminPanel /></P>} />
                 <Route path="/configuracoes" element={<P><Configuracoes /></P>} />
                 <Route path="/leitor" element={<P><LeitorBarcode /></P>} />
                 <Route path="*" element={<NotFound />} />
