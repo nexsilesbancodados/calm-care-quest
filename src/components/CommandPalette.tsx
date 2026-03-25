@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
 import {
   CommandDialog,
   CommandInput,

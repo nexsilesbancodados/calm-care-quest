@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { BarcodeCanvas } from "@/components/BarcodeCanvas";
 import { QRCodeCanvas } from "@/components/QRCodeCanvas";
-import { mockMedications } from "@/data/mockMedications";
+import { useMedicationContext } from "@/contexts/MedicationContext";
 import { CATEGORIES, type Medication } from "@/types/medication";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
