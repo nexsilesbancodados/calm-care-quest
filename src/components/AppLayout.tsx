@@ -47,6 +47,12 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
   const { profile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, requestPermission } = useRealtimeNotifications();
+  useOnlinePresence(location.pathname);
+
+  useEffect(() => {
+    requestPermission();
+  }, []);
 
   const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
   const displayName = profile?.nome || "Usuário";
