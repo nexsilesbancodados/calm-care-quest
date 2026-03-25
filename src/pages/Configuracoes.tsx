@@ -1,321 +1,172 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAudit } from "@/contexts/AuditContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Building2, Bell, Shield, Database, Users, Save, Check, UserPlus, Mail, Trash2, ScrollText } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Building2, Bell, Shield, Save, Check, Plus, ScrollText } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth, roleLabels, roleDescriptions, type UserRole } from "@/contexts/AuthContext";
-import { useAudit } from "@/contexts/AuditContext";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-const SETTINGS_KEY = "psifarma-settings";
-
-const defaultSettings = {
-  hospitalName: "Hospital Psiquiátrico São Lucas",
-  pharmacyName: "Farmácia Interna Central",
-  cnpj: "12.345.678/0001-90",
-  responsiblePharmacist: "Dr. Carlos Alberto Mendes",
-  crf: "CRF-SP 12345",
-  lowStockAlert: true,
-  expiryAlert: true,
-  expiryDays: "60",
-  criticalStockAlert: true,
-  emailNotifications: false,
-  controlledSubstanceLog: true,
-  doubleCheck: true,
-  autoBackup: true,
-  backupFrequency: "diário",
-};
+import type { ConfigHospital, ClinicaParceira, Categoria, AuditEntry } from "@/types/database";
 
 const Configuracoes = () => {
-  const { user, can, invitedUsers, inviteUser, removeUser } = useAuth();
-  const { entries } = useAudit();
+  const { isAdmin } = useAuth();
+  const { log } = useAudit();
+  const [config, setConfig] = useState<ConfigHospital | null>(null);
+  const [clinicas, setClinicas] = useState<ClinicaParceira[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [newUser, setNewUser] = useState({ name: "", email: "", role: "farma" as UserRole });
+  const [clinicaDialog, setClinicaDialog] = useState(false);
+  const [clinicaForm, setClinicaForm] = useState({ nome: "", cnes: "", endereco: "", contato: "", telefone: "" });
 
-  const [settings, setSettings] = useState(() => {
-    const stored = localStorage.getItem(SETTINGS_KEY);
-    return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
-  });
+  useEffect(() => {
+    const fetch = async () => {
+      const [{ data: cfgData }, { data: cData }, { data: catData }, { data: auditData }] = await Promise.all([
+        supabase.from("configuracoes_hospital").select("*").single(),
+        supabase.from("clinicas_parceiras").select("*").order("nome"),
+        supabase.from("categorias_medicamento").select("*").order("nome"),
+        supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(50),
+      ]);
+      setConfig(cfgData as ConfigHospital || null);
+      setClinicas(cData as ClinicaParceira[] || []);
+      setCategorias(catData as Categoria[] || []);
+      setAuditEntries(auditData as AuditEntry[] || []);
+      setLoading(false);
+    };
+    fetch();
+  }, []);
 
-  const handleSave = () => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    setSaved(true);
-    toast.success("Configurações salvas com sucesso!");
-    setTimeout(() => setSaved(false), 2000);
+  const handleSaveConfig = async () => {
+    if (!config) return;
+    await supabase.from("configuracoes_hospital").update({ nome: config.nome, cnes: config.cnes, alerta_estoque_pct: config.alerta_estoque_pct, alerta_vencimento_dias: config.alerta_vencimento_dias }).eq("id", config.id);
+    setSaved(true); toast.success("Configurações salvas!"); setTimeout(() => setSaved(false), 2000);
   };
 
-  const handleInvite = () => {
-    if (!newUser.name || !newUser.email) { toast.error("Preencha nome e e-mail"); return; }
-    inviteUser({
-      name: newUser.name, email: newUser.email, role: newUser.role,
-      initials: newUser.name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase(),
-    });
-    toast.success(`Convite enviado para ${newUser.email}`);
-    setInviteOpen(false);
-    setNewUser({ name: "", email: "", role: "farma" });
+  const handleAddClinica = async () => {
+    if (!clinicaForm.nome) { toast.error("Nome é obrigatório"); return; }
+    const { data, error } = await supabase.from("clinicas_parceiras").insert(clinicaForm).select().single();
+    if (error) { toast.error("Erro"); return; }
+    setClinicas(prev => [...prev, data as ClinicaParceira]);
+    await log({ acao: "Cadastro Clínica", tabela: "clinicas_parceiras", registro_id: data.id });
+    toast.success("Clínica cadastrada!");
+    setClinicaDialog(false);
+    setClinicaForm({ nome: "", cnes: "", endereco: "", contato: "", telefone: "" });
   };
 
-  const handleRemoveUser = (id: string, name: string) => { removeUser(id); toast.success(`${name} removido da equipe`); };
-
-  const severityConfig = {
-    info: "bg-info/10 text-info",
-    warning: "bg-warning/10 text-warning",
-    critical: "bg-destructive/10 text-destructive",
-  };
+  if (!isAdmin) return <AppLayout title="Configurações"><p className="text-muted-foreground text-center py-12">Acesso restrito a administradores</p></AppLayout>;
+  if (loading) return <AppLayout title="Configurações"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
   return (
     <AppLayout title="Configurações" subtitle="Ajustes gerais do sistema">
-      <div className="max-w-3xl space-y-6">
-        <Tabs defaultValue="geral" className="w-full">
+      <div className="max-w-3xl">
+        <Tabs defaultValue="geral">
           <TabsList className="mb-6">
             <TabsTrigger value="geral">Geral</TabsTrigger>
-            <TabsTrigger value="usuarios"><Users className="h-3.5 w-3.5 mr-1.5" />Usuários & Acessos</TabsTrigger>
-            {can("manage_settings") && (
-              <TabsTrigger value="auditoria"><ScrollText className="h-3.5 w-3.5 mr-1.5" />Log de Auditoria</TabsTrigger>
-            )}
+            <TabsTrigger value="clinicas">Clínicas Parceiras</TabsTrigger>
+            <TabsTrigger value="categorias">Categorias</TabsTrigger>
+            <TabsTrigger value="auditoria"><ScrollText className="h-3.5 w-3.5 mr-1" />Auditoria</TabsTrigger>
           </TabsList>
 
           <TabsContent value="geral" className="space-y-6">
-            <SettingsSection icon={Building2} title="Informações do Hospital" delay={0}>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <Field label="Nome do Hospital" value={settings.hospitalName} onChange={(v) => setSettings({ ...settings, hospitalName: v })} />
-                <Field label="Farmácia" value={settings.pharmacyName} onChange={(v) => setSettings({ ...settings, pharmacyName: v })} />
-                <Field label="CNPJ" value={settings.cnpj} onChange={(v) => setSettings({ ...settings, cnpj: v })} />
-              </div>
-            </SettingsSection>
-
-            <SettingsSection icon={Bell} title="Alertas e Notificações" delay={0.05}>
-              <div className="space-y-4">
-                <ToggleField label="Alerta de estoque baixo" description="Notificar quando medicamento atingir estoque mínimo" checked={settings.lowStockAlert} onChange={(v) => setSettings({ ...settings, lowStockAlert: v })} />
-                <ToggleField label="Alerta de validade" description="Notificar medicamentos próximos do vencimento" checked={settings.expiryAlert} onChange={(v) => setSettings({ ...settings, expiryAlert: v })} />
-                {settings.expiryAlert && (
-                  <div className="pl-12 space-y-1.5">
-                    <Label className="text-xs font-medium">Dias de antecedência</Label>
-                    <Select value={settings.expiryDays} onValueChange={(v) => setSettings({ ...settings, expiryDays: v })}>
-                      <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="30">30 dias</SelectItem>
-                        <SelectItem value="60">60 dias</SelectItem>
-                        <SelectItem value="90">90 dias</SelectItem>
-                        <SelectItem value="120">120 dias</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                <ToggleField label="Alerta de estoque crítico" description="Alerta urgente para níveis críticos" checked={settings.criticalStockAlert} onChange={(v) => setSettings({ ...settings, criticalStockAlert: v })} />
-                <ToggleField label="Notificações por e-mail" description="Enviar alertas também por e-mail" checked={settings.emailNotifications} onChange={(v) => setSettings({ ...settings, emailNotifications: v })} badge="Em breve" />
-              </div>
-            </SettingsSection>
-
-            <SettingsSection icon={Shield} title="Segurança e Controle" delay={0.1}>
-              <div className="space-y-4">
-                <ToggleField label="Log de substâncias controladas" description="Registrar todas as movimentações de controlados automaticamente" checked={settings.controlledSubstanceLog} onChange={(v) => setSettings({ ...settings, controlledSubstanceLog: v })} />
-                <ToggleField label="Conferência dupla" description="Exigir confirmação de segundo profissional para dispensação de controlados" checked={settings.doubleCheck} onChange={(v) => setSettings({ ...settings, doubleCheck: v })} />
-              </div>
-            </SettingsSection>
-
-            <SettingsSection icon={Database} title="Backup e Dados" delay={0.15}>
-              <div className="space-y-4">
-                <ToggleField label="Backup automático" description="Realizar backup dos dados periodicamente" checked={settings.autoBackup} onChange={(v) => setSettings({ ...settings, autoBackup: v })} />
-                {settings.autoBackup && (
-                  <div className="pl-12 space-y-1.5">
-                    <Label className="text-xs font-medium">Frequência</Label>
-                    <Select value={settings.backupFrequency} onValueChange={(v) => setSettings({ ...settings, backupFrequency: v })}>
-                      <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="diário">Diário</SelectItem>
-                        <SelectItem value="semanal">Semanal</SelectItem>
-                        <SelectItem value="mensal">Mensal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            </SettingsSection>
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex justify-end pt-2 pb-8">
-              <Button onClick={handleSave} className="gradient-primary text-primary-foreground gap-2 px-6">
-                {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                {saved ? "Salvo!" : "Salvar Configurações"}
-              </Button>
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="usuarios" className="space-y-6">
-            {/* Role Descriptions */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="p-5 shadow-card">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Shield className="h-4 w-4" /></div>
-                  <h3 className="text-sm font-semibold">Níveis de Acesso</h3>
+            {config && (
+              <Card className="p-5 shadow-card space-y-4">
+                <div className="flex items-center gap-2 text-sm font-semibold"><Building2 className="h-4 w-4 text-primary" />Hospital</div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5"><Label className="text-xs">Nome</Label><Input value={config.nome} onChange={e => setConfig({ ...config, nome: e.target.value })} /></div>
+                  <div className="space-y-1.5"><Label className="text-xs">CNES</Label><Input value={config.cnes} onChange={e => setConfig({ ...config, cnes: e.target.value })} /></div>
+                  <div className="space-y-1.5"><Label className="text-xs">Alerta Estoque (%)</Label><Input type="number" value={config.alerta_estoque_pct} onChange={e => setConfig({ ...config, alerta_estoque_pct: Number(e.target.value) })} /></div>
+                  <div className="space-y-1.5"><Label className="text-xs">Alerta Vencimento (dias)</Label><Input type="number" value={config.alerta_vencimento_dias} onChange={e => setConfig({ ...config, alerta_vencimento_dias: Number(e.target.value) })} /></div>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {(["admin", "farma"] as UserRole[]).map((role) => (
-                    <div key={role} className={cn("rounded-lg border p-3", role === "admin" ? "border-primary/20 bg-primary/5" : "border-info/20 bg-info/5")}>
-                      <Badge variant="outline" className={cn("text-[10px] mb-1", role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[role]}</Badge>
-                      <p className="text-xs text-muted-foreground">{roleDescriptions[role]}</p>
-                    </div>
-                  ))}
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveConfig} className="gradient-primary text-primary-foreground gap-2">
+                    {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}{saved ? "Salvo!" : "Salvar"}
+                  </Button>
                 </div>
               </Card>
-            </motion.div>
-
-            {/* Team */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-              <Card className="p-5 shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Users className="h-4 w-4" /></div>
-                    <div><h3 className="text-sm font-semibold">Equipe</h3><p className="text-[11px] text-muted-foreground">{invitedUsers.length + 1} membros</p></div>
-                  </div>
-                  {can("invite_users") && (
-                    <Button onClick={() => setInviteOpen(true)} size="sm" className="gradient-primary text-primary-foreground gap-1.5 text-xs"><UserPlus className="h-3.5 w-3.5" /> Convidar</Button>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  {user && (
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/20 border">
-                      <Avatar className="h-9 w-9"><AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{user.initials}</AvatarFallback></Avatar>
-                      <div className="flex-1 min-w-0"><p className="text-sm font-medium">{user.name}</p><p className="text-[11px] text-muted-foreground">{user.email}</p></div>
-                      <Badge variant="outline" className={cn("text-[10px]", user.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[user.role]}</Badge>
-                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Você</Badge>
-                    </div>
-                  )}
-                  {invitedUsers.map((member) => (
-                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent/10 transition-colors">
-                      <Avatar className="h-9 w-9"><AvatarFallback className="bg-muted text-muted-foreground text-xs font-bold">{member.initials}</AvatarFallback></Avatar>
-                      <div className="flex-1 min-w-0"><p className="text-sm font-medium">{member.name}</p><p className="text-[11px] text-muted-foreground">{member.email}</p></div>
-                      <Badge variant="outline" className={cn("text-[10px]", member.role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[member.role]}</Badge>
-                      {can("invite_users") && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveUser(member.id, member.name)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {!can("invite_users") && (
-                  <div className="mt-4 pt-3 border-t"><p className="text-[11px] text-muted-foreground text-center">Apenas administradores podem gerenciar a equipe</p></div>
-                )}
-              </Card>
-            </motion.div>
+            )}
           </TabsContent>
 
-          {can("manage_settings") && (
-            <TabsContent value="auditoria" className="space-y-4">
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="p-5 shadow-card">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><ScrollText className="h-4 w-4" /></div>
-                    <div>
-                      <h3 className="text-sm font-semibold">Log de Auditoria</h3>
-                      <p className="text-[11px] text-muted-foreground">{entries.length} registros — visível apenas para administradores</p>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/50 hover:bg-muted/50">
-                          <TableHead className="text-xs font-semibold">Data/Hora</TableHead>
-                          <TableHead className="text-xs font-semibold">Usuário</TableHead>
-                          <TableHead className="text-xs font-semibold">Ação</TableHead>
-                          <TableHead className="text-xs font-semibold">Módulo</TableHead>
-                          <TableHead className="text-xs font-semibold">Detalhes</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {entries.map((entry) => (
-                          <TableRow key={entry.id} className="hover:bg-accent/20">
-                            <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                              {new Date(entry.timestamp).toLocaleDateString("pt-BR")} {new Date(entry.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                            </TableCell>
-                            <TableCell className="text-xs font-medium">{entry.userName}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn("text-[10px]", severityConfig[entry.severity])}>{entry.action}</Badge>
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{entry.module}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground max-w-[250px] truncate">{entry.details}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+          <TabsContent value="clinicas" className="space-y-4">
+            <div className="flex justify-end"><Button onClick={() => setClinicaDialog(true)} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" />Nova Clínica</Button></div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {clinicas.map(c => (
+                <Card key={c.id} className="p-4 shadow-card">
+                  <p className="text-sm font-semibold">{c.nome}</p>
+                  <p className="text-xs text-muted-foreground">{c.cnes && `CNES: ${c.cnes} • `}{c.endereco}</p>
+                  <p className="text-xs text-muted-foreground">{c.contato} • {c.telefone}</p>
+                  <Badge variant="outline" className={cn("text-[9px] mt-2", c.ativo ? "bg-success/10 text-success" : "bg-muted")}>{c.ativo ? "Ativa" : "Inativa"}</Badge>
                 </Card>
-              </motion.div>
-            </TabsContent>
-          )}
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="categorias">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {categorias.map(c => (
+                <div key={c.id} className="flex items-center gap-3 rounded-lg border p-3">
+                  <div className="h-4 w-4 rounded-full shrink-0" style={{ backgroundColor: c.cor }} />
+                  <span className="text-sm font-medium">{c.nome}</span>
+                  <Badge variant="outline" className={cn("text-[9px] ml-auto", c.ativo ? "bg-success/10 text-success" : "bg-muted")}>{c.ativo ? "Ativa" : "Inativa"}</Badge>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="auditoria">
+            <Card className="shadow-card overflow-hidden">
+              <Table>
+                <TableHeader><TableRow className="bg-muted/50">
+                  <TableHead className="text-xs">Data</TableHead>
+                  <TableHead className="text-xs">Ação</TableHead>
+                  <TableHead className="text-xs">Tabela</TableHead>
+                  <TableHead className="text-xs">Registro</TableHead>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {auditEntries.map(e => (
+                    <TableRow key={e.id}>
+                      <TableCell className="text-xs text-muted-foreground">{new Date(e.created_at).toLocaleString("pt-BR")}</TableCell>
+                      <TableCell className="text-xs font-medium">{e.acao}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{e.tabela}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{e.registro_id?.substring(0, 8) || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Invite Dialog */}
-      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+      <Dialog open={clinicaDialog} onOpenChange={setClinicaDialog}>
         <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><UserPlus className="h-5 w-5 text-primary" />Convidar Usuário</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Nova Clínica Parceira</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <div className="space-y-1.5"><Label className="text-xs font-medium">Nome Completo</Label><Input value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} placeholder="Nome do profissional" /></div>
-            <div className="space-y-1.5"><Label className="text-xs font-medium">E-mail</Label><div className="relative"><Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@hospital.com" className="pl-10" /></div></div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">Nível de Acesso</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {(["admin", "farma"] as UserRole[]).map((role) => (
-                  <button key={role} onClick={() => setNewUser({ ...newUser, role })} className={cn("rounded-lg border p-3 text-left transition-all", newUser.role === role ? role === "admin" ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-info bg-info/5 ring-1 ring-info/30" : "hover:bg-accent/30")}>
-                    <Badge variant="outline" className={cn("text-[10px] mb-1", role === "admin" ? "border-primary/30 text-primary" : "border-info/30 text-info")}>{roleLabels[role]}</Badge>
-                    <p className="text-[10px] text-muted-foreground leading-snug">{roleDescriptions[role]}</p>
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-1.5"><Label className="text-xs">Nome</Label><Input value={clinicaForm.nome} onChange={e => setClinicaForm({ ...clinicaForm, nome: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">CNES</Label><Input value={clinicaForm.cnes} onChange={e => setClinicaForm({ ...clinicaForm, cnes: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Telefone</Label><Input value={clinicaForm.telefone} onChange={e => setClinicaForm({ ...clinicaForm, telefone: e.target.value })} /></div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setInviteOpen(false)}>Cancelar</Button>
-              <Button onClick={handleInvite} className="gradient-primary text-primary-foreground gap-2"><UserPlus className="h-4 w-4" /> Enviar Convite</Button>
-            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Endereço</Label><Input value={clinicaForm.endereco} onChange={e => setClinicaForm({ ...clinicaForm, endereco: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label className="text-xs">Contato</Label><Input value={clinicaForm.contato} onChange={e => setClinicaForm({ ...clinicaForm, contato: e.target.value })} /></div>
+            <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setClinicaDialog(false)}>Cancelar</Button><Button onClick={handleAddClinica} className="gradient-primary text-primary-foreground">Cadastrar</Button></div>
           </div>
         </DialogContent>
       </Dialog>
     </AppLayout>
   );
 };
-
-function SettingsSection({ icon: Icon, title, children, delay = 0 }: { icon: any; title: string; children: React.ReactNode; delay?: number }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay }}>
-      <Card className="p-5 shadow-card">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div>
-          <h3 className="text-sm font-semibold">{title}</h3>
-        </div>
-        {children}
-      </Card>
-    </motion.div>
-  );
-}
-
-function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (<div className="space-y-1.5"><Label className="text-xs font-medium">{label}</Label><Input value={value} onChange={(e) => onChange(e.target.value)} /></div>);
-}
-
-function ToggleField({ label, description, checked, onChange, badge }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void; badge?: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <div className="flex items-center gap-2"><p className="text-sm font-medium">{label}</p>{badge && <Badge variant="outline" className="text-[10px] text-muted-foreground">{badge}</Badge>}</div>
-        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
-      </div>
-      <Switch checked={checked} onCheckedChange={onChange} disabled={!!badge} />
-    </div>
-  );
-}
 
 export default Configuracoes;
