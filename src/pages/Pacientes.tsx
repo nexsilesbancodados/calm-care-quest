@@ -154,16 +154,21 @@ const Pacientes = () => {
     totalRx: patients.reduce((s, p) => s + p.prescriptions.filter((r) => r.active).length, 0),
   }), [patients]);
 
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     if (!newPatient.name || !newPatient.diagnosis) { toast.error("Preencha nome e diagnóstico"); return; }
+    const regNum = `${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`;
+    const { data, error } = await supabase.from("patients").insert({
+      name: newPatient.name, registration_number: regNum,
+      date_of_birth: newPatient.dateOfBirth || null, gender: newPatient.gender,
+      ward: newPatient.ward, bed: newPatient.bed || null, diagnosis: newPatient.diagnosis,
+      status: newPatient.status, admission_date: new Date().toISOString().split("T")[0],
+      attending_doctor: newPatient.attendingDoctor, allergies: newPatient.allergies, notes: newPatient.notes,
+    }).select().single();
+    if (error) { toast.error("Erro ao cadastrar paciente"); return; }
     const p: Patient = {
-      id: `P${String(patients.length + 1).padStart(3, "0")}`,
-      ...newPatient,
-      registrationNumber: `2026-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`,
+      id: data.id, ...newPatient, registrationNumber: regNum,
       admissionDate: new Date().toISOString().split("T")[0],
-      prescriptions: [],
-      evolution: [],
-      dispensations: [],
+      prescriptions: [], evolution: [], dispensations: [],
     };
     setPatients((prev) => [p, ...prev]);
     log({ userId: user?.id || "", userName: user?.name || "", action: "Cadastro de Paciente", module: "Pacientes", details: `${p.name} — ${p.diagnosis}`, severity: "info" });
@@ -172,14 +177,14 @@ const Pacientes = () => {
     setNewPatient({ name: "", dateOfBirth: "", gender: "Masculino", ward: "", bed: "", diagnosis: "", status: "internado", attendingDoctor: "", allergies: "", notes: "" });
   };
 
-  const handleAddRx = () => {
+  const handleAddRx = async () => {
     if (!selectedPatient || !newRx.medicationName) return;
-    const rx: Prescription = {
-      id: `RX${crypto.randomUUID().slice(0, 4)}`,
-      ...newRx,
-      startDate: new Date().toISOString().split("T")[0],
-      active: true,
-    };
+    const { data, error } = await supabase.from("prescriptions").insert({
+      patient_id: selectedPatient.id, medication_name: newRx.medicationName,
+      dosage: newRx.dosage, frequency: newRx.frequency, prescribed_by: newRx.prescribedBy, notes: newRx.notes,
+    }).select().single();
+    if (error) { toast.error("Erro ao adicionar prescrição"); return; }
+    const rx: Prescription = { id: data.id, ...newRx, startDate: data.start_date, active: true };
     const update = (p: Patient) => p.id === selectedPatient.id ? { ...p, prescriptions: [rx, ...p.prescriptions] } : p;
     setPatients((prev) => prev.map(update));
     setSelectedPatient((prev) => prev ? update(prev) : prev);
@@ -188,23 +193,28 @@ const Pacientes = () => {
     toast.success("Prescrição adicionada!");
   };
 
-  const toggleRxActive = (patientId: string, rxId: string) => {
+  const toggleRxActive = async (patientId: string, rxId: string) => {
+    const patient = patients.find((p) => p.id === patientId);
+    const rx = patient?.prescriptions.find((r) => r.id === rxId);
+    if (!rx) return;
+    const newActive = !rx.active;
+    await supabase.from("prescriptions").update({
+      active: newActive, end_date: newActive ? null : new Date().toISOString().split("T")[0],
+    }).eq("id", rxId);
     const update = (p: Patient) => p.id === patientId
-      ? { ...p, prescriptions: p.prescriptions.map((r) => r.id === rxId ? { ...r, active: !r.active, endDate: r.active ? new Date().toISOString().split("T")[0] : undefined } : r) }
+      ? { ...p, prescriptions: p.prescriptions.map((r) => r.id === rxId ? { ...r, active: newActive, endDate: newActive ? undefined : new Date().toISOString().split("T")[0] } : r) }
       : p;
     setPatients((prev) => prev.map(update));
     setSelectedPatient((prev) => prev && prev.id === patientId ? update(prev) : prev);
   };
 
-  const handleAddEvolution = () => {
+  const handleAddEvolution = async () => {
     if (!selectedPatient || !newEvo.description) { toast.error("Preencha a descrição"); return; }
-    const entry: EvolutionEntry = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      type: newEvo.type,
-      description: newEvo.description,
-      author: user?.name || "—",
-    };
+    const { data, error } = await supabase.from("patient_evolution").insert({
+      patient_id: selectedPatient.id, type: newEvo.type, description: newEvo.description, author: user?.name || "—",
+    }).select().single();
+    if (error) { toast.error("Erro ao registrar evolução"); return; }
+    const entry: EvolutionEntry = { id: data.id, date: data.created_at, type: newEvo.type, description: newEvo.description, author: user?.name || "—" };
     const update = (p: Patient) => p.id === selectedPatient.id ? { ...p, evolution: [entry, ...p.evolution] } : p;
     setPatients((prev) => prev.map(update));
     setSelectedPatient((prev) => prev ? update(prev) : prev);
