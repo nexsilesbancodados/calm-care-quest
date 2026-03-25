@@ -34,7 +34,7 @@ const Movimentacoes = () => {
     const fetchData = async () => {
       setLoading(true);
       let query = supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").order("created_at", { ascending: false });
-      if (typeFilter !== "all") query = query.eq("tipo", typeFilter);
+      if (typeFilter !== "all") query = query.eq("tipo", typeFilter as any);
       if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
       if (dateTo) query = query.lte("created_at", `${dateTo}T23:59:59`);
       query = query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
