@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, ArrowDownCircle, ArrowUpCircle, Repeat, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { Search, ArrowDownCircle, ArrowUpCircle, Repeat, ChevronLeft, ChevronRight, Calendar, Download, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -29,10 +30,20 @@ const Movimentacoes = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+
+      // Get count
+      let countQuery = supabase.from("movimentacoes").select("id", { count: "exact", head: true });
+      if (typeFilter !== "all") countQuery = countQuery.eq("tipo", typeFilter as any);
+      if (dateFrom) countQuery = countQuery.gte("created_at", `${dateFrom}T00:00:00`);
+      if (dateTo) countQuery = countQuery.lte("created_at", `${dateTo}T23:59:59`);
+      const { count } = await countQuery;
+      setTotalCount(count || 0);
+
       let query = supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").order("created_at", { ascending: false });
       if (typeFilter !== "all") query = query.eq("tipo", typeFilter as any);
       if (dateFrom) query = query.gte("created_at", `${dateFrom}T00:00:00`);
@@ -53,8 +64,57 @@ const Movimentacoes = () => {
 
   const resetFilters = () => { setSearch(""); setTypeFilter("all"); setDateFrom(""); setDateTo(""); setPage(0); };
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  // Summary stats
+  const entradas = movements.filter(m => m.tipo === "entrada").reduce((s, m) => s + m.quantidade, 0);
+  const saidas = movements.filter(m => ["saida", "dispensacao"].includes(m.tipo)).reduce((s, m) => s + m.quantidade, 0);
+
+  const handleExportCSV = () => {
+    const headers = ["Data", "Tipo", "Medicamento", "Quantidade", "Paciente", "Setor", "NF", "Observação"];
+    const rows = filtered.map(m => [
+      new Date(m.created_at).toLocaleString("pt-BR"),
+      m.tipo,
+      m.medicamentos?.nome || "—",
+      m.quantidade,
+      m.paciente || "—",
+      m.setor || "—",
+      m.nota_fiscal || "—",
+      m.observacao || "",
+    ]);
+    const csv = [headers.join(";"), ...rows.map(r => r.join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `movimentacoes-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  };
+
   return (
     <AppLayout title="Movimentações" subtitle="Histórico completo de entradas e saídas">
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: "Total no Período", value: totalCount, icon: ClipboardList, color: "text-primary", bg: "bg-primary/10" },
+          { label: "Entradas", value: `+${entradas}`, icon: ArrowDownCircle, color: "text-success", bg: "bg-success/10" },
+          { label: "Saídas", value: `-${saidas}`, icon: ArrowUpCircle, color: "text-destructive", bg: "bg-destructive/10" },
+        ].map((item, i) => (
+          <motion.div key={item.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <Card className="p-4 shadow-card">
+              <div className="flex items-center gap-3">
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", item.bg)}>
+                  <item.icon className={cn("h-4 w-4", item.color)} />
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase">{item.label}</p>
+                  <p className="text-xl font-bold">{item.value}</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
       <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -73,8 +133,11 @@ const Movimentacoes = () => {
           <span className="text-xs text-muted-foreground">até</span>
           <Input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(0); }} className="w-[140px] bg-card text-xs" />
         </div>
+        <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={handleExportCSV}>
+          <Download className="h-3.5 w-3.5" /> CSV
+        </Button>
         {(search || typeFilter !== "all" || dateFrom || dateTo) && (
-          <Button variant="ghost" size="sm" className="text-xs" onClick={resetFilters}>Limpar filtros</Button>
+          <Button variant="ghost" size="sm" className="text-xs" onClick={resetFilters}>Limpar</Button>
         )}
       </div>
 
@@ -98,11 +161,21 @@ const Movimentacoes = () => {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhuma movimentação encontrada</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-16">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
+                          <ClipboardList className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">Nenhuma movimentação encontrada</p>
+                        <p className="text-xs text-muted-foreground">Tente ajustar os filtros ou período</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 ) : filtered.map(m => {
                   const cfg = typeConfig[m.tipo] || typeConfig.entrada;
                   return (
-                    <TableRow key={m.id}>
+                    <TableRow key={m.id} className="hover:bg-accent/30">
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{new Date(m.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</TableCell>
                       <TableCell><Badge variant="outline" className={cn("text-[11px] gap-1", cfg.className)}><cfg.icon className="h-3 w-3" />{cfg.label}</Badge></TableCell>
                       <TableCell className="font-medium text-sm">{m.medicamentos?.nome || "—"} <span className="text-muted-foreground text-xs">{m.medicamentos?.concentracao || ""}</span></TableCell>
@@ -119,10 +192,16 @@ const Movimentacoes = () => {
           </motion.div>
 
           <div className="flex items-center justify-between mt-4">
-            <p className="text-xs text-muted-foreground">Página {page + 1} • {filtered.length} registros nesta página</p>
+            <p className="text-xs text-muted-foreground">
+              Página {page + 1} de {Math.max(1, totalPages)} • {totalCount} registros
+            </p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="gap-1"><ChevronLeft className="h-4 w-4" />Anterior</Button>
-              <Button variant="outline" size="sm" disabled={movements.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)} className="gap-1">Próxima<ChevronRight className="h-4 w-4" /></Button>
+              <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="gap-1">
+                <ChevronLeft className="h-4 w-4" />Anterior
+              </Button>
+              <Button variant="outline" size="sm" disabled={movements.length < PAGE_SIZE} onClick={() => setPage(p => p + 1)} className="gap-1">
+                Próxima<ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </>

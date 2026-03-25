@@ -77,6 +77,15 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
             </div>
             <div className="flex items-center gap-1 sm:gap-1.5">
               {actions}
+              <button
+                onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
+                className="hidden sm:flex items-center gap-2 rounded-lg border bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <span>Buscar...</span>
+                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </button>
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => navigate("/alertas")}>
                 <Bell className="h-4 w-4" />
               </Button>
