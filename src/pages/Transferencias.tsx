@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
 import { useMedicationContext } from "@/contexts/MedicationContext";
-import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
