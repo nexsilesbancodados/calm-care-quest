@@ -366,10 +366,10 @@ function LabelPreview({ med, codeType, labelSize }: { med: Medication; codeType:
 function ScannerCard() {
   const [scanInput, setScanInput] = useState("");
   const [scannedMed, setScannedMed] = useState<Medication | null>(null);
+  const { medications } = useMedicationContext();
 
   const handleScan = () => {
     if (!scanInput.trim()) return;
-    const { medications } = useMedicationContext();
     const found = medications.find(
       (m) => m.batchNumber.toLowerCase() === scanInput.toLowerCase() ||
         `${m.batchNumber}-${m.name.replace(/\s/g, "").substring(0, 10)}`.toLowerCase() === scanInput.toLowerCase()
