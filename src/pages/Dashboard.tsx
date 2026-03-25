@@ -46,6 +46,30 @@ const Dashboard = () => {
     });
   }, [medications, searchQuery, categoryFilter, stockFilter]);
 
+  // Derive top stocked meds for chart
+  const topStocked = useMemo(() =>
+    [...medications].sort((a, b) => b.currentStock - a.currentStock).slice(0, 5).map((m) => ({ name: m.name, qty: m.currentStock })),
+  [medications]);
+
+  // Derive alerts from real data
+  const quickAlerts = useMemo(() => {
+    const now = new Date();
+    const alerts: { label: string; detail: string; severity: "critical" | "warning" }[] = [];
+    medications.forEach((m) => {
+      if (m.currentStock === 0) alerts.push({ label: `${m.name} ${m.dosage}`, detail: "Esgotado — aguardando reposição", severity: "critical" });
+      else if (getStockStatus(m.currentStock, m.minimumStock) === "crítico") alerts.push({ label: `${m.name} ${m.dosage}`, detail: `Estoque crítico: ${m.currentStock}/${m.minimumStock} un.`, severity: "critical" });
+      const diff = (new Date(m.expirationDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+      if (diff <= 60 && diff > 0) alerts.push({ label: `${m.name} ${m.dosage}`, detail: `Vence em ${Math.ceil(diff)} dias`, severity: "warning" });
+      if (diff <= 0) alerts.push({ label: `${m.name} ${m.dosage}`, detail: `VENCIDO em ${new Date(m.expirationDate).toLocaleDateString("pt-BR")}`, severity: "critical" });
+    });
+    return alerts.slice(0, 6);
+  }, [medications]);
+
+  const severityConfig = {
+    warning: "border-warning/30 bg-warning/5",
+    critical: "border-destructive/30 bg-destructive/5",
+  };
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMed, setEditingMed] = useState<Medication | null>(null);
   const [now, setNow] = useState(new Date());
