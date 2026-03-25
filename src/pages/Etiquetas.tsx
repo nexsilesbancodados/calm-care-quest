@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { BarcodeCanvas } from "@/components/BarcodeCanvas";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Printer, Search, CheckSquare, Square, ScanBarcode, QrCode, Settings2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import JsBarcode from "jsbarcode";
 import type { Medicamento, Lote } from "@/types/database";
 
 type CodeType = "barcode" | "qrcode";
@@ -24,6 +25,14 @@ const labelSizes: Record<LabelSize, { w: number; h: number; label: string }> = {
   medium: { w: 280, h: 140, label: "Média (70×35mm)" },
   large: { w: 380, h: 180, label: "Grande (95×45mm)" },
 };
+
+function generateBarcodeSvgString(value: string): string {
+  const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  try {
+    JsBarcode(svgEl, value, { format: "CODE128", width: 1.5, height: 35, displayValue: true, fontSize: 10, margin: 2, lineColor: "#1a1a2e", background: "#ffffff" });
+    return new XMLSerializer().serializeToString(svgEl);
+  } catch { return ""; }
+}
 
 const Etiquetas = () => {
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
@@ -55,13 +64,28 @@ const Etiquetas = () => {
     const pw = window.open("", "_blank");
     if (!pw) { toast.error("Popup bloqueado"); return; }
     const size = labelSizes[labelSize];
-    const labels = selectedMeds.flatMap(m => Array.from({ length: copies }, () => `
-      <div style="width:${size.w}px;height:${size.h}px;border:1px solid #ddd;border-radius:6px;padding:8px;display:inline-flex;flex-direction:column;justify-content:space-between;margin:4px;font-family:Arial;page-break-inside:avoid;">
-        <div><div style="font-size:11px;font-weight:bold;">${m.nome}</div><div style="font-size:9px;color:#666;">${m.concentracao} • ${m.forma_farmaceutica}</div></div>
-        <div style="font-size:8px;color:#666;display:flex;justify-content:space-between;"><span>Código: ${m.codigo_barras || "—"}</span><span>Local: ${m.localizacao}</span></div>
-      </div>
-    `)).join("");
-    pw.document.write(`<!DOCTYPE html><html><head><title>Etiquetas</title><style>@media print{@page{margin:8mm}}body{display:flex;flex-wrap:wrap;padding:8px;}</style></head><body>${labels}</body><script>window.onload=function(){window.print()}<\/script></html>`);
+
+    const labels = selectedMeds.flatMap(m => {
+      const code = m.codigo_barras || m.id.substring(0, 12);
+      const barcodeSvg = codeType === "barcode" ? generateBarcodeSvgString(code) : "";
+      return Array.from({ length: copies }, () => `
+        <div style="width:${size.w}px;height:${size.h}px;border:1px solid #ddd;border-radius:6px;padding:8px;display:inline-flex;flex-direction:column;justify-content:space-between;margin:4px;font-family:Arial,sans-serif;page-break-inside:avoid;overflow:hidden;">
+          <div>
+            <div style="font-size:11px;font-weight:bold;line-height:1.2;">${m.nome}</div>
+            <div style="font-size:9px;color:#666;">${m.concentracao} • ${m.forma_farmaceutica}</div>
+          </div>
+          <div style="text-align:center;flex:1;display:flex;align-items:center;justify-content:center;">
+            ${codeType === "barcode" ? barcodeSvg : `<img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(code)}" style="height:${Math.min(size.h - 60, 80)}px;" />`}
+          </div>
+          <div style="font-size:8px;color:#666;display:flex;justify-content:space-between;">
+            <span>${m.codigo_barras || "—"}</span>
+            <span>Local: ${m.localizacao}</span>
+          </div>
+        </div>
+      `);
+    }).join("");
+
+    pw.document.write(`<!DOCTYPE html><html><head><title>Etiquetas — PsiRumoCerto</title><style>@media print{@page{margin:8mm}}body{display:flex;flex-wrap:wrap;padding:8px;}</style></head><body>${labels}</body><script>window.onload=function(){window.print()}<\/script></html>`);
     pw.document.close();
     toast.success(`${selectedMeds.length * copies} etiquetas preparadas`);
   };
@@ -100,6 +124,15 @@ const Etiquetas = () => {
         <div className="space-y-4">
           <Card className="p-5 shadow-card space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold"><Settings2 className="h-4 w-4 text-primary" />Configurações</div>
+            <div className="space-y-1.5"><Label className="text-xs">Tipo de Código</Label>
+              <Select value={codeType} onValueChange={v => setCodeType(v as CodeType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="barcode"><div className="flex items-center gap-2"><ScanBarcode className="h-3.5 w-3.5" />Código de Barras</div></SelectItem>
+                  <SelectItem value="qrcode"><div className="flex items-center gap-2"><QrCode className="h-3.5 w-3.5" />QR Code</div></SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5"><Label className="text-xs">Tamanho</Label>
               <Select value={labelSize} onValueChange={v => setLabelSize(v as LabelSize)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -112,6 +145,33 @@ const Etiquetas = () => {
             <div className="flex justify-between text-xs"><span className="text-muted-foreground">Total etiquetas</span><span className="font-semibold">{selectedMeds.length * copies}</span></div>
             <Button className="w-full gap-2 gradient-primary text-primary-foreground" onClick={handlePrint} disabled={selectedMeds.length === 0}><Printer className="h-4 w-4" />Imprimir</Button>
           </Card>
+
+          {/* Preview */}
+          {selectedMeds.length > 0 && (
+            <Card className="p-4 shadow-card">
+              <p className="text-xs font-semibold mb-3 flex items-center gap-1.5"><Eye className="h-3.5 w-3.5 text-primary" />Pré-visualização</p>
+              <div className="space-y-3">
+                {selectedMeds.slice(0, 2).map(med => (
+                  <div key={med.id} className="border rounded-lg p-3 bg-white text-black">
+                    <p className="text-[11px] font-bold">{med.nome}</p>
+                    <p className="text-[9px] text-gray-500">{med.concentracao} • {med.forma_farmaceutica}</p>
+                    <div className="my-2 flex justify-center">
+                      {codeType === "barcode" ? (
+                        <BarcodeCanvas value={med.codigo_barras || med.id.substring(0, 12)} height={30} width={1.2} fontSize={9} />
+                      ) : (
+                        <QRCodeCanvas value={med.codigo_barras || med.id.substring(0, 12)} size={64} />
+                      )}
+                    </div>
+                    <div className="flex justify-between text-[8px] text-gray-400">
+                      <span>{med.codigo_barras || "—"}</span>
+                      <span>Local: {med.localizacao}</span>
+                    </div>
+                  </div>
+                ))}
+                {selectedMeds.length > 2 && <p className="text-[10px] text-muted-foreground text-center">+{selectedMeds.length - 2} mais...</p>}
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </AppLayout>
