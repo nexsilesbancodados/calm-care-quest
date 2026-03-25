@@ -153,6 +153,33 @@ const Usuarios = () => {
     toast.success("Papel atualizado!");
   };
 
+  const manageUser = async () => {
+    if (!confirmAction) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-user", {
+        body: { action: confirmAction.type, user_id: confirmAction.userId },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || error?.message || "Erro ao executar ação");
+        return;
+      }
+      toast.success(data.message);
+      if (confirmAction.type === "delete") {
+        setProfiles(prev => prev.filter(p => p.user_id !== confirmAction.userId));
+      } else if (confirmAction.type === "block") {
+        setProfiles(prev => prev.map(p => p.user_id === confirmAction.userId ? { ...p, ativo: false } : p));
+      } else if (confirmAction.type === "unblock") {
+        setProfiles(prev => prev.map(p => p.user_id === confirmAction.userId ? { ...p, ativo: true } : p));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro inesperado");
+    } finally {
+      setActionLoading(false);
+      setConfirmAction(null);
+    }
+  };
+
   if (!isAdmin) return <AppLayout title="Usuários"><p className="text-muted-foreground text-center py-12">Acesso restrito a administradores</p></AppLayout>;
   if (loading) return <AppLayout title="Usuários"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
