@@ -1,18 +1,27 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Activity } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="space-y-4 w-64">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex h-14 w-14 items-center justify-center rounded-2xl gradient-hero shadow-lg shadow-primary/20"
+        >
+          <Activity className="h-7 w-7 text-primary-foreground" />
+        </motion.div>
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
         </div>
+        <p className="text-xs text-muted-foreground font-medium">Carregando PsiRumoCerto...</p>
       </div>
     );
   }
