@@ -1,195 +1,207 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { MedicationTable } from "@/components/MedicationTable";
-import { MedicationDialog } from "@/components/MedicationDialog";
-import { MedicationDetail } from "@/components/MedicationDetail";
-import { useMedicationContext } from "@/contexts/MedicationContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
-import { getStockStatus, type MedicationCategory, type Medication } from "@/types/medication";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Search, Plus, Pill } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
+import type { Medicamento, Lote, Categoria, Fornecedor } from "@/types/database";
+import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
 const Medicamentos = () => {
-  const { medications, addMedication, updateMedication, deleteMedication } = useMedicationContext();
-  const { user } = useAuth();
   const { log } = useAudit();
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<MedicationCategory | "all">("all");
-  const [stockFilter, setStockFilter] = useState<"all" | "normal" | "baixo" | "crítico" | "esgotado">("all");
+  const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[]; categoria?: Categoria })[]>([]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingMed, setEditingMed] = useState<Medication | null>(null);
-  const [detailMed, setDetailMed] = useState<Medication | null>(null);
-  const [csvDialogOpen, setCsvDialogOpen] = useState(false);
-  const [csvResults, setCsvResults] = useState<{ success: number; errors: string[] } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editMed, setEditMed] = useState<Medicamento | null>(null);
+  const [form, setForm] = useState({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
 
-  const filtered = useMemo(() => {
-    return medications.filter((med) => {
-      const matchesSearch = !searchQuery || med.name.toLowerCase().includes(searchQuery.toLowerCase()) || med.genericName.toLowerCase().includes(searchQuery.toLowerCase()) || med.batchNumber.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || med.category === categoryFilter;
-      const matchesStock = stockFilter === "all" || getStockStatus(med.currentStock, med.minimumStock) === stockFilter;
-      return matchesSearch && matchesCategory && matchesStock;
-    });
-  }, [medications, searchQuery, categoryFilter, stockFilter]);
-
-  const handleAdd = () => { setEditingMed(null); setDialogOpen(true); };
-  const handleRowClick = (med: Medication) => { setDetailMed(med); };
-  const handleEditFromDetail = (med: Medication) => { setDetailMed(null); setEditingMed(med); setDialogOpen(true); };
-  const handleSave = (data: Omit<Medication, "id" | "lastUpdated">) => {
-    if (editingMed) updateMedication(editingMed.id, data);
-    else addMedication(data);
-  };
-
-  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      const lines = text.split(/\r?\n/).filter((l) => l.trim());
-      if (lines.length < 2) { toast.error("Arquivo CSV vazio ou sem dados"); return; }
-
-      const header = lines[0].split(/[;,]/).map((h) => h.trim().toLowerCase());
-      const nameIdx = header.findIndex((h) => h.includes("nome") || h === "name");
-      const genericIdx = header.findIndex((h) => h.includes("genérico") || h.includes("generico") || h === "genericname");
-      const categoryIdx = header.findIndex((h) => h.includes("categoria") || h === "category");
-      const dosageIdx = header.findIndex((h) => h.includes("dosagem") || h === "dosage");
-      const formIdx = header.findIndex((h) => h.includes("forma") || h === "form");
-      const manufacturerIdx = header.findIndex((h) => h.includes("fabricante") || h === "manufacturer");
-      const batchIdx = header.findIndex((h) => h.includes("lote") || h === "batch");
-      const expiryIdx = header.findIndex((h) => h.includes("validade") || h.includes("expir"));
-      const stockIdx = header.findIndex((h) => h.includes("estoque") || h === "stock" || h === "currentstock");
-      const minStockIdx = header.findIndex((h) => h.includes("mínimo") || h.includes("minimo") || h === "minimumstock");
-      const locationIdx = header.findIndex((h) => h.includes("local") || h === "location");
-      const controlledIdx = header.findIndex((h) => h.includes("controlad") || h === "controlled");
-
-      if (nameIdx === -1) { toast.error("Coluna 'Nome' não encontrada no CSV"); return; }
-
-      let success = 0;
-      const errors: string[] = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(/[;,]/).map((c) => c.trim());
-        const name = cols[nameIdx];
-        if (!name) { errors.push(`Linha ${i + 1}: nome vazio`); continue; }
-
-        try {
-          addMedication({
-            name,
-            genericName: cols[genericIdx] || name,
-            category: (cols[categoryIdx] || "outro") as MedicationCategory,
-            dosage: cols[dosageIdx] || "—",
-            form: cols[formIdx] || "Comprimido",
-            manufacturer: cols[manufacturerIdx] || "—",
-            batchNumber: cols[batchIdx] || `IMP-${String(i).padStart(4, "0")}`,
-            expirationDate: cols[expiryIdx] || "2027-12-31",
-            currentStock: Number(cols[stockIdx]) || 0,
-            minimumStock: Number(cols[minStockIdx]) || 50,
-            location: cols[locationIdx] || "A-01",
-            controlledSubstance: cols[controlledIdx]?.toLowerCase() === "sim" || cols[controlledIdx]?.toLowerCase() === "true",
-            notes: "Importado via CSV",
-          });
-          success++;
-        } catch {
-          errors.push(`Linha ${i + 1}: erro ao processar ${name}`);
-        }
-      }
-
-      log({ userId: user?.id || "", userName: user?.name || "", action: "Importação CSV", module: "Medicamentos", details: `${success} medicamentos importados, ${errors.length} erros`, severity: errors.length > 0 ? "warning" : "info" });
-      setCsvResults({ success, errors });
-      toast.success(`${success} medicamentos importados!`);
+  useEffect(() => {
+    const fetch = async () => {
+      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: fornData }] = await Promise.all([
+        supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
+        supabase.from("lotes").select("*").eq("ativo", true),
+        supabase.from("categorias_medicamento").select("*").eq("ativo", true),
+        supabase.from("fornecedores").select("*").eq("ativo", true).order("nome"),
+      ]);
+      setCategorias(catsData as Categoria[] || []);
+      setFornecedores(fornData as Fornecedor[] || []);
+      setMeds((medsData || []).map((m: any) => ({
+        ...m,
+        lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
+        categoria: (catsData || []).find((c: any) => c.id === m.categoria_id),
+      })));
+      setLoading(false);
     };
-    reader.readAsText(file, "UTF-8");
-    e.target.value = "";
+    fetch();
+  }, []);
+
+  const filtered = meds.filter(m => {
+    const matchSearch = !search || m.nome.toLowerCase().includes(search.toLowerCase()) || m.generico.toLowerCase().includes(search.toLowerCase()) || m.codigo_barras?.includes(search);
+    const matchCat = catFilter === "all" || m.categoria_id === catFilter;
+    return matchSearch && matchCat;
+  });
+
+  const openNew = () => {
+    setEditMed(null);
+    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
+    setDialogOpen(true);
   };
 
-  const downloadTemplate = () => {
-    const csv = "Nome;Genérico;Categoria;Dosagem;Forma;Fabricante;Lote;Validade;Estoque;Mínimo;Local;Controlado\nExemplo Med;Exemplo Genérico;antidepressivo;50mg;Comprimido;Lab Exemplo;LOT-001;2027-06-30;200;50;A-01;Não";
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = "template-importacao-medicamentos.csv"; a.click();
-    URL.revokeObjectURL(url);
+  const openEdit = (m: Medicamento) => {
+    setEditMed(m);
+    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    setDialogOpen(true);
   };
+
+  const handleSave = async () => {
+    if (!form.nome) { toast.error("Nome é obrigatório"); return; }
+    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario };
+
+    if (editMed) {
+      const { error } = await supabase.from("medicamentos").update(row).eq("id", editMed.id);
+      if (error) { toast.error("Erro ao atualizar"); return; }
+      setMeds(prev => prev.map(m => m.id === editMed.id ? { ...m, ...row } as any : m));
+      await log({ acao: "Atualização", tabela: "medicamentos", registro_id: editMed.id });
+      toast.success("Medicamento atualizado!");
+    } else {
+      const { data, error } = await supabase.from("medicamentos").insert(row).select().single();
+      if (error) { toast.error("Erro ao cadastrar"); return; }
+      setMeds(prev => [{ ...data, lotes: [], categoria: categorias.find(c => c.id === data.categoria_id) } as any, ...prev]);
+      await log({ acao: "Cadastro", tabela: "medicamentos", registro_id: data.id });
+      toast.success("Medicamento cadastrado!");
+    }
+    setDialogOpen(false);
+  };
+
+  const handleDeactivate = async (id: string) => {
+    await supabase.from("medicamentos").update({ ativo: false }).eq("id", id);
+    setMeds(prev => prev.filter(m => m.id !== id));
+    await log({ acao: "Desativação", tabela: "medicamentos", registro_id: id });
+    toast.success("Medicamento desativado");
+  };
+
+  if (loading) return <AppLayout title="Medicamentos"><div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}</div></AppLayout>;
 
   return (
     <AppLayout title="Medicamentos" subtitle={`${filtered.length} medicamentos cadastrados`}>
-      {/* CSV Import Button */}
-      <div className="flex justify-end mb-4">
-        <Button variant="outline" size="sm" onClick={() => setCsvDialogOpen(true)} className="gap-2 text-xs">
-          <Upload className="h-3.5 w-3.5" /> Importar CSV
-        </Button>
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar por nome, genérico ou código de barras..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
+        </div>
+        <Select value={catFilter} onValueChange={setCatFilter}>
+          <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Categoria" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas categorias</SelectItem>
+            {categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button onClick={openNew} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" /> Novo</Button>
       </div>
 
-      <MedicationTable
-        medications={filtered}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        categoryFilter={categoryFilter}
-        onCategoryChange={setCategoryFilter}
-        stockFilter={stockFilter}
-        onStockFilterChange={setStockFilter}
-        onAdd={handleAdd}
-        onEdit={handleRowClick}
-      />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+              <TableHead className="text-xs font-semibold">Concentração</TableHead>
+              <TableHead className="text-xs font-semibold">Categoria</TableHead>
+              <TableHead className="text-xs font-semibold text-center">Estoque</TableHead>
+              <TableHead className="text-xs font-semibold">Status</TableHead>
+              <TableHead className="text-xs font-semibold">Local</TableHead>
+              <TableHead className="text-xs font-semibold">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum medicamento encontrado</TableCell></TableRow>
+            ) : filtered.map(med => {
+              const total = getEstoqueTotal(med.lotes);
+              const status = getEstoqueStatus(total, med.estoque_minimo);
+              const cfg = ESTOQUE_STATUS_CONFIG[status];
+              return (
+                <TableRow key={med.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => openEdit(med)}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Pill className="h-4 w-4 text-primary shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium">{med.nome}</p>
+                        <p className="text-[11px] text-muted-foreground">{med.generico}</p>
+                      </div>
+                      {med.controlado && <Badge variant="outline" className="text-[9px] bg-primary/10 text-primary">Ctrl</Badge>}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm">{med.concentracao} • {med.forma_farmaceutica}</TableCell>
+                  <TableCell><Badge variant="outline" className="text-[10px]" style={{ borderColor: med.categoria?.cor }}>{med.categoria?.nome || "—"}</Badge></TableCell>
+                  <TableCell className="text-center font-semibold">{total}</TableCell>
+                  <TableCell><Badge variant="outline" className={cn("text-[10px]", cfg.className)}>{cfg.label}</Badge></TableCell>
+                  <TableCell className="text-sm text-muted-foreground font-mono">{med.localizacao}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={(e) => { e.stopPropagation(); handleDeactivate(med.id); }}>Desativar</Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </motion.div>
 
-      <MedicationDialog open={dialogOpen} onOpenChange={setDialogOpen} medication={editingMed} onSave={handleSave} onDelete={deleteMedication} />
-
-      <MedicationDetail
-        medication={detailMed}
-        open={!!detailMed}
-        onOpenChange={(open) => { if (!open) setDetailMed(null); }}
-        onEdit={handleEditFromDetail}
-        onDelete={(id) => { deleteMedication(id); setDetailMed(null); }}
-      />
-
-      {/* CSV Import Dialog */}
-      <Dialog open={csvDialogOpen} onOpenChange={(open) => { setCsvDialogOpen(open); if (!open) setCsvResults(null); }}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Upload className="h-5 w-5 text-primary" /> Importação via CSV</DialogTitle></DialogHeader>
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editMed ? "Editar Medicamento" : "Novo Medicamento"}</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
-            <p className="text-sm text-muted-foreground">
-              Importe medicamentos em massa a partir de um arquivo CSV. O arquivo deve conter as colunas: <strong>Nome</strong>, Genérico, Categoria, Dosagem, Forma, Fabricante, Lote, Validade, Estoque, Mínimo, Local, Controlado.
-            </p>
-
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-1.5 text-xs">
-                <FileText className="h-3.5 w-3.5" /> Baixar Template
-              </Button>
-            </div>
-
-            <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm font-medium">Clique para selecionar o arquivo CSV</p>
-              <p className="text-xs text-muted-foreground mt-1">Separador: vírgula (,) ou ponto e vírgula (;)</p>
-              <input ref={fileInputRef} type="file" accept=".csv,.txt" className="hidden" onChange={handleCSVImport} />
-            </div>
-
-            {csvResults && (
-              <div className="rounded-lg border p-4 space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span className="font-medium">{csvResults.success} medicamentos importados com sucesso</span>
-                </div>
-                {csvResults.errors.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      <span className="font-medium">{csvResults.errors.length} erros:</span>
-                    </div>
-                    <div className="max-h-[100px] overflow-y-auto text-xs text-muted-foreground space-y-0.5">
-                      {csvResults.errors.map((err, i) => <p key={i}>{err}</p>)}
-                    </div>
-                  </div>
-                )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5 col-span-2"><Label className="text-xs">Nome Comercial</Label><Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Nome Genérico</Label><Input value={form.generico} onChange={e => setForm({ ...form, generico: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Princípio Ativo</Label><Input value={form.principio_ativo} onChange={e => setForm({ ...form, principio_ativo: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Concentração</Label><Input value={form.concentracao} onChange={e => setForm({ ...form, concentracao: e.target.value })} placeholder="Ex: 50mg" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Forma Farmacêutica</Label>
+                <Select value={form.forma_farmaceutica} onValueChange={v => setForm({ ...form, forma_farmaceutica: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{["Comprimido", "Cápsula", "Solução Oral", "Injetável", "Gotas", "Pomada", "Supositório", "Adesivo"].map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                </Select>
               </div>
-            )}
+              <div className="space-y-1.5"><Label className="text-xs">Código de Barras</Label><Input value={form.codigo_barras} onChange={e => setForm({ ...form, codigo_barras: e.target.value })} className="font-mono" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Categoria</Label>
+                <Select value={form.categoria_id} onValueChange={v => setForm({ ...form, categoria_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>{categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Fornecedor</Label>
+                <Select value={form.fornecedor_id} onValueChange={v => setForm({ ...form, fornecedor_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>{fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Estoque Mínimo</Label><Input type="number" value={form.estoque_minimo} onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Estoque Máximo</Label><Input type="number" value={form.estoque_maximo} onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Localização</Label><Input value={form.localizacao} onChange={e => setForm({ ...form, localizacao: e.target.value })} placeholder="A-01" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Preço Unitário (R$)</Label><Input type="number" step="0.01" value={form.preco_unitario} onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })} /></div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" checked={form.controlado} onChange={e => setForm({ ...form, controlado: e.target.checked })} id="ctrl" />
+              <label htmlFor="ctrl" className="text-xs font-medium">Substância Controlada</label>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSave} className="gradient-primary text-primary-foreground">Salvar</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
