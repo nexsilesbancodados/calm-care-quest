@@ -68,6 +68,8 @@ const Usuarios = () => {
   const [selectedRole, setSelectedRole] = useState<AppRole>("visualizador");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(getPermissionsForRole("visualizador"));
   const [sending, setSending] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: "delete" | "block" | "unblock"; userId: string; nome: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
