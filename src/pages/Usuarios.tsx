@@ -11,7 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserPlus, Shield, Send, Mail } from "lucide-react";
+import { Users, UserPlus, Shield, Send, Mail, Ban, Trash2, ShieldCheck, MoreHorizontal, UserX, UserCheck } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -66,6 +68,8 @@ const Usuarios = () => {
   const [selectedRole, setSelectedRole] = useState<AppRole>("visualizador");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(getPermissionsForRole("visualizador"));
   const [sending, setSending] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ type: "delete" | "block" | "unblock"; userId: string; nome: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -149,6 +153,33 @@ const Usuarios = () => {
     toast.success("Papel atualizado!");
   };
 
+  const manageUser = async () => {
+    if (!confirmAction) return;
+    setActionLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-user", {
+        body: { action: confirmAction.type, user_id: confirmAction.userId },
+      });
+      if (error || data?.error) {
+        toast.error(data?.error || error?.message || "Erro ao executar ação");
+        return;
+      }
+      toast.success(data.message);
+      if (confirmAction.type === "delete") {
+        setProfiles(prev => prev.filter(p => p.user_id !== confirmAction.userId));
+      } else if (confirmAction.type === "block") {
+        setProfiles(prev => prev.map(p => p.user_id === confirmAction.userId ? { ...p, ativo: false } : p));
+      } else if (confirmAction.type === "unblock") {
+        setProfiles(prev => prev.map(p => p.user_id === confirmAction.userId ? { ...p, ativo: true } : p));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro inesperado");
+    } finally {
+      setActionLoading(false);
+      setConfirmAction(null);
+    }
+  };
+
   if (!isAdmin) return <AppLayout title="Usuários"><p className="text-muted-foreground text-center py-12">Acesso restrito a administradores</p></AppLayout>;
   if (loading) return <AppLayout title="Usuários"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
@@ -194,13 +225,44 @@ const Usuarios = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell><Badge variant="outline" className={cn("text-[10px]", p.ativo ? "bg-success/10 text-success" : "bg-muted")}>{p.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("text-[10px]", p.ativo ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20")}>
+                      {p.ativo ? "Ativo" : "Bloqueado"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="text-xs" onClick={async () => {
-                      await supabase.from("profiles").update({ ativo: !p.ativo }).eq("id", p.id);
-                      setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, ativo: !x.ativo } : x));
-                    }}>{p.ativo ? "Desativar" : "Ativar"}</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {p.ativo ? (
+                          <DropdownMenuItem
+                            className="gap-2 text-xs cursor-pointer text-warning"
+                            onClick={() => setConfirmAction({ type: "block", userId: p.user_id, nome: p.nome })}
+                          >
+                            <Ban className="h-3.5 w-3.5" /> Bloquear Acesso
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            className="gap-2 text-xs cursor-pointer text-success"
+                            onClick={() => setConfirmAction({ type: "unblock", userId: p.user_id, nome: p.nome })}
+                          >
+                            <UserCheck className="h-3.5 w-3.5" /> Desbloquear
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="gap-2 text-xs cursor-pointer text-destructive focus:text-destructive"
+                          onClick={() => setConfirmAction({ type: "delete", userId: p.user_id, nome: p.nome })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Excluir Permanentemente
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               );
@@ -315,6 +377,55 @@ const Usuarios = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              {confirmAction?.type === "delete" && <Trash2 className="h-5 w-5 text-destructive" />}
+              {confirmAction?.type === "block" && <Ban className="h-5 w-5 text-warning" />}
+              {confirmAction?.type === "unblock" && <UserCheck className="h-5 w-5 text-success" />}
+              {confirmAction?.type === "delete" && "Excluir Usuário"}
+              {confirmAction?.type === "block" && "Bloquear Usuário"}
+              {confirmAction?.type === "unblock" && "Desbloquear Usuário"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === "delete" && (
+                <>Tem certeza que deseja excluir permanentemente o usuário <strong>{confirmAction.nome}</strong>? Esta ação não pode ser desfeita. Todos os dados do usuário serão removidos.</>
+              )}
+              {confirmAction?.type === "block" && (
+                <>Deseja bloquear o acesso de <strong>{confirmAction?.nome}</strong>? O usuário não conseguirá fazer login até ser desbloqueado.</>
+              )}
+              {confirmAction?.type === "unblock" && (
+                <>Deseja restaurar o acesso de <strong>{confirmAction?.nome}</strong>? O usuário poderá fazer login novamente.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={manageUser}
+              disabled={actionLoading}
+              className={cn(
+                confirmAction?.type === "delete" && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+                confirmAction?.type === "block" && "bg-warning text-warning-foreground hover:bg-warning/90",
+                confirmAction?.type === "unblock" && "bg-success text-success-foreground hover:bg-success/90"
+              )}
+            >
+              {actionLoading ? (
+                <div className="h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+              ) : (
+                <>
+                  {confirmAction?.type === "delete" && "Excluir"}
+                  {confirmAction?.type === "block" && "Bloquear"}
+                  {confirmAction?.type === "unblock" && "Desbloquear"}
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 };
