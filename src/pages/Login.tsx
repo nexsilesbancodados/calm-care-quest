@@ -16,6 +16,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [nome, setNome] = useState("");
 
   useEffect(() => {
     if (!authLoading && session) navigate("/");
