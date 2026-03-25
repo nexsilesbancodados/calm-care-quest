@@ -99,40 +99,26 @@ const Dashboard = () => {
       </div>
 
       {/* Charts + Quick Actions Row */}
-      <div className="grid lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
-        {/* Weekly Flow Chart */}
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+        {/* Top Stocked */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }} className="lg:col-span-2">
           <Card className="p-4 sm:p-5 shadow-card h-full">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-primary" />
-              Fluxo dos Últimos 7 Dias
+              <Package className="h-4 w-4 text-primary" />
+              Maiores Estoques
             </h3>
-            <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={weeklyFlow}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={30} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
-                <Area type="monotone" dataKey="entradas" stroke="#10b981" fill="#10b981" fillOpacity={0.15} strokeWidth={2} name="Entradas" />
-                <Area type="monotone" dataKey="dispensações" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.15} strokeWidth={2} name="Dispensações" />
-                <Area type="monotone" dataKey="saídas" stroke="#f59e0b" fill="#f59e0b" fillOpacity={0.1} strokeWidth={1.5} name="Saídas" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </Card>
-        </motion.div>
-
-        {/* Top Dispensed */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
-          <Card className="p-4 sm:p-5 shadow-card h-full">
-            <h3 className="text-sm font-semibold mb-3">Top Dispensados (7d)</h3>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={topDispensed} layout="vertical" margin={{ left: 0, right: 8 }}>
-                <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis type="category" dataKey="name" width={80} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} formatter={(v: number) => [`${v} un.`]} />
-                <Bar dataKey="qty" fill="hsl(174, 62%, 38%)" radius={[0, 4, 4, 0]} barSize={14} />
-              </BarChart>
-            </ResponsiveContainer>
+            {topStocked.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-12">Nenhum medicamento cadastrado</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={topStocked} layout="vertical" margin={{ left: 0, right: 8 }}>
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} formatter={(v: number) => [`${v} un.`]} />
+                  <Bar dataKey="qty" fill="hsl(174, 62%, 38%)" radius={[0, 4, 4, 0]} barSize={14} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </Card>
         </motion.div>
 
@@ -157,52 +143,29 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* Activity + Alerts Row */}
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="lg:col-span-2">
-          <Card className="p-4 sm:p-5 shadow-card h-full">
-            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-primary" /> Atividade Recente
-            </h3>
-            <div className="space-y-1">
-              {recentActivity.map((item, i) => (
-                <motion.div key={item.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.45 + i * 0.04 }} className="flex items-start gap-3 py-2.5 px-2 rounded-lg hover:bg-accent/30 transition-colors">
-                  <div className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-md mt-0.5", item.className)}>
-                    <item.icon className="h-3.5 w-3.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground leading-snug">{item.text}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-muted-foreground">{item.user}</span>
-                      <span className="text-[11px] text-muted-foreground/50">•</span>
-                      <span className="text-[11px] text-muted-foreground/70">{item.time}</span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </Card>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
-          <Card className="p-4 sm:p-5 shadow-card h-full">
-            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" /> Alertas Urgentes
-            </h3>
-            <div className="space-y-3">
-              {quickAlerts.map((alert, i) => (
-                <motion.div key={alert.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} className={cn("rounded-lg border p-3", severityConfig[alert.severity])}>
-                  <p className="text-sm font-medium text-foreground">{alert.label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{alert.detail}</p>
-                </motion.div>
-              ))}
-            </div>
-            <div className="mt-4 pt-3 border-t">
-              <a href="/alertas" className="text-xs text-primary hover:underline font-medium">Ver todos os alertas →</a>
-            </div>
-          </Card>
-        </motion.div>
-      </div>
+      {/* Alerts Row */}
+      {quickAlerts.length > 0 && (
+        <div className="mb-6">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+            <Card className="p-4 sm:p-5 shadow-card">
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive" /> Alertas Urgentes
+              </h3>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {quickAlerts.map((alert, i) => (
+                  <motion.div key={`${alert.label}-${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + i * 0.06 }} className={cn("rounded-lg border p-3", severityConfig[alert.severity])}>
+                    <p className="text-sm font-medium text-foreground">{alert.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{alert.detail}</p>
+                  </motion.div>
+                ))}
+              </div>
+              <div className="mt-4 pt-3 border-t">
+                <a href="/alertas" className="text-xs text-primary hover:underline font-medium">Ver todos os alertas →</a>
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+      )}
 
       {/* Medication Table */}
       <MedicationTable
