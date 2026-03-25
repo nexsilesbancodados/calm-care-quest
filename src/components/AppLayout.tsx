@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Moon, Sun, LogOut, Settings, ChevronRight, Shield, Bell } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, ChevronRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/ThemeProvider";
@@ -12,6 +12,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
+import { useEffect } from "react";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -28,6 +32,7 @@ const pageTitles: Record<string, string> = {
   "/configuracoes": "Configurações",
   "/usuarios": "Usuários",
   "/leitor": "Leitor de Código",
+  "/admin": "Painel Admin",
 };
 
 interface AppLayoutProps {
@@ -42,6 +47,12 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
   const { profile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, requestPermission } = useRealtimeNotifications();
+  useOnlinePresence(location.pathname);
+
+  useEffect(() => {
+    requestPermission();
+  }, []);
 
   const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
   const displayName = profile?.nome || "Usuário";
@@ -86,9 +97,13 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                   ⌘K
                 </kbd>
               </button>
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground h-8 w-8" onClick={() => navigate("/alertas")}>
-                <Bell className="h-4 w-4" />
-              </Button>
+              <NotificationCenter
+                notifications={notifications}
+                unreadCount={unreadCount}
+                markAsRead={markAsRead}
+                markAllAsRead={markAllAsRead}
+                clearAll={clearAll}
+              />
               <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground h-8 w-8">
                 {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
