@@ -62,7 +62,7 @@ const Login = () => {
               <Cross className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white tracking-tight">PharmaControl</h1>
+              <h1 className="text-xl font-bold text-white tracking-tight">PsiRumoCerto</h1>
               <p className="text-xs text-white/70">Farmácia Hospitalar</p>
             </div>
           </div>
@@ -82,7 +82,7 @@ const Login = () => {
           </div>
         </motion.div>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className="text-[11px] text-white/40">
-          © 2026 PharmaControl — Sistema de Gestão Farmacêutica v2.0
+          © 2026 PsiRumoCerto — Sistema de Gestão Farmacêutica v2.0
         </motion.p>
       </div>
 
@@ -93,7 +93,7 @@ const Login = () => {
               <Cross className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">PharmaControl</h1>
+              <h1 className="text-lg font-bold text-foreground">PsiRumoCerto</h1>
               <p className="text-[11px] text-muted-foreground">Farmácia Hospitalar</p>
             </div>
           </div>
