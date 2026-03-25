@@ -225,13 +225,44 @@ const Usuarios = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell><Badge variant="outline" className={cn("text-[10px]", p.ativo ? "bg-success/10 text-success" : "bg-muted")}>{p.ativo ? "Ativo" : "Inativo"}</Badge></TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={cn("text-[10px]", p.ativo ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20")}>
+                      {p.ativo ? "Ativo" : "Bloqueado"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="text-xs" onClick={async () => {
-                      await supabase.from("profiles").update({ ativo: !p.ativo }).eq("id", p.id);
-                      setProfiles(prev => prev.map(x => x.id === p.id ? { ...x, ativo: !x.ativo } : x));
-                    }}>{p.ativo ? "Desativar" : "Ativar"}</Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        {p.ativo ? (
+                          <DropdownMenuItem
+                            className="gap-2 text-xs cursor-pointer text-warning"
+                            onClick={() => setConfirmAction({ type: "block", userId: p.user_id, nome: p.nome })}
+                          >
+                            <Ban className="h-3.5 w-3.5" /> Bloquear Acesso
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem
+                            className="gap-2 text-xs cursor-pointer text-success"
+                            onClick={() => setConfirmAction({ type: "unblock", userId: p.user_id, nome: p.nome })}
+                          >
+                            <UserCheck className="h-3.5 w-3.5" /> Desbloquear
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="gap-2 text-xs cursor-pointer text-destructive focus:text-destructive"
+                          onClick={() => setConfirmAction({ type: "delete", userId: p.user_id, nome: p.nome })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Excluir Permanentemente
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               );
