@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import { useMedicationContext } from "@/contexts/MedicationContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudit } from "@/contexts/AuditContext";
@@ -76,95 +77,12 @@ const evolutionTypeConfig: Record<string, { label: string; className: string }> 
   alta: { label: "Alta / Transferência", className: "bg-success/10 text-success" },
 };
 
-const initialPatients: Patient[] = [
-  {
-    id: "P001", name: "Carlos Eduardo Santos", registrationNumber: "2026-1042", dateOfBirth: "1985-06-15", gender: "Masculino",
-    ward: "Ala B", bed: "B-12", diagnosis: "Esquizofrenia Paranoide (F20.0)", status: "internado", admissionDate: "2026-01-10",
-    attendingDoctor: "Dr. Ricardo Mendes", allergies: "Dipirona", notes: "Paciente estável, em acompanhamento semanal.",
-    prescriptions: [
-      { id: "RX001", medicationName: "Risperidona", dosage: "2mg", frequency: "2x ao dia", startDate: "2026-01-10", prescribedBy: "Dr. Ricardo Mendes", notes: "Dose ajustada em 15/02", active: true },
-      { id: "RX002", medicationName: "Clonazepam", dosage: "2mg", frequency: "1x à noite", startDate: "2026-01-10", prescribedBy: "Dr. Ricardo Mendes", notes: "SOS em caso de agitação", active: true },
-    ],
-    evolution: [
-      { id: "E001", date: "2026-03-18T10:00:00", type: "clinica", description: "Paciente orientado, sem alucinações nas últimas 48h. Mantém medicação atual.", author: "Dr. Ricardo Mendes" },
-      { id: "E002", date: "2026-03-10T14:30:00", type: "medicacao", description: "Ajuste de Risperidona de 1mg para 2mg 2x/dia.", author: "Dr. Ricardo Mendes" },
-      { id: "E003", date: "2026-02-20T08:00:00", type: "intercorrencia", description: "Episódio de agitação psicomotora. Administrado Clonazepam 2mg SOS.", author: "Enf. Maria Silva" },
-    ],
-    dispensations: [
-      { date: "2026-03-18", medicationName: "Risperidona 2mg", quantity: 30 },
-      { date: "2026-03-10", medicationName: "Clonazepam 2mg", quantity: 10 },
-    ],
-  },
-  {
-    id: "P002", name: "Maria Aparecida Lima", registrationNumber: "2026-0987", dateOfBirth: "1972-11-22", gender: "Feminino",
-    ward: "Ala A", bed: "A-05", diagnosis: "Transtorno Bipolar tipo I (F31.1)", status: "internado", admissionDate: "2026-02-20",
-    attendingDoctor: "Dra. Fernanda Oliveira", allergies: "Nenhuma conhecida", notes: "Em fase maníaca, estabilização em curso.",
-    prescriptions: [
-      { id: "RX003", medicationName: "Carbonato de Lítio", dosage: "300mg", frequency: "3x ao dia", startDate: "2026-02-20", prescribedBy: "Dra. Fernanda Oliveira", notes: "Litemia: 0.8 mEq/L (14/03)", active: true },
-      { id: "RX004", medicationName: "Quetiapina", dosage: "100mg", frequency: "1x à noite", startDate: "2026-02-22", prescribedBy: "Dra. Fernanda Oliveira", notes: "", active: true },
-      { id: "RX005", medicationName: "Olanzapina", dosage: "10mg", frequency: "1x ao dia", startDate: "2026-02-20", endDate: "2026-03-05", prescribedBy: "Dra. Fernanda Oliveira", notes: "Substituída por Quetiapina", active: false },
-    ],
-    evolution: [
-      { id: "E004", date: "2026-03-15T09:00:00", type: "clinica", description: "Humor mais estável, aceitando medicação oral. Sem ideias de grandiosidade.", author: "Dra. Fernanda Oliveira" },
-      { id: "E005", date: "2026-03-05T11:00:00", type: "medicacao", description: "Substituição de Olanzapina por Quetiapina 100mg noturna.", author: "Dra. Fernanda Oliveira" },
-    ],
-    dispensations: [
-      { date: "2026-03-15", medicationName: "Carbonato de Lítio 300mg", quantity: 60 },
-    ],
-  },
-  {
-    id: "P003", name: "José Antônio Ferreira", registrationNumber: "2026-1103", dateOfBirth: "1990-03-08", gender: "Masculino",
-    ward: "Ala C", bed: "C-03", diagnosis: "Transtorno de Ansiedade Generalizada (F41.1)", status: "internado", admissionDate: "2026-03-05",
-    attendingDoctor: "Dr. Ricardo Mendes", allergies: "Sulfa, Penicilina", notes: "Internação breve, previsão de alta em 7 dias.",
-    prescriptions: [
-      { id: "RX006", medicationName: "Sertralina", dosage: "50mg", frequency: "1x pela manhã", startDate: "2026-03-05", prescribedBy: "Dr. Ricardo Mendes", notes: "", active: true },
-      { id: "RX007", medicationName: "Diazepam", dosage: "10mg", frequency: "SOS", startDate: "2026-03-05", prescribedBy: "Dr. Ricardo Mendes", notes: "Máx 3x ao dia", active: true },
-    ],
-    evolution: [
-      { id: "E006", date: "2026-03-17T16:00:00", type: "clinica", description: "Melhora dos sintomas ansiosos. Previsão de alta em 48h.", author: "Dr. Ricardo Mendes" },
-    ],
-    dispensations: [
-      { date: "2026-03-17", medicationName: "Diazepam 10mg", quantity: 5 },
-    ],
-  },
-  {
-    id: "P004", name: "Ana Beatriz Souza", registrationNumber: "2025-0856", dateOfBirth: "1995-09-30", gender: "Feminino",
-    ward: "Ala B", bed: "B-08", diagnosis: "Depressão Grave com Sintomas Psicóticos (F32.3)", status: "internado", admissionDate: "2025-12-15",
-    attendingDoctor: "Dra. Fernanda Oliveira", allergies: "Nenhuma conhecida", notes: "Melhora significativa, avaliação para alta programada.",
-    prescriptions: [
-      { id: "RX008", medicationName: "Fluoxetina", dosage: "20mg", frequency: "1x pela manhã", startDate: "2025-12-15", prescribedBy: "Dra. Fernanda Oliveira", notes: "", active: true },
-      { id: "RX009", medicationName: "Risperidona", dosage: "2mg", frequency: "1x à noite", startDate: "2025-12-15", endDate: "2026-02-28", prescribedBy: "Dra. Fernanda Oliveira", notes: "Suspensa após remissão dos sintomas psicóticos", active: false },
-    ],
-    evolution: [],
-    dispensations: [],
-  },
-  {
-    id: "P005", name: "Roberto Carlos Pereira", registrationNumber: "2026-0750", dateOfBirth: "1968-01-12", gender: "Masculino",
-    ward: "—", diagnosis: "Dependência de Álcool (F10.2)", status: "ambulatorial", admissionDate: "2026-02-01",
-    attendingDoctor: "Dr. Paulo Guedes", allergies: "Nenhuma conhecida", notes: "Atendimento quinzenal no ambulatório.",
-    prescriptions: [
-      { id: "RX010", medicationName: "Carbamazepina", dosage: "200mg", frequency: "2x ao dia", startDate: "2026-02-01", prescribedBy: "Dr. Paulo Guedes", notes: "Prevenção de convulsões", active: true },
-    ],
-    evolution: [],
-    dispensations: [],
-  },
-  {
-    id: "P006", name: "Luciana de Almeida", registrationNumber: "2025-0412", dateOfBirth: "1988-07-19", gender: "Feminino",
-    ward: "—", diagnosis: "Transtorno Borderline (F60.3)", status: "alta", admissionDate: "2025-08-10",
-    attendingDoctor: "Dra. Fernanda Oliveira", allergies: "Ibuprofeno", notes: "Alta em 10/01/2026, acompanhamento ambulatorial.",
-    prescriptions: [
-      { id: "RX011", medicationName: "Sertralina", dosage: "50mg", frequency: "1x pela manhã", startDate: "2025-08-10", endDate: "2026-01-10", prescribedBy: "Dra. Fernanda Oliveira", notes: "", active: false },
-    ],
-    evolution: [],
-    dispensations: [],
-  },
-];
-
 const Pacientes = () => {
   const { medications, adjustStock, getMedicationById } = useMedicationContext();
   const { user } = useAuth();
   const { log } = useAudit();
-  const [patients, setPatients] = useState(initialPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PatientStatus | "all">("all");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -178,6 +96,49 @@ const Pacientes = () => {
   const [newEvo, setNewEvo] = useState({ type: "clinica" as EvolutionEntry["type"], description: "" });
   const [dispMedId, setDispMedId] = useState("");
   const [dispQty, setDispQty] = useState(0);
+
+  const fetchPatients = useCallback(async () => {
+    const { data: patientsData } = await supabase.from("patients").select("*").order("name");
+    if (!patientsData) { setLoading(false); return; }
+
+    const patientsList: Patient[] = [];
+    for (const p of patientsData) {
+      const { data: rxData } = await supabase.from("prescriptions").select("*").eq("patient_id", p.id);
+      const { data: evoData } = await supabase.from("patient_evolution").select("*").eq("patient_id", p.id).order("created_at", { ascending: false });
+      const { data: dispData } = await supabase.from("dispensations").select("*").eq("patient_id", p.id).order("dispensed_at", { ascending: false });
+
+      patientsList.push({
+        id: p.id,
+        name: p.name,
+        registrationNumber: p.registration_number,
+        dateOfBirth: p.date_of_birth || "",
+        gender: p.gender,
+        ward: p.ward,
+        bed: p.bed || undefined,
+        diagnosis: p.diagnosis,
+        status: p.status as PatientStatus,
+        admissionDate: p.admission_date || "",
+        attendingDoctor: p.attending_doctor,
+        allergies: p.allergies,
+        notes: p.notes,
+        prescriptions: (rxData || []).map((r: any) => ({
+          id: r.id, medicationName: r.medication_name, dosage: r.dosage,
+          frequency: r.frequency, startDate: r.start_date, endDate: r.end_date || undefined,
+          prescribedBy: r.prescribed_by, notes: r.notes, active: r.active,
+        })),
+        evolution: (evoData || []).map((e: any) => ({
+          id: e.id, date: e.created_at, type: e.type, description: e.description, author: e.author,
+        })),
+        dispensations: (dispData || []).map((d: any) => ({
+          date: d.dispensed_at?.split("T")[0] || "", medicationName: d.medication_name, quantity: d.quantity,
+        })),
+      });
+    }
+    setPatients(patientsList);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchPatients(); }, [fetchPatients]);
 
   const filtered = useMemo(() =>
     patients.filter((p) => {
