@@ -16,517 +16,452 @@ export type Database = {
     Tables: {
       audit_log: {
         Row: {
-          action: string
+          acao: string
           created_at: string
-          details: string
-          entity: string
-          entity_id: string | null
+          dados_anteriores: Json | null
+          dados_novos: Json | null
           id: string
-          user_email: string
-          user_name: string
+          registro_id: string | null
+          tabela: string
+          usuario_id: string | null
         }
         Insert: {
-          action: string
+          acao: string
           created_at?: string
-          details?: string
-          entity?: string
-          entity_id?: string | null
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
           id?: string
-          user_email?: string
-          user_name?: string
+          registro_id?: string | null
+          tabela?: string
+          usuario_id?: string | null
         }
         Update: {
-          action?: string
+          acao?: string
           created_at?: string
-          details?: string
-          entity?: string
-          entity_id?: string | null
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
           id?: string
-          user_email?: string
-          user_name?: string
+          registro_id?: string | null
+          tabela?: string
+          usuario_id?: string | null
         }
         Relationships: []
       }
-      dispensations: {
+      categorias_medicamento: {
         Row: {
-          dispensed_at: string
+          ativo: boolean
+          cor: string
           id: string
-          medication_name: string
-          patient_id: string
-          quantity: number
+          nome: string
         }
         Insert: {
-          dispensed_at?: string
+          ativo?: boolean
+          cor?: string
           id?: string
-          medication_name: string
-          patient_id: string
-          quantity?: number
+          nome: string
         }
         Update: {
-          dispensed_at?: string
+          ativo?: boolean
+          cor?: string
           id?: string
-          medication_name?: string
-          patient_id?: string
-          quantity?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "dispensations_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      medications: {
-        Row: {
-          batch_number: string
-          category: string
-          controlled_substance: boolean
-          created_at: string
-          current_stock: number
-          dosage: string
-          expiration_date: string
-          form: string
-          generic_name: string
-          id: string
-          location: string
-          manufacturer: string
-          minimum_stock: number
-          name: string
-          notes: string
-          updated_at: string
-        }
-        Insert: {
-          batch_number?: string
-          category?: string
-          controlled_substance?: boolean
-          created_at?: string
-          current_stock?: number
-          dosage?: string
-          expiration_date?: string
-          form?: string
-          generic_name?: string
-          id?: string
-          location?: string
-          manufacturer?: string
-          minimum_stock?: number
-          name: string
-          notes?: string
-          updated_at?: string
-        }
-        Update: {
-          batch_number?: string
-          category?: string
-          controlled_substance?: boolean
-          created_at?: string
-          current_stock?: number
-          dosage?: string
-          expiration_date?: string
-          form?: string
-          generic_name?: string
-          id?: string
-          location?: string
-          manufacturer?: string
-          minimum_stock?: number
-          name?: string
-          notes?: string
-          updated_at?: string
+          nome?: string
         }
         Relationships: []
       }
-      movements: {
+      clinicas_parceiras: {
         Row: {
+          ativo: boolean
+          cnes: string
+          contato: string
           created_at: string
+          endereco: string
           id: string
-          medication_id: string | null
-          medication_name: string
-          notes: string
-          patient: string | null
-          quantity: number
-          responsible_person: string
-          type: string
-          ward: string | null
+          nome: string
+          telefone: string
         }
         Insert: {
+          ativo?: boolean
+          cnes?: string
+          contato?: string
           created_at?: string
+          endereco?: string
           id?: string
-          medication_id?: string | null
-          medication_name: string
-          notes?: string
-          patient?: string | null
-          quantity?: number
-          responsible_person?: string
-          type?: string
-          ward?: string | null
+          nome: string
+          telefone?: string
         }
         Update: {
+          ativo?: boolean
+          cnes?: string
+          contato?: string
           created_at?: string
+          endereco?: string
           id?: string
-          medication_id?: string | null
-          medication_name?: string
-          notes?: string
-          patient?: string | null
-          quantity?: number
-          responsible_person?: string
-          type?: string
-          ward?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "movements_medication_id_fkey"
-            columns: ["medication_id"]
-            isOneToOne: false
-            referencedRelation: "medications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      patient_evolution: {
-        Row: {
-          author: string
-          created_at: string
-          description: string
-          id: string
-          patient_id: string
-          type: string
-        }
-        Insert: {
-          author?: string
-          created_at?: string
-          description?: string
-          id?: string
-          patient_id: string
-          type?: string
-        }
-        Update: {
-          author?: string
-          created_at?: string
-          description?: string
-          id?: string
-          patient_id?: string
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "patient_evolution_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      patients: {
-        Row: {
-          admission_date: string | null
-          allergies: string
-          attending_doctor: string
-          bed: string | null
-          created_at: string
-          date_of_birth: string | null
-          diagnosis: string
-          gender: string
-          id: string
-          name: string
-          notes: string
-          registration_number: string
-          status: string
-          updated_at: string
-          ward: string
-        }
-        Insert: {
-          admission_date?: string | null
-          allergies?: string
-          attending_doctor?: string
-          bed?: string | null
-          created_at?: string
-          date_of_birth?: string | null
-          diagnosis?: string
-          gender?: string
-          id?: string
-          name: string
-          notes?: string
-          registration_number?: string
-          status?: string
-          updated_at?: string
-          ward?: string
-        }
-        Update: {
-          admission_date?: string | null
-          allergies?: string
-          attending_doctor?: string
-          bed?: string | null
-          created_at?: string
-          date_of_birth?: string | null
-          diagnosis?: string
-          gender?: string
-          id?: string
-          name?: string
-          notes?: string
-          registration_number?: string
-          status?: string
-          updated_at?: string
-          ward?: string
+          nome?: string
+          telefone?: string
         }
         Relationships: []
       }
-      prescriptions: {
+      configuracoes_hospital: {
         Row: {
-          active: boolean
-          created_at: string
-          dosage: string
-          end_date: string | null
-          frequency: string
+          alerta_estoque_pct: number
+          alerta_vencimento_dias: number
+          cnes: string
           id: string
-          medication_name: string
-          notes: string
-          patient_id: string
-          prescribed_by: string
-          start_date: string
+          logo_url: string | null
+          nome: string
         }
         Insert: {
-          active?: boolean
-          created_at?: string
-          dosage?: string
-          end_date?: string | null
-          frequency?: string
+          alerta_estoque_pct?: number
+          alerta_vencimento_dias?: number
+          cnes?: string
           id?: string
-          medication_name: string
-          notes?: string
-          patient_id: string
-          prescribed_by?: string
-          start_date?: string
+          logo_url?: string | null
+          nome?: string
         }
         Update: {
-          active?: boolean
-          created_at?: string
-          dosage?: string
-          end_date?: string | null
-          frequency?: string
+          alerta_estoque_pct?: number
+          alerta_vencimento_dias?: number
+          cnes?: string
           id?: string
-          medication_name?: string
-          notes?: string
-          patient_id?: string
-          prescribed_by?: string
-          start_date?: string
+          logo_url?: string | null
+          nome?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "prescriptions_patient_id_fkey"
-            columns: ["patient_id"]
-            isOneToOne: false
-            referencedRelation: "patients"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      supplier_medications: {
+      fornecedores: {
         Row: {
-          id: string
-          medication_id: string
-          supplier_id: string
-        }
-        Insert: {
-          id?: string
-          medication_id: string
-          supplier_id: string
-        }
-        Update: {
-          id?: string
-          medication_id?: string
-          supplier_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_medications_medication_id_fkey"
-            columns: ["medication_id"]
-            isOneToOne: false
-            referencedRelation: "medications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supplier_medications_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      supplier_orders: {
-        Row: {
-          created_at: string
-          id: string
-          items: string
-          nf: string | null
-          quantity: number
-          status: string
-          supplier_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          items?: string
-          nf?: string | null
-          quantity?: number
-          status?: string
-          supplier_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          items?: string
-          nf?: string | null
-          quantity?: number
-          status?: string
-          supplier_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supplier_orders_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      suppliers: {
-        Row: {
-          active: boolean
-          address: string
-          avg_delivery_days: number
-          category: string
+          ativo: boolean
           cnpj: string
-          contact: string
+          contato: string
           created_at: string
           email: string
+          endereco: string
           id: string
-          last_order: string | null
-          name: string
-          notes: string
-          phone: string
-          rating: number
+          nome: string
+          telefone: string
           updated_at: string
         }
         Insert: {
-          active?: boolean
-          address?: string
-          avg_delivery_days?: number
-          category?: string
+          ativo?: boolean
           cnpj?: string
-          contact?: string
+          contato?: string
           created_at?: string
           email?: string
+          endereco?: string
           id?: string
-          last_order?: string | null
-          name: string
-          notes?: string
-          phone?: string
-          rating?: number
+          nome: string
+          telefone?: string
           updated_at?: string
         }
         Update: {
-          active?: boolean
-          address?: string
-          avg_delivery_days?: number
-          category?: string
+          ativo?: boolean
           cnpj?: string
-          contact?: string
+          contato?: string
           created_at?: string
           email?: string
+          endereco?: string
           id?: string
-          last_order?: string | null
-          name?: string
-          notes?: string
-          phone?: string
-          rating?: number
+          nome?: string
+          telefone?: string
           updated_at?: string
         }
         Relationships: []
       }
-      transfer_items: {
+      lotes: {
         Row: {
-          batch_number: string
-          dosage: string
+          ativo: boolean
+          created_at: string
           id: string
-          medication_name: string
-          quantity: number
-          transfer_id: string
+          medicamento_id: string
+          numero_lote: string
+          preco_unitario: number
+          quantidade_atual: number
+          validade: string
         }
         Insert: {
-          batch_number?: string
-          dosage?: string
+          ativo?: boolean
+          created_at?: string
           id?: string
-          medication_name: string
-          quantity?: number
-          transfer_id: string
+          medicamento_id: string
+          numero_lote?: string
+          preco_unitario?: number
+          quantidade_atual?: number
+          validade?: string
         }
         Update: {
-          batch_number?: string
-          dosage?: string
+          ativo?: boolean
+          created_at?: string
           id?: string
-          medication_name?: string
-          quantity?: number
-          transfer_id?: string
+          medicamento_id?: string
+          numero_lote?: string
+          preco_unitario?: number
+          quantidade_atual?: number
+          validade?: string
         }
         Relationships: [
           {
-            foreignKeyName: "transfer_items_transfer_id_fkey"
-            columns: ["transfer_id"]
+            foreignKeyName: "lotes_medicamento_id_fkey"
+            columns: ["medicamento_id"]
             isOneToOne: false
-            referencedRelation: "transfers"
+            referencedRelation: "medicamentos"
             referencedColumns: ["id"]
           },
         ]
       }
-      transfers: {
+      medicamentos: {
         Row: {
+          ativo: boolean
+          categoria_id: string | null
+          codigo_barras: string | null
+          concentracao: string
+          controlado: boolean
           created_at: string
-          date: string
-          destination_branch: string
-          direction: string
-          expected_date: string | null
+          estoque_maximo: number
+          estoque_minimo: number
+          forma_farmaceutica: string
+          fornecedor_id: string | null
+          generico: string
           id: string
-          notes: string
-          origin_branch: string
-          received_by: string | null
-          responsible_person: string
-          status: string
-          transport_doc: string | null
+          localizacao: string
+          nome: string
+          preco_unitario: number
+          principio_ativo: string
           updated_at: string
         }
         Insert: {
+          ativo?: boolean
+          categoria_id?: string | null
+          codigo_barras?: string | null
+          concentracao?: string
+          controlado?: boolean
           created_at?: string
-          date?: string
-          destination_branch?: string
-          direction?: string
-          expected_date?: string | null
+          estoque_maximo?: number
+          estoque_minimo?: number
+          forma_farmaceutica?: string
+          fornecedor_id?: string | null
+          generico?: string
           id?: string
-          notes?: string
-          origin_branch?: string
-          received_by?: string | null
-          responsible_person?: string
-          status?: string
-          transport_doc?: string | null
+          localizacao?: string
+          nome: string
+          preco_unitario?: number
+          principio_ativo?: string
           updated_at?: string
         }
         Update: {
+          ativo?: boolean
+          categoria_id?: string | null
+          codigo_barras?: string | null
+          concentracao?: string
+          controlado?: boolean
           created_at?: string
-          date?: string
-          destination_branch?: string
-          direction?: string
-          expected_date?: string | null
+          estoque_maximo?: number
+          estoque_minimo?: number
+          forma_farmaceutica?: string
+          fornecedor_id?: string | null
+          generico?: string
           id?: string
-          notes?: string
-          origin_branch?: string
-          received_by?: string | null
-          responsible_person?: string
-          status?: string
-          transport_doc?: string | null
+          localizacao?: string
+          nome?: string
+          preco_unitario?: number
+          principio_ativo?: string
           updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicamentos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_medicamento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medicamentos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      movimentacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lote_id: string | null
+          medicamento_id: string | null
+          nota_fiscal: string | null
+          observacao: string
+          paciente: string | null
+          prontuario: string | null
+          quantidade: number
+          setor: string | null
+          tipo: Database["public"]["Enums"]["tipo_movimentacao"]
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lote_id?: string | null
+          medicamento_id?: string | null
+          nota_fiscal?: string | null
+          observacao?: string
+          paciente?: string | null
+          prontuario?: string | null
+          quantidade?: number
+          setor?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_movimentacao"]
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lote_id?: string | null
+          medicamento_id?: string | null
+          nota_fiscal?: string | null
+          observacao?: string
+          paciente?: string | null
+          prontuario?: string | null
+          quantidade?: number
+          setor?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_movimentacao"]
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          ativo: boolean
+          avatar_url: string | null
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transferencias: {
+        Row: {
+          aprovador_id: string | null
+          clinica_destino_id: string | null
+          clinica_origem_id: string | null
+          created_at: string
+          id: string
+          lote_id: string | null
+          medicamento_id: string | null
+          observacao: string
+          quantidade: number
+          solicitante_id: string | null
+          status: Database["public"]["Enums"]["status_transferencia"]
+          updated_at: string
+          urgencia: boolean
+        }
+        Insert: {
+          aprovador_id?: string | null
+          clinica_destino_id?: string | null
+          clinica_origem_id?: string | null
+          created_at?: string
+          id?: string
+          lote_id?: string | null
+          medicamento_id?: string | null
+          observacao?: string
+          quantidade?: number
+          solicitante_id?: string | null
+          status?: Database["public"]["Enums"]["status_transferencia"]
+          updated_at?: string
+          urgencia?: boolean
+        }
+        Update: {
+          aprovador_id?: string | null
+          clinica_destino_id?: string | null
+          clinica_origem_id?: string | null
+          created_at?: string
+          id?: string
+          lote_id?: string | null
+          medicamento_id?: string | null
+          observacao?: string
+          quantidade?: number
+          solicitante_id?: string | null
+          status?: Database["public"]["Enums"]["status_transferencia"]
+          updated_at?: string
+          urgencia?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencias_clinica_destino_id_fkey"
+            columns: ["clinica_destino_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas_parceiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_clinica_origem_id_fkey"
+            columns: ["clinica_origem_id"]
+            isOneToOne: false
+            referencedRelation: "clinicas_parceiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -535,10 +470,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      promote_to_admin: { Args: { _email: string }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "admin"
+        | "farmaceutico"
+        | "auxiliar_farmacia"
+        | "enfermeiro"
+        | "visualizador"
+      status_transferencia:
+        | "pendente"
+        | "aprovado"
+        | "enviado"
+        | "recebido"
+        | "cancelado"
+      tipo_movimentacao:
+        | "entrada"
+        | "saida"
+        | "transferencia"
+        | "ajuste"
+        | "dispensacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -665,6 +628,28 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "admin",
+        "farmaceutico",
+        "auxiliar_farmacia",
+        "enfermeiro",
+        "visualizador",
+      ],
+      status_transferencia: [
+        "pendente",
+        "aprovado",
+        "enviado",
+        "recebido",
+        "cancelado",
+      ],
+      tipo_movimentacao: [
+        "entrada",
+        "saida",
+        "transferencia",
+        "ajuste",
+        "dispensacao",
+      ],
+    },
   },
 } as const
