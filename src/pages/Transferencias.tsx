@@ -551,7 +551,7 @@ const Transferencias = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Select value={item.medicationName} onValueChange={(v) => {
-                        const med = mockMedications.find((m) => m.name === v);
+                        const med = medications.find((m) => m.name === v);
                         if (med) {
                           updateItem(idx, "medicationName", med.name);
                           updateItem(idx, "dosage", med.dosage);
@@ -560,7 +560,7 @@ const Transferencias = () => {
                       }}>
                         <SelectTrigger className="text-xs"><SelectValue placeholder="Medicamento" /></SelectTrigger>
                         <SelectContent>
-                          {mockMedications.map((m) => <SelectItem key={m.id} value={m.name}>{m.name} {m.dosage}</SelectItem>)}
+                          {medications.map((m) => <SelectItem key={m.id} value={m.name}>{m.name} {m.dosage}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <Input type="number" min={1} placeholder="Quantidade" value={item.quantity || ""} onChange={(e) => updateItem(idx, "quantity", Number(e.target.value))} className="text-xs" />

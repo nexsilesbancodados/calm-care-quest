@@ -38,7 +38,8 @@ const Etiquetas = () => {
   const [showPreview, setShowPreview] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const filteredMeds = mockMedications.filter((m) =>
+  const { medications: allMeds } = useMedicationContext();
+  const filteredMeds = allMeds.filter((m) =>
     !search || m.name.toLowerCase().includes(search.toLowerCase()) || m.batchNumber.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -58,7 +59,7 @@ const Etiquetas = () => {
     }
   };
 
-  const selectedMeds = mockMedications.filter((m) => selectedIds.has(m.id));
+  const selectedMeds = allMeds.filter((m) => selectedIds.has(m.id));
 
   const generateCodeValue = (med: Medication) => {
     return `${med.batchNumber}-${med.name.replace(/\s/g, "").substring(0, 10)}`;
@@ -368,7 +369,8 @@ function ScannerCard() {
 
   const handleScan = () => {
     if (!scanInput.trim()) return;
-    const found = mockMedications.find(
+    const { medications } = useMedicationContext();
+    const found = medications.find(
       (m) => m.batchNumber.toLowerCase() === scanInput.toLowerCase() ||
         `${m.batchNumber}-${m.name.replace(/\s/g, "").substring(0, 10)}`.toLowerCase() === scanInput.toLowerCase()
     );
