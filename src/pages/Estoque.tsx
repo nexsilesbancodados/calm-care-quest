@@ -135,8 +135,8 @@ const Estoque = () => {
                 const expanded = expandedIds.has(med.id);
                 const valorTotal = med.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0);
                 return (
-                  <>
-                    <TableRow key={med.id} className="hover:bg-accent/30 cursor-pointer" onClick={() => med.lotes.length > 0 && toggleExpand(med.id)}>
+                  <React.Fragment key={med.id}>
+                    <TableRow className="hover:bg-accent/30 cursor-pointer" onClick={() => med.lotes.length > 0 && toggleExpand(med.id)}>
                       <TableCell className="w-8">
                         {med.lotes.length > 0 && (expanded ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />)}
                       </TableCell>
