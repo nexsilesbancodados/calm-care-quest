@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Moon, Sun, LogOut, Settings, ChevronRight, Shield, Bell } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, ChevronRight, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/ThemeProvider";
@@ -12,6 +12,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
+import { useEffect } from "react";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -28,6 +32,7 @@ const pageTitles: Record<string, string> = {
   "/configuracoes": "Configurações",
   "/usuarios": "Usuários",
   "/leitor": "Leitor de Código",
+  "/admin": "Painel Admin",
 };
 
 interface AppLayoutProps {
