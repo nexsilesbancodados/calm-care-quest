@@ -52,7 +52,7 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">PharmaControl</span>
+              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">PsiRumoCerto</span>
               <span className="text-[11px] text-sidebar-foreground/60">Farmácia Hospitalar</span>
             </div>
           )}
@@ -111,7 +111,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-4">
         {!collapsed && (
           <div className="rounded-lg bg-sidebar-accent/50 p-3">
-            <p className="text-[11px] text-sidebar-foreground/50 leading-relaxed">PharmaControl v2.0</p>
+            <p className="text-[11px] text-sidebar-foreground/50 leading-relaxed">PsiRumoCerto v2.0</p>
           </div>
         )}
       </SidebarFooter>
