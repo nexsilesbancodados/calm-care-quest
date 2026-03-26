@@ -33,6 +33,7 @@ const pageTitles: Record<string, string> = {
   "/usuarios": "Usuários",
   "/leitor": "Leitor de Código",
   "/admin": "Painel Admin",
+  "/prescricoes": "Prescrições",
 };
 
 interface AppLayoutProps {

@@ -200,7 +200,7 @@ const Dashboard = () => {
       </motion.div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-3 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-2 sm:gap-3 mb-6">
         <StatCard title="Total" value={stats.total} icon={Pill} variant="info" delay={0} onClick={() => navigate("/medicamentos")} />
         <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.04} />
         <StatCard title="Est. Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.08} onClick={() => navigate("/alertas")} />
