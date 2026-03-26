@@ -20,6 +20,7 @@ import Relatorios from "./pages/Relatorios";
 import Entrada from "./pages/Entrada";
 import Dispensacao from "./pages/Dispensacao";
 import LeitorBarcode from "./pages/LeitorBarcode";
+import Prescricoes from "./pages/Prescricoes";
 import Usuarios from "./pages/Usuarios";
 import AdminPanel from "./pages/AdminPanel";
 import Login from "./pages/Login";
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/admin" element={<P><AdminPanel /></P>} />
                 <Route path="/configuracoes" element={<P><Configuracoes /></P>} />
                 <Route path="/leitor" element={<P><LeitorBarcode /></P>} />
+                <Route path="/prescricoes" element={<P><Prescricoes /></P>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
