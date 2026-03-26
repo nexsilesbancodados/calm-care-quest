@@ -277,7 +277,6 @@ const Alertas = () => {
               <motion.div key={a.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
                 className="group flex items-start gap-3 sm:gap-4 rounded-xl border bg-card p-3 sm:p-4 shadow-card hover:shadow-card-hover transition-all relative overflow-hidden"
               >
-              >
                 <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", cfg.className)}>
                   <cfg.icon className="h-5 w-5" />
                 </div>
