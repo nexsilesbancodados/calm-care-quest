@@ -11,29 +11,30 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/PageLoader";
 import { CommandPalette } from "@/components/CommandPalette";
 import { lazy, Suspense } from "react";
+import { pages } from "@/lib/lazyPages";
 
-// Lazy-loaded pages
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Medicamentos = lazy(() => import("./pages/Medicamentos"));
-const Alertas = lazy(() => import("./pages/Alertas"));
-const Movimentacoes = lazy(() => import("./pages/Movimentacoes"));
-const Estoque = lazy(() => import("./pages/Estoque"));
-const Configuracoes = lazy(() => import("./pages/Configuracoes"));
-const Etiquetas = lazy(() => import("./pages/Etiquetas"));
-const Transferencias = lazy(() => import("./pages/Transferencias"));
-const Fornecedores = lazy(() => import("./pages/Fornecedores"));
-const Relatorios = lazy(() => import("./pages/Relatorios"));
-const Entrada = lazy(() => import("./pages/Entrada"));
-const Dispensacao = lazy(() => import("./pages/Dispensacao"));
-const LeitorBarcode = lazy(() => import("./pages/LeitorBarcode"));
-const Prescricoes = lazy(() => import("./pages/Prescricoes"));
-const Usuarios = lazy(() => import("./pages/Usuarios"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const Pacientes = lazy(() => import("./pages/Pacientes"));
-const Inventario = lazy(() => import("./pages/Inventario"));
-const Perfil = lazy(() => import("./pages/Perfil"));
-const Login = lazy(() => import("./pages/Login"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+// Lazy-loaded pages using centralized imports
+const Dashboard = lazy(pages["/"]);
+const Medicamentos = lazy(pages["/medicamentos"]);
+const Alertas = lazy(pages["/alertas"]);
+const Movimentacoes = lazy(pages["/movimentacoes"]);
+const Estoque = lazy(pages["/estoque"]);
+const Configuracoes = lazy(pages["/configuracoes"]);
+const Etiquetas = lazy(pages["/etiquetas"]);
+const Transferencias = lazy(pages["/transferencias"]);
+const Fornecedores = lazy(pages["/fornecedores"]);
+const Relatorios = lazy(pages["/relatorios"]);
+const Entrada = lazy(pages["/entrada"]);
+const Dispensacao = lazy(pages["/dispensacao"]);
+const LeitorBarcode = lazy(pages["/leitor"]);
+const Prescricoes = lazy(pages["/prescricoes"]);
+const Usuarios = lazy(pages["/usuarios"]);
+const AdminPanel = lazy(pages["/admin"]);
+const Pacientes = lazy(pages["/pacientes"]);
+const Inventario = lazy(pages["/inventario"]);
+const Perfil = lazy(pages["/perfil"]);
+const Login = lazy(pages["/login"]);
+const ResetPassword = lazy(pages["/reset-password"]);
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
