@@ -29,6 +29,7 @@ const allItems = [
   { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: null, badgeKey: "alerts" as const },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null, badgeKey: null },
   { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
+  { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: "prescricoes" as const },
 ];
 
 const systemItems = [
@@ -43,14 +44,15 @@ export function AppSidebar() {
   const location = useLocation();
   const { profile } = useAuth();
   const isActive = (path: string) => location.pathname === path;
-  const [badgeCounts, setBadgeCounts] = useState<{ alerts: number; transfers: number }>({ alerts: 0, transfers: 0 });
+  const [badgeCounts, setBadgeCounts] = useState<{ alerts: number; transfers: number; prescricoes: number }>({ alerts: 0, transfers: 0, prescricoes: 0 });
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const [{ data: medsData }, { data: lotesData }, { count: transCount }] = await Promise.all([
+      const [{ data: medsData }, { data: lotesData }, { count: transCount }, { count: prescCount }] = await Promise.all([
         supabase.from("medicamentos").select("id, estoque_minimo").eq("ativo", true),
         supabase.from("lotes").select("id, medicamento_id, quantidade_atual, validade").eq("ativo", true),
         supabase.from("transferencias").select("id", { count: "exact", head: true }).eq("status", "pendente"),
+        supabase.from("prescricoes").select("id", { count: "exact", head: true }).eq("status", "ativa"),
       ]);
 
       const now = new Date();
@@ -66,7 +68,7 @@ export function AppSidebar() {
         });
       });
 
-      setBadgeCounts({ alerts: alertCount, transfers: transCount || 0 });
+      setBadgeCounts({ alerts: alertCount, transfers: transCount || 0, prescricoes: prescCount || 0 });
     };
 
     fetchCounts();
