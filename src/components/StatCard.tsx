@@ -76,7 +76,7 @@ export function StatCard({ title, value, icon: Icon, variant = "default", suffix
       transition={{ duration: 0.35, delay, type: "spring", stiffness: 260, damping: 22 }}
       whileHover={{ y: -3, transition: { duration: 0.15 } }}
       className={cn(
-        "group relative rounded-xl border bg-card p-3.5 transition-all duration-200 cursor-default overflow-hidden",
+        "group relative rounded-xl border bg-card p-2.5 sm:p-3.5 transition-all duration-200 cursor-default overflow-hidden",
         onClick && "cursor-pointer active:scale-[0.97]",
         config.card,
         "shadow-sm hover:shadow-md"
@@ -86,22 +86,22 @@ export function StatCard({ title, value, icon: Icon, variant = "default", suffix
       {/* Accent gradient overlay */}
       <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300", config.accent)} />
 
-      <div className="relative flex items-center gap-3">
+      <div className="relative flex items-center gap-2 sm:gap-3">
         {/* Icon */}
         <div className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ring-1 transition-all duration-200",
+          "flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg ring-1 transition-all duration-200",
           "group-hover:scale-105 group-hover:shadow-sm",
           config.icon
         )}>
-          <Icon className="h-4 w-4" strokeWidth={2} />
+          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={2} />
         </div>
 
         {/* Content */}
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{title}</p>
-          <p className="text-xl font-bold text-foreground tabular-nums tracking-tight leading-tight font-display">
+          <p className="text-[8px] sm:text-[10px] uppercase tracking-wider text-muted-foreground font-medium truncate">{title}</p>
+          <p className="text-lg sm:text-xl font-bold text-foreground tabular-nums tracking-tight leading-tight font-display">
             {animatedValue}
-            {suffix && <span className="text-[10px] font-medium text-muted-foreground ml-0.5">{suffix}</span>}
+            {suffix && <span className="text-[8px] sm:text-[10px] font-medium text-muted-foreground ml-0.5">{suffix}</span>}
           </p>
         </div>
 
