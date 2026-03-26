@@ -22,8 +22,34 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Respon
 import {
   Package, AlertTriangle, CheckCircle, TrendingDown, Search, ChevronDown, ChevronRight,
   Calendar, Wrench, ShieldAlert, DollarSign, Clock, ArrowUpDown, ChevronLeft,
-  Filter, X, BarChart3, TableIcon, AlertCircle, Info, TrendingUp, ShoppingCart
+  Filter, X, BarChart3, TableIcon, AlertCircle, Info, TrendingUp, ShoppingCart,
+  Pill, Syringe, Droplets, Wind, Eye, Sparkles, FlaskConical, CircleDot, type LucideIcon,
 } from "lucide-react";
+
+const FORMA_ICON_MAP: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
+  "Comprimido": { icon: Pill, color: "text-primary", bg: "bg-primary/10" },
+  "Cápsula": { icon: CircleDot, color: "text-info", bg: "bg-info/10" },
+  "Injetável": { icon: Syringe, color: "text-destructive", bg: "bg-destructive/10" },
+  "Solução": { icon: FlaskConical, color: "text-accent", bg: "bg-accent/10" },
+  "Solução Oral": { icon: Droplets, color: "text-accent", bg: "bg-accent/10" },
+  "Suspensão": { icon: FlaskConical, color: "text-info", bg: "bg-info/10" },
+  "Pomada": { icon: Sparkles, color: "text-warning", bg: "bg-warning/10" },
+  "Creme": { icon: Sparkles, color: "text-warning", bg: "bg-warning/10" },
+  "Gel": { icon: Droplets, color: "text-success", bg: "bg-success/10" },
+  "Colírio": { icon: Eye, color: "text-info", bg: "bg-info/10" },
+  "Spray": { icon: Wind, color: "text-accent", bg: "bg-accent/10" },
+  "Aerossol": { icon: Wind, color: "text-accent", bg: "bg-accent/10" },
+  "Xarope": { icon: Droplets, color: "text-primary", bg: "bg-primary/10" },
+  "Supositório": { icon: CircleDot, color: "text-warning", bg: "bg-warning/10" },
+  "Pó": { icon: Sparkles, color: "text-muted-foreground", bg: "bg-muted" },
+};
+
+function getFormaVisual(forma: string) {
+  const match = Object.entries(FORMA_ICON_MAP).find(([key]) =>
+    forma.toLowerCase().includes(key.toLowerCase())
+  );
+  return match ? match[1] : { icon: Pill, color: "text-muted-foreground", bg: "bg-muted" };
+}
 import { toast } from "sonner";
 import type { Medicamento, Lote, Categoria } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
@@ -531,7 +557,16 @@ const Estoque = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2.5">
+                              {(() => {
+                                const fv = getFormaVisual(med.forma_farmaceutica);
+                                const FormaIcon = fv.icon;
+                                return (
+                                  <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", fv.bg)}>
+                                    <FormaIcon className={cn("h-4 w-4", fv.color)} />
+                                  </div>
+                                );
+                              })()}
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <p className="text-sm font-medium">{med.nome}</p>
