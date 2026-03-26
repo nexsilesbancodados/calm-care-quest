@@ -234,22 +234,24 @@ const Dashboard = () => {
           transition={{ delay: 0.12 }}
           className="mb-4 sm:mb-6"
         >
-          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 sm:p-4 flex items-center gap-3">
-            <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-semibold text-foreground">
-                {criticalCoverageMeds.length} medicamento{criticalCoverageMeds.length > 1 ? "s" : ""} com menos de 7 dias de cobertura estimada
-              </p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
-                {criticalCoverageMeds.slice(0, 3).map(m => m.nome).join(", ")}{criticalCoverageMeds.length > 3 ? ` e mais ${criticalCoverageMeds.length - 3}` : ""}
-              </p>
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-foreground">
+                  {criticalCoverageMeds.length} medicamento{criticalCoverageMeds.length > 1 ? "s" : ""} com menos de 7 dias de cobertura
+                </p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+                  {criticalCoverageMeds.slice(0, 3).map(m => m.nome).join(", ")}{criticalCoverageMeds.length > 3 ? ` e mais ${criticalCoverageMeds.length - 3}` : ""}
+                </p>
+              </div>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="shrink-0 text-xs gap-1 border-destructive/20 text-destructive hover:bg-destructive/10"
+              className="shrink-0 text-xs gap-1 border-destructive/20 text-destructive hover:bg-destructive/10 w-full sm:w-auto"
               onClick={() => navigate("/estoque")}
             >
               Ver no Estoque <ArrowRight className="h-3 w-3" />
