@@ -132,20 +132,19 @@ export function AppSidebar() {
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-          <NavLink
-            to={item.url}
-            end={item.url === "/"}
-            className={cn(
-              "group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sidebar-foreground/70 transition-all duration-200",
-              "hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60",
-              active && "bg-sidebar-primary/15 text-sidebar-primary-foreground border border-sidebar-primary/25 shadow-[0_0_12px_hsl(var(--sidebar-primary)/0.15)]"
-            )}
-            activeClassName=""
-            style={{ animationDelay: `${index * 30}ms` }}
-          >
+            <NavLink
+              to={item.url}
+              end={item.url === "/"}
+              className={cn(
+                "group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sidebar-foreground/70 transition-colors duration-75",
+                "hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60",
+                active && "bg-sidebar-primary/15 text-sidebar-primary-foreground border border-sidebar-primary/25 shadow-[0_0_12px_hsl(var(--sidebar-primary)/0.15)]"
+              )}
+              activeClassName=""
+            >
             <div className="relative">
               <item.icon className={cn(
-                "h-[17px] w-[17px] shrink-0 transition-all duration-200",
+                "h-[17px] w-[17px] shrink-0 transition-colors duration-75",
                 active
                   ? "text-sidebar-ring drop-shadow-[0_0_4px_hsl(var(--sidebar-primary)/0.5)]"
                   : "text-sidebar-foreground/45 group-hover:text-sidebar-accent-foreground"
@@ -157,7 +156,7 @@ export function AppSidebar() {
             {!collapsed && (
               <>
                 <span className={cn(
-                  "text-[13px] flex-1 transition-colors duration-200",
+                  "text-[13px] flex-1 transition-colors duration-75",
                   active ? "font-semibold text-sidebar-accent-foreground" : "font-medium"
                 )}>
                   {item.title}
