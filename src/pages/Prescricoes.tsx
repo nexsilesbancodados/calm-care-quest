@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAutomations } from "@/hooks/useAutomations";
-import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
