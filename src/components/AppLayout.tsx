@@ -100,7 +100,7 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Premium Header */}
-          <header className="h-[60px] flex items-center justify-between border-b border-border/40 bg-card/50 backdrop-blur-2xl px-3 sm:px-5 sticky top-0 z-10">
+          <header className="h-[56px] sm:h-[60px] flex items-center justify-between border-b border-border/30 bg-card/60 backdrop-blur-2xl px-3 sm:px-5 sticky top-0 z-10">
             {/* Left side */}
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-accent/20 transition-all rounded-lg h-8 w-8" />
@@ -239,8 +239,10 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
           </header>
 
           {/* Main content */}
-          <main className="flex-1 p-3 sm:p-6 overflow-auto">
-            {children}
+          <main className="flex-1 p-3 sm:p-5 lg:p-6 overflow-auto">
+            <div className="page-enter">
+              {children}
+            </div>
           </main>
         </div>
       </div>

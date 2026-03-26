@@ -62,55 +62,55 @@
     --gradient-sidebar: linear-gradient(180deg, hsl(162 40% 8%), hsl(162 45% 4%));
     --gradient-hero: linear-gradient(135deg, hsl(152 50% 18%), hsl(170 45% 22%), hsl(190 50% 26%));
     --gradient-accent: linear-gradient(135deg, hsl(190 55% 38%), hsl(190 60% 48%));
-    --shadow-card: 0 1px 2px hsl(160 30% 10% / 0.02), 0 4px 12px hsl(160 30% 10% / 0.04), 0 8px 24px hsl(160 30% 10% / 0.03);
-    --shadow-card-hover: 0 4px 8px hsl(160 30% 10% / 0.04), 0 12px 32px hsl(160 30% 10% / 0.08), 0 0 0 1px hsl(152 58% 38% / 0.04);
-    --shadow-elevated: 0 8px 32px hsl(160 30% 10% / 0.1), 0 20px 48px hsl(160 30% 10% / 0.06);
-    --shadow-glow: 0 0 24px hsl(152 58% 38% / 0.2), 0 4px 16px hsl(152 58% 38% / 0.1);
+    --shadow-card: 0 1px 3px hsl(160 30% 10% / 0.03), 0 4px 16px hsl(160 30% 10% / 0.05);
+    --shadow-card-hover: 0 4px 12px hsl(160 30% 10% / 0.06), 0 16px 40px hsl(160 30% 10% / 0.1), 0 0 0 1px hsl(152 58% 38% / 0.06);
+    --shadow-elevated: 0 12px 40px hsl(160 30% 10% / 0.12), 0 24px 56px hsl(160 30% 10% / 0.08);
+    --shadow-glow: 0 0 28px hsl(152 58% 38% / 0.22), 0 4px 20px hsl(152 58% 38% / 0.12);
   }
 
   .dark {
     --background: 162 35% 5%;
-    --foreground: 155 15% 92%;
-    --card: 162 30% 8%;
-    --card-foreground: 155 15% 92%;
-    --popover: 162 30% 8%;
-    --popover-foreground: 155 15% 92%;
-    --primary: 152 60% 58%;
-    --primary-foreground: 0 0% 100%;
-    --primary-glow: 152 65% 65%;
+    --foreground: 150 12% 93%;
+    --card: 162 28% 8.5%;
+    --card-foreground: 150 12% 93%;
+    --popover: 162 28% 8.5%;
+    --popover-foreground: 150 12% 93%;
+    --primary: 152 62% 55%;
+    --primary-foreground: 162 40% 4%;
+    --primary-glow: 152 68% 62%;
     --secondary: 162 22% 13%;
-    --secondary-foreground: 155 15% 88%;
+    --secondary-foreground: 150 12% 88%;
     --muted: 162 20% 12%;
-    --muted-foreground: 155 10% 52%;
-    --accent: 190 50% 46%;
+    --muted-foreground: 150 10% 55%;
+    --accent: 190 50% 48%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 48%;
+    --destructive: 0 62% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 162 20% 15%;
-    --input: 162 20% 14%;
-    --ring: 152 60% 58%;
+    --border: 162 18% 16%;
+    --input: 162 18% 15%;
+    --ring: 152 62% 55%;
 
-    --sidebar-background: 162 40% 4%;
-    --sidebar-foreground: 155 12% 52%;
-    --sidebar-primary: 152 58% 58%;
-    --sidebar-accent: 162 28% 10%;
-    --sidebar-accent-foreground: 155 12% 88%;
-    --sidebar-border: 162 25% 12%;
-    --sidebar-muted: 162 20% 12%;
+    --sidebar-background: 162 38% 4.5%;
+    --sidebar-foreground: 150 10% 55%;
+    --sidebar-primary: 152 60% 52%;
+    --sidebar-accent: 162 26% 11%;
+    --sidebar-accent-foreground: 150 10% 90%;
+    --sidebar-border: 162 22% 13%;
+    --sidebar-muted: 162 18% 12%;
 
-    --warning: 38 88% 52%;
+    --warning: 38 88% 54%;
     --warning-foreground: 38 95% 15%;
-    --success: 152 55% 55%;
-    --success-foreground: 0 0% 100%;
-    --info: 210 75% 60%;
+    --success: 152 58% 52%;
+    --success-foreground: 162 40% 4%;
+    --info: 210 78% 62%;
     --info-foreground: 0 0% 100%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(152 50% 40%), hsl(152 55% 52%));
-    --gradient-hero: linear-gradient(135deg, hsl(152 45% 14%), hsl(170 40% 18%), hsl(190 45% 22%));
-    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.15), 0 4px 12px hsl(0 0% 0% / 0.2), 0 0 0 1px hsl(155 20% 20% / 0.15);
-    --shadow-card-hover: 0 4px 8px hsl(0 0% 0% / 0.2), 0 12px 32px hsl(0 0% 0% / 0.3), 0 0 0 1px hsl(152 55% 48% / 0.1);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.35), 0 20px 48px hsl(0 0% 0% / 0.2);
-    --shadow-glow: 0 0 32px hsl(152 55% 48% / 0.25), 0 4px 16px hsl(152 55% 48% / 0.15);
+    --gradient-primary: linear-gradient(135deg, hsl(152 52% 42%), hsl(152 58% 55%));
+    --gradient-hero: linear-gradient(135deg, hsl(152 42% 14%), hsl(170 38% 18%), hsl(190 42% 22%));
+    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.2), 0 4px 16px hsl(0 0% 0% / 0.25), 0 0 0 1px hsl(152 30% 25% / 0.08);
+    --shadow-card-hover: 0 4px 12px hsl(0 0% 0% / 0.25), 0 16px 40px hsl(0 0% 0% / 0.35), 0 0 0 1px hsl(152 55% 48% / 0.12);
+    --shadow-elevated: 0 12px 40px hsl(0 0% 0% / 0.4), 0 24px 56px hsl(0 0% 0% / 0.25);
+    --shadow-glow: 0 0 36px hsl(152 58% 50% / 0.3), 0 4px 20px hsl(152 58% 50% / 0.18);
   }
 }
 
@@ -129,18 +129,19 @@
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.15);
+    background: hsl(var(--muted-foreground) / 0.12);
     border-radius: 9999px;
+    transition: background 0.2s;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.3);
+    background: hsl(var(--muted-foreground) / 0.25);
   }
 
   select,
@@ -241,10 +242,10 @@
 
 @layer utilities {
   .glass {
-    @apply bg-card/70 backdrop-blur-xl border border-border/40;
+    @apply bg-card/60 backdrop-blur-xl border border-border/30;
   }
   .glass-strong {
-    @apply bg-card/85 backdrop-blur-2xl border border-border/50;
+    @apply bg-card/80 backdrop-blur-2xl border border-border/40;
   }
   .gradient-primary {
     background: var(--gradient-primary);
@@ -400,24 +401,25 @@
   }
 }
 
-/* Global mobile improvements */
+/* ===== Global Smooth Transitions ===== */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Global mobile improvements ===== */
 @media (max-width: 639px) {
-  /* Prevent horizontal overflow */
   body {
     overflow-x: hidden;
   }
 
-  /* Smaller padding on mobile for dialogs/cards */
   .sm\:p-6 {
     padding: 0.75rem;
   }
 
-  /* Fix select triggers on mobile */
   [role="combobox"] {
     font-size: 12px;
   }
 
-  /* Tabs on mobile */
   [role="tablist"] {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -425,6 +427,30 @@
   }
   [role="tablist"]::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Better touch targets on mobile */
+  button, [role="button"], a {
+    min-height: 36px;
+  }
+
+  /* Better table scroll on mobile */
+  table {
+    font-size: 11px;
+  }
+
+  /* Dialog improvements on mobile */
+  [role="dialog"] {
+    max-height: 90vh;
+    margin: 16px;
+  }
+}
+
+/* ===== Medium screens ===== */
+@media (min-width: 640px) and (max-width: 1023px) {
+  /* Tablet optimizations */
+  .grid-cols-2 {
+    gap: 0.625rem;
   }
 }
 
