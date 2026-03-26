@@ -76,6 +76,8 @@ const Entrada = () => {
   // Active tab
   const [tab, setTab] = useState("entrada");
 
+  const qtdInputRef = React.useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
@@ -91,6 +93,8 @@ const Entrada = () => {
       const medId = searchParams.get("medicamento_id");
       if (medId && (m || []).find((med: any) => med.id === medId)) {
         setCurMedId(medId);
+        // Focus quantity field when coming from reposition
+        setTimeout(() => qtdInputRef.current?.focus(), 300);
       }
       setLoading(false);
     });

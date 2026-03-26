@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
 import { Card } from "@/components/ui/card";
@@ -8,7 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { useDashboardCore, useConsumoData } from "@/hooks/useDashboardData";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell,
   CartesianGrid, Area, AreaChart,
@@ -31,13 +33,6 @@ const PERIOD_OPTIONS = [
   { value: "last_month", label: "Mês anterior" },
 ];
 
-const quickActions = [
-  { label: "Entrada", desc: "Receber", icon: ArrowDownCircle, path: "/entrada", color: "text-success", bg: "bg-success/8 group-hover:bg-success/12" },
-  { label: "Dispensar", desc: "Saída", icon: ArrowUpCircle, path: "/dispensacao", color: "text-info", bg: "bg-info/8 group-hover:bg-info/12" },
-  { label: "Etiquetas", desc: "Imprimir", icon: Barcode, path: "/etiquetas", color: "text-primary", bg: "bg-primary/8 group-hover:bg-primary/12" },
-  { label: "Transferir", desc: "Clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "text-warning", bg: "bg-warning/8 group-hover:bg-warning/12" },
-];
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -46,6 +41,37 @@ const Dashboard = () => {
 
   const { data: core, isLoading } = useDashboardCore();
   const { data: consumoData = [] } = useConsumoData(period);
+
+  // Fetch consumo 30d for coverage calculation
+  const { data: consumo30d = {} } = useQuery({
+    queryKey: ["dashboard-consumo-30d-coverage"],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase.from("movimentacoes").select("medicamento_id, quantidade")
+        .in("tipo", ["saida", "dispensacao"])
+        .gte("created_at", thirtyDaysAgo);
+      const cMap: Record<string, number> = {};
+      (data || []).forEach((m: any) => {
+        if (m.medicamento_id) cMap[m.medicamento_id] = (cMap[m.medicamento_id] || 0) + m.quantidade;
+      });
+      return cMap;
+    },
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch today's dispensações count
+  const { data: dispensacoesHoje = 0 } = useQuery({
+    queryKey: ["dashboard-dispensacoes-hoje"],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count } = await supabase.from("movimentacoes").select("id", { count: "exact", head: true })
+        .eq("tipo", "dispensacao")
+        .gte("created_at", today.toISOString());
+      return count || 0;
+    },
+    staleTime: 60 * 1000,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
@@ -75,6 +101,19 @@ const Dashboard = () => {
   const expiredMeds = meds.filter(m => m.lotes.some(l => new Date(l.validade) < now));
   const lowStockMeds = meds.filter(m => { const t = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0); return t > 0 && t <= m.estoque_minimo; });
 
+  // Critical coverage: meds with ≤ 7 days coverage
+  const criticalCoverageMeds = useMemo(() => {
+    return meds.filter(m => {
+      const total = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0);
+      if (total === 0) return false;
+      const consumo = consumo30d[m.id] || 0;
+      if (consumo === 0) return false;
+      const cmmDiario = consumo / 30;
+      const dias = total / cmmDiario;
+      return dias <= 7;
+    });
+  }, [meds, consumo30d]);
+
   const greeting = () => {
     const h = now.getHours();
     if (h < 12) return "Bom dia";
@@ -83,6 +122,14 @@ const Dashboard = () => {
   };
 
   const totalAlerts = expiredMeds.length + lowStockMeds.length + (pendingTransfers > 0 ? 1 : 0);
+
+  // Quick actions with badges
+  const quickActions = useMemo(() => [
+    { label: "Entrada", desc: "Receber", icon: ArrowDownCircle, path: "/entrada", color: "text-success", bg: "bg-success/8 group-hover:bg-success/12", badge: stats.outOfStock > 0 ? `${stats.outOfStock} em falta` : null },
+    { label: "Dispensar", desc: "Saída", icon: ArrowUpCircle, path: "/dispensacao", color: "text-info", bg: "bg-info/8 group-hover:bg-info/12", badge: dispensacoesHoje > 0 ? `${dispensacoesHoje} hoje` : null },
+    { label: "Etiquetas", desc: "Imprimir", icon: Barcode, path: "/etiquetas", color: "text-primary", bg: "bg-primary/8 group-hover:bg-primary/12", badge: null },
+    { label: "Transferir", desc: "Clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "text-warning", bg: "bg-warning/8 group-hover:bg-warning/12", badge: pendingTransfers > 0 ? `${pendingTransfers} pendentes` : null },
+  ], [stats.outOfStock, dispensacoesHoje, pendingTransfers]);
 
   if (isLoading)
     return (
@@ -145,7 +192,7 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* ── Quick Actions ── */}
+      {/* ── Quick Actions with badges ── */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="mb-4 sm:mb-6">
         <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
           {quickActions.map((a, i) => (
@@ -155,7 +202,7 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.04 }}
               onClick={() => navigate(a.path)}
-              className="group flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 rounded-xl border border-border/50 bg-card p-2.5 sm:p-3.5 hover:border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.97] text-center sm:text-left"
+              className="group flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 rounded-xl border border-border/50 bg-card p-2.5 sm:p-3.5 hover:border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.97] text-center sm:text-left relative"
             >
               <div className={cn("flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200", a.bg)}>
                 <a.icon className={cn("h-3.5 w-3.5 sm:h-4.5 sm:w-4.5", a.color)} />
@@ -164,11 +211,48 @@ const Dashboard = () => {
                 <p className="text-[10px] sm:text-sm font-semibold text-foreground leading-tight truncate">{a.label}</p>
                 <p className="text-[8px] sm:text-[10px] text-muted-foreground mt-0 sm:mt-0.5 truncate hidden sm:block">{a.desc}</p>
               </div>
+              {a.badge && (
+                <span className="text-[9px] font-semibold bg-destructive/15 text-destructive rounded-full px-1.5 py-0.5 absolute top-1 right-1 sm:static sm:ml-auto whitespace-nowrap">
+                  {a.badge}
+                </span>
+              )}
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 ml-auto shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all hidden sm:block" />
             </motion.button>
           ))}
         </div>
       </motion.div>
+
+      {/* ── Critical Coverage Alert ── */}
+      {criticalCoverageMeds.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-4 sm:mb-6"
+        >
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 sm:p-4 flex items-center gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+              <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-semibold text-foreground">
+                {criticalCoverageMeds.length} medicamento{criticalCoverageMeds.length > 1 ? "s" : ""} com menos de 7 dias de cobertura estimada
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+                {criticalCoverageMeds.slice(0, 3).map(m => m.nome).join(", ")}{criticalCoverageMeds.length > 3 ? ` e mais ${criticalCoverageMeds.length - 3}` : ""}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 text-xs gap-1 border-destructive/20 text-destructive hover:bg-destructive/10"
+              onClick={() => navigate("/estoque")}
+            >
+              Ver no Estoque <ArrowRight className="h-3 w-3" />
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
       {/* ── KPI Stats Grid ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 mb-4 sm:mb-6">
