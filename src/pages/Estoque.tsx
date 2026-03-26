@@ -1,44 +1,67 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAudit } from "@/contexts/AuditContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Package, AlertTriangle, CheckCircle, TrendingDown, Search, ChevronDown, ChevronRight, Calendar } from "lucide-react";
+import { Package, AlertTriangle, CheckCircle, TrendingDown, Search, ChevronDown, ChevronRight, Calendar, Wrench } from "lucide-react";
+import { toast } from "sonner";
 import type { Medicamento, Lote, Categoria } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
 const COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#6b7280"];
 
+const MOTIVOS_AJUSTE = [
+  { value: "inventario", label: "Inventário" },
+  { value: "perda", label: "Perda" },
+  { value: "vencimento", label: "Vencimento" },
+  { value: "erro_lancamento", label: "Erro de Lançamento" },
+  { value: "outro", label: "Outro" },
+];
+
 const Estoque = () => {
+  const { log } = useAudit();
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState("all");
   const [catFilter, setCatFilter] = useState("all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"table" | "charts">("table");
 
-  useEffect(() => {
-    const fetch = async () => {
-      const [{ data: medsData }, { data: lotesData }, { data: catsData }] = await Promise.all([
-        supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
-        supabase.from("lotes").select("*").eq("ativo", true),
-        supabase.from("categorias_medicamento").select("*"),
-      ]);
-      setCategorias(catsData as Categoria[] || []);
-      setMeds((medsData || []).map((m: any) => ({ ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id) })));
-      setLoading(false);
-    };
-    fetch();
-  }, []);
+  // Ajuste dialog
+  const [ajusteOpen, setAjusteOpen] = useState(false);
+  const [ajusteMed, setAjusteMed] = useState<(Medicamento & { lotes: Lote[] }) | null>(null);
+  const [ajusteForm, setAjusteForm] = useState({ lote_id: "", quantidade_nova: 0, motivo: "", observacao: "" });
+  const [ajusteSaving, setAjusteSaving] = useState(false);
+
+  const fetchData = async () => {
+    const [{ data: medsData }, { data: lotesData }, { data: catsData }] = await Promise.all([
+      supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
+      supabase.from("lotes").select("*").eq("ativo", true),
+      supabase.from("categorias_medicamento").select("*"),
+    ]);
+    setCategorias(catsData as Categoria[] || []);
+    setMeds((medsData || []).map((m: any) => ({ ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id) })));
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const toggleExpand = (id: string) => setExpandedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
@@ -67,6 +90,60 @@ const Estoque = () => {
   const totalUnits = meds.reduce((s, m) => s + getEstoqueTotal(m.lotes), 0);
   const totalValue = meds.reduce((s, m) => s + m.lotes.reduce((ls, l) => ls + l.quantidade_atual * l.preco_unitario, 0), 0);
   const now = new Date();
+
+  // Get FEFO lote for a med (first non-expired lote sorted by validade)
+  const getFefoLoteId = (lotes: Lote[]) => {
+    const sorted = [...lotes].filter(l => l.ativo && new Date(l.validade) > now).sort((a, b) => new Date(a.validade).getTime() - new Date(b.validade).getTime());
+    return sorted[0]?.id;
+  };
+
+  // Ajuste handlers
+  const openAjuste = (med: Medicamento & { lotes: Lote[] }) => {
+    setAjusteMed(med);
+    setAjusteForm({ lote_id: med.lotes[0]?.id || "", quantidade_nova: med.lotes[0]?.quantidade_atual || 0, motivo: "", observacao: "" });
+    setAjusteOpen(true);
+  };
+
+  const handleAjuste = async () => {
+    if (!ajusteForm.lote_id || !ajusteForm.motivo || !ajusteForm.observacao.trim()) {
+      toast.error("Preencha lote, motivo e observação");
+      return;
+    }
+    setAjusteSaving(true);
+    const lote = ajusteMed?.lotes.find(l => l.id === ajusteForm.lote_id);
+    if (!lote) { setAjusteSaving(false); return; }
+
+    const delta = ajusteForm.quantidade_nova - lote.quantidade_atual;
+
+    await supabase.from("lotes").update({ quantidade_atual: ajusteForm.quantidade_nova }).eq("id", ajusteForm.lote_id);
+
+    await supabase.from("movimentacoes").insert({
+      tipo: "ajuste" as any,
+      medicamento_id: ajusteMed!.id,
+      lote_id: ajusteForm.lote_id,
+      quantidade: Math.abs(delta),
+      usuario_id: user?.id,
+      observacao: `[${MOTIVOS_AJUSTE.find(m => m.value === ajusteForm.motivo)?.label}] ${ajusteForm.observacao}`,
+    });
+
+    await log({
+      acao: "Ajuste de Estoque",
+      tabela: "lotes",
+      registro_id: ajusteForm.lote_id,
+      dados_anteriores: { quantidade_atual: lote.quantidade_atual },
+      dados_novos: { quantidade_atual: ajusteForm.quantidade_nova, motivo: ajusteForm.motivo, delta },
+    });
+
+    toast.success(`Estoque ajustado: ${lote.quantidade_atual} → ${ajusteForm.quantidade_nova}`);
+    setAjusteOpen(false);
+    setAjusteSaving(false);
+    fetchData();
+  };
+
+  const handleAjusteLoteChange = (loteId: string) => {
+    const lote = ajusteMed?.lotes.find(l => l.id === loteId);
+    setAjusteForm({ ...ajusteForm, lote_id: loteId, quantidade_nova: lote?.quantidade_atual || 0 });
+  };
 
   if (loading) return <AppLayout title="Estoque"><div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}</div></AppLayout>;
 
@@ -123,17 +200,19 @@ const Estoque = () => {
                 <TableHead className="text-xs font-semibold text-center">Lotes</TableHead>
                 <TableHead className="text-xs font-semibold">Local</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Valor Total</TableHead>
+                <TableHead className="text-xs font-semibold w-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
               ) : filtered.map(med => {
                 const total = getEstoqueTotal(med.lotes);
                 const status = getEstoqueStatus(total, med.estoque_minimo);
                 const cfg = ESTOQUE_STATUS_CONFIG[status];
                 const expanded = expandedIds.has(med.id);
                 const valorTotal = med.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0);
+                const fefoId = getFefoLoteId(med.lotes);
                 return (
                   <React.Fragment key={med.id}>
                     <TableRow className="hover:bg-accent/30 cursor-pointer" onClick={() => med.lotes.length > 0 && toggleExpand(med.id)}>
@@ -150,16 +229,23 @@ const Estoque = () => {
                       <TableCell className="text-center text-sm text-muted-foreground">{med.lotes.length}</TableCell>
                       <TableCell className="text-sm text-muted-foreground font-mono">{med.localizacao}</TableCell>
                       <TableCell className="text-right text-sm font-medium">R$ {valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); openAjuste(med); }} title="Ajuste de Estoque">
+                          <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                     {expanded && med.lotes.sort((a, b) => new Date(a.validade).getTime() - new Date(b.validade).getTime()).map(lote => {
                       const diffDays = Math.ceil((new Date(lote.validade).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                       const isExpired = diffDays <= 0;
                       const isNearExpiry = diffDays > 0 && diffDays <= 60;
+                      const isFefo = lote.id === fefoId;
                       return (
                         <TableRow key={lote.id} className="bg-muted/20 hover:bg-muted/30">
                           <TableCell></TableCell>
                           <TableCell colSpan={2} className="text-xs text-muted-foreground pl-8">
                             <span className="font-mono font-medium">Lote {lote.numero_lote}</span>
+                            {isFefo && <Badge variant="outline" className="ml-2 text-[9px] bg-info/10 text-info border-info/20">FEFO</Badge>}
                           </TableCell>
                           <TableCell className="text-center text-xs font-medium">{lote.quantidade_atual}</TableCell>
                           <TableCell>
@@ -177,6 +263,7 @@ const Estoque = () => {
                           <TableCell className="text-right text-xs text-muted-foreground">
                             R$ {(lote.quantidade_atual * lote.preco_unitario).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </TableCell>
+                          <TableCell></TableCell>
                         </TableRow>
                       );
                     })}
@@ -219,6 +306,57 @@ const Estoque = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Ajuste Dialog */}
+      <Dialog open={ajusteOpen} onOpenChange={setAjusteOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader><DialogTitle>Ajuste de Estoque — {ajusteMed?.nome}</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Lote *</Label>
+              <Select value={ajusteForm.lote_id} onValueChange={handleAjusteLoteChange}>
+                <SelectTrigger><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
+                <SelectContent>
+                  {ajusteMed?.lotes.map(l => (
+                    <SelectItem key={l.id} value={l.id}>
+                      Lote {l.numero_lote} — Atual: {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Quantidade Nova</Label>
+              <Input type="number" min={0} value={ajusteForm.quantidade_nova} onChange={e => setAjusteForm({ ...ajusteForm, quantidade_nova: Number(e.target.value) })} />
+              {ajusteForm.lote_id && (
+                <p className="text-[11px] text-muted-foreground">
+                  Atual: {ajusteMed?.lotes.find(l => l.id === ajusteForm.lote_id)?.quantidade_atual} → Nova: {ajusteForm.quantidade_nova}
+                  {" "}(delta: {ajusteForm.quantidade_nova - (ajusteMed?.lotes.find(l => l.id === ajusteForm.lote_id)?.quantidade_atual || 0)})
+                </p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Motivo *</Label>
+              <Select value={ajusteForm.motivo} onValueChange={v => setAjusteForm({ ...ajusteForm, motivo: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecionar motivo" /></SelectTrigger>
+                <SelectContent>
+                  {MOTIVOS_AJUSTE.map(m => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Observação *</Label>
+              <Textarea value={ajusteForm.observacao} onChange={e => setAjusteForm({ ...ajusteForm, observacao: e.target.value })} rows={2} placeholder="Descreva o motivo do ajuste..." />
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="outline" onClick={() => setAjusteOpen(false)}>Cancelar</Button>
+              <Button onClick={handleAjuste} disabled={ajusteSaving} className="gradient-primary text-primary-foreground">
+                {ajusteSaving ? "Salvando..." : "Confirmar Ajuste"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };

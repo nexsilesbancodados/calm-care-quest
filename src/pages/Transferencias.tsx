@@ -10,15 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Search, Plus, Clock, Truck, CheckCircle2, XCircle, Zap, AlertTriangle, RefreshCw } from "lucide-react";
+import { Search, Plus, Clock, Truck, CheckCircle2, XCircle, Zap, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import type { Transferencia, Medicamento, ClinicaParceira, Lote, StatusTransferencia } from "@/types/database";
+import type { Medicamento, ClinicaParceira, Lote, StatusTransferencia } from "@/types/database";
 
 const statusCfg: Record<string, { label: string; icon: any; className: string }> = {
   pendente: { label: "Pendente", icon: Clock, className: "bg-warning/10 text-warning border-warning/20" },
@@ -32,46 +31,56 @@ const Transferencias = () => {
   const { user } = useAuth();
   const { log } = useAudit();
   const [transfers, setTransfers] = useState<any[]>([]);
-  const [meds, setMeds] = useState<Medicamento[]>([]);
+  const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [clinicas, setClinicas] = useState<ClinicaParceira[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ medicamento_id: "", quantidade: 0, clinica_destino_id: "", urgencia: false, observacao: "" });
+  const [form, setForm] = useState({ medicamento_id: "", lote_id: "", quantidade: 0, clinica_destino_id: "", urgencia: false, observacao: "" });
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: tData }, { data: mData }, { data: cData }] = await Promise.all([
-      supabase.from("transferencias").select("*, medicamentos(nome, concentracao), clinica_origem:clinicas_parceiras!transferencias_clinica_origem_id_fkey(nome), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome)").order("created_at", { ascending: false }),
+    const [{ data: tData }, { data: mData }, { data: cData }, { data: lotesData }] = await Promise.all([
+      supabase.from("transferencias").select("*, medicamentos(nome, concentracao), clinica_origem:clinicas_parceiras!transferencias_clinica_origem_id_fkey(nome), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome), lotes(numero_lote, validade)").order("created_at", { ascending: false }),
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("clinicas_parceiras").select("*").eq("ativo", true).order("nome"),
+      supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
     ]);
     setTransfers(tData || []);
-    setMeds(mData as Medicamento[] || []);
+    setMeds((mData || []).map((m: any) => ({
+      ...m,
+      lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
+    })));
     setClinicas(cData as ClinicaParceira[] || []);
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
+  const selectedMed = meds.find(m => m.id === form.medicamento_id);
+
   const handleCreate = async () => {
-    if (!form.medicamento_id || !form.clinica_destino_id || !form.quantidade) { toast.error("Preencha todos os campos"); return; }
+    if (!form.medicamento_id || !form.clinica_destino_id || !form.quantidade || !form.lote_id) {
+      toast.error("Preencha todos os campos obrigatórios (incluindo lote)");
+      return;
+    }
     const { data, error } = await supabase.from("transferencias").insert({
       medicamento_id: form.medicamento_id,
+      lote_id: form.lote_id,
       quantidade: form.quantidade,
       clinica_destino_id: form.clinica_destino_id,
       urgencia: form.urgencia,
       observacao: form.observacao,
       solicitante_id: user?.id,
       status: "pendente" as any,
-    }).select("*, medicamentos(nome, concentracao), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome)").single();
+    }).select("*, medicamentos(nome, concentracao), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome), lotes(numero_lote, validade)").single();
     if (error) { toast.error("Erro ao criar transferência"); return; }
     setTransfers(prev => [data, ...prev]);
     await log({ acao: "Nova Transferência", tabela: "transferencias", registro_id: data.id });
     toast.success("Transferência criada!");
     setDialogOpen(false);
-    setForm({ medicamento_id: "", quantidade: 0, clinica_destino_id: "", urgencia: false, observacao: "" });
+    setForm({ medicamento_id: "", lote_id: "", quantidade: 0, clinica_destino_id: "", urgencia: false, observacao: "" });
   };
 
   const updateStatus = async (id: string, status: StatusTransferencia) => {
@@ -150,6 +159,7 @@ const Transferencias = () => {
             <TableRow className="bg-muted/50">
               <TableHead className="text-xs font-semibold">Data</TableHead>
               <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+              <TableHead className="text-xs font-semibold">Lote</TableHead>
               <TableHead className="text-xs font-semibold text-center">Qtd</TableHead>
               <TableHead className="text-xs font-semibold">Origem</TableHead>
               <TableHead className="text-xs font-semibold">Destino</TableHead>
@@ -160,7 +170,7 @@ const Transferencias = () => {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-16">
+                <TableCell colSpan={8} className="text-center py-16">
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
                       <Truck className="h-6 w-6 text-muted-foreground" />
@@ -185,6 +195,9 @@ const Transferencias = () => {
                         </Badge>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell className="text-xs font-mono text-muted-foreground">
+                    {t.lotes?.numero_lote || "—"}
                   </TableCell>
                   <TableCell className="text-center font-semibold">{t.quantidade}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{t.clinica_origem?.nome || "Sede"}</TableCell>
@@ -216,14 +229,29 @@ const Transferencias = () => {
           <DialogHeader><DialogTitle>Nova Transferência</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
-              <Label className="text-xs">Medicamento</Label>
-              <Select value={form.medicamento_id} onValueChange={v => setForm({ ...form, medicamento_id: v })}>
+              <Label className="text-xs">Medicamento *</Label>
+              <Select value={form.medicamento_id} onValueChange={v => setForm({ ...form, medicamento_id: v, lote_id: "" })}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                <SelectContent>{meds.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>)}</SelectContent>
+                <SelectContent>{meds.filter(m => m.lotes && m.lotes.length > 0).map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+            {selectedMed && selectedMed.lotes && selectedMed.lotes.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Lote *</Label>
+                <Select value={form.lote_id} onValueChange={v => setForm({ ...form, lote_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
+                  <SelectContent>
+                    {selectedMed.lotes.map(l => (
+                      <SelectItem key={l.id} value={l.id}>
+                        Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-1.5">
-              <Label className="text-xs">Clínica Destino</Label>
+              <Label className="text-xs">Clínica Destino *</Label>
               <Select value={form.clinica_destino_id} onValueChange={v => setForm({ ...form, clinica_destino_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>{clinicas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
@@ -231,7 +259,7 @@ const Transferencias = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs">Quantidade</Label>
+                <Label className="text-xs">Quantidade *</Label>
                 <Input type="number" min={1} value={form.quantidade || ""} onChange={e => setForm({ ...form, quantidade: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
