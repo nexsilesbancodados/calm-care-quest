@@ -149,13 +149,15 @@ const Dashboard = () => {
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral da farmácia hospitalar">
       {/* ── Hero Banner ── */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-4 sm:mb-6">
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl gradient-hero text-white p-4 sm:p-6 lg:p-7 border border-white/[0.06]">
-          <div className="absolute inset-0 opacity-[0.04]" style={{
-            backgroundImage: `radial-gradient(circle at 20% 50%, hsla(172,60%,50%,0.15) 0%, transparent 50%),
-              radial-gradient(circle at 80% 20%, hsla(258,68%,60%,0.1) 0%, transparent 50%)`,
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 24 }} className="mb-4 sm:mb-6">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl gradient-hero text-white p-4 sm:p-6 lg:p-7 border border-white/[0.08] shadow-[0_4px_40px_hsl(152_50%_30%/0.15)]">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `radial-gradient(circle at 15% 60%, hsla(152,60%,50%,0.18) 0%, transparent 45%),
+              radial-gradient(circle at 85% 25%, hsla(190,55%,45%,0.12) 0%, transparent 45%),
+              radial-gradient(circle at 50% 90%, hsla(170,50%,40%,0.08) 0%, transparent 40%)`,
           }} />
-          <div className="absolute top-0 right-0 w-40 sm:w-64 h-40 sm:h-64 bg-white/[0.02] rounded-full -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute top-0 right-0 w-40 sm:w-72 h-40 sm:h-72 bg-white/[0.03] rounded-full -translate-y-1/2 translate-x-1/3 blur-sm" />
+          <div className="absolute bottom-0 left-0 w-32 sm:w-48 h-32 sm:h-48 bg-primary/[0.04] rounded-full translate-y-1/2 -translate-x-1/4 blur-md" />
 
           <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
             <div className="space-y-1 sm:space-y-2 min-w-0">
@@ -184,7 +186,7 @@ const Dashboard = () => {
             </div>
 
             <div className="text-left sm:text-right flex sm:flex-col items-baseline sm:items-end gap-2 sm:gap-1">
-              <p className="text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums tracking-tighter font-display leading-none">
+              <p className="text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums tracking-tighter font-display leading-none" style={{ textShadow: '0 0 30px hsla(152,55%,48%,0.3)' }}>
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
@@ -202,9 +204,11 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.04 }}
               onClick={() => navigate(a.path)}
-              className="group flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 rounded-xl border border-border/50 bg-card p-2.5 sm:p-3.5 hover:border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.97] text-center sm:text-left relative"
+              className="group flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 rounded-xl border border-border/50 bg-card p-2.5 sm:p-3.5 hover:border-primary/30 hover:shadow-[0_4px_20px_hsl(var(--primary)/0.08)] transition-all duration-300 active:scale-[0.96] text-center sm:text-left relative overflow-hidden"
             >
-              <div className={cn("flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200", a.bg)}>
+              {/* Hover glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+              <div className={cn("relative flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:scale-110", a.bg)}>
                 <a.icon className={cn("h-3.5 w-3.5 sm:h-4.5 sm:w-4.5", a.color)} />
               </div>
               <div className="min-w-0">
@@ -273,7 +277,7 @@ const Dashboard = () => {
       <div className="grid lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
         {/* Consumo Chart */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="lg:col-span-3">
-          <Card className="p-3 sm:p-5 h-full border-border/50">
+           <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-5">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/8">
@@ -333,7 +337,7 @@ const Dashboard = () => {
 
         {/* Categories Pie */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
-          <Card className="p-3 sm:p-5 h-full border-border/50">
+          <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
             <div className="flex items-center gap-2 mb-3 sm:mb-5">
               <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-accent/8">
                 <Pill className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
@@ -377,7 +381,7 @@ const Dashboard = () => {
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
         {/* Top Stocked */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-          <Card className="p-3 sm:p-5 h-full border-border/50">
+          <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
             <div className="flex items-center justify-between mb-3 sm:mb-5">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-success/8">
@@ -418,7 +422,7 @@ const Dashboard = () => {
 
         {/* Alerts */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="p-3 sm:p-5 h-full border-border/50">
+          <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
             <div className="flex items-center justify-between mb-3 sm:mb-5">
               <div className="flex items-center gap-2">
                 <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-warning/8">
