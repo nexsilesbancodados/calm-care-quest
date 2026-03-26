@@ -1,4 +1,4 @@
-import { Bell, Check, CheckCheck, Trash2, ArrowLeftRight, Package, Clock, Info } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, ArrowLeftRight, Package, Clock, Info, Zap, ShieldAlert, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -6,13 +6,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import type { AppNotification } from "@/hooks/useRealtimeNotifications";
+import type { Notificacao } from "@/hooks/useAutomations";
 
 const ICON_MAP: Record<string, any> = {
   transfer: ArrowLeftRight,
   stock: Package,
   expiry: Clock,
   system: Info,
+  estoque_baixo: Package,
+  vencimento: Clock,
+  dispensacao: FileText,
+  prescricao_vencida: ShieldAlert,
 };
 
 const COLOR_MAP: Record<string, { text: string; bg: string }> = {
@@ -20,17 +24,21 @@ const COLOR_MAP: Record<string, { text: string; bg: string }> = {
   stock: { text: "text-success", bg: "bg-success/10" },
   expiry: { text: "text-warning", bg: "bg-warning/10" },
   system: { text: "text-primary", bg: "bg-primary/10" },
+  estoque_baixo: { text: "text-destructive", bg: "bg-destructive/10" },
+  vencimento: { text: "text-warning", bg: "bg-warning/10" },
+  dispensacao: { text: "text-info", bg: "bg-info/10" },
+  prescricao_vencida: { text: "text-destructive", bg: "bg-destructive/10" },
 };
 
 interface Props {
-  notifications: AppNotification[];
+  notifications: Notificacao[];
   unreadCount: number;
   markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearAll: () => void;
+  markAllRead: () => void;
+  markAsResolved: (id: string) => void;
 }
 
-export function NotificationCenter({ notifications, unreadCount, markAsRead, markAllAsRead, clearAll }: Props) {
+export function NotificationCenter({ notifications, unreadCount, markAsRead, markAllRead, markAsResolved }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -62,13 +70,8 @@ export function NotificationCenter({ notifications, unreadCount, markAsRead, mar
           </div>
           <div className="flex items-center gap-0.5">
             {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={markAllAsRead}>
+              <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1 rounded-lg hover:bg-primary/10 hover:text-primary" onClick={markAllRead}>
                 <CheckCheck className="h-3 w-3" /> Ler todas
-              </Button>
-            )}
-            {notifications.length > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 text-[10px] text-destructive rounded-lg hover:bg-destructive/10" onClick={clearAll}>
-                <Trash2 className="h-3 w-3" />
               </Button>
             )}
           </div>
@@ -86,9 +89,9 @@ export function NotificationCenter({ notifications, unreadCount, markAsRead, mar
           ) : (
             <div className="p-1.5 space-y-0.5">
               <AnimatePresence>
-                {notifications.map((n, i) => {
-                  const Icon = ICON_MAP[n.type] || Info;
-                  const colors = COLOR_MAP[n.type] || COLOR_MAP.system;
+                {notifications.slice(0, 20).map((n, i) => {
+                  const Icon = ICON_MAP[n.tipo] || Info;
+                  const colors = COLOR_MAP[n.tipo] || COLOR_MAP.system;
                   return (
                     <motion.div
                       key={n.id}
@@ -99,7 +102,7 @@ export function NotificationCenter({ notifications, unreadCount, markAsRead, mar
                       className={cn(
                         "flex items-start gap-3 px-3 py-3 cursor-pointer rounded-xl transition-all duration-200",
                         "hover:bg-accent/50",
-                        !n.read && "bg-primary/[0.04]"
+                        !n.lida && "bg-primary/[0.04]"
                       )}
                       onClick={() => {
                         markAsRead(n.id);
@@ -110,15 +113,15 @@ export function NotificationCenter({ notifications, unreadCount, markAsRead, mar
                         <Icon className={cn("h-4 w-4", colors.text)} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className={cn("text-xs leading-tight", !n.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
-                          {n.title}
+                        <p className={cn("text-xs leading-tight", !n.lida ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
+                          {n.titulo}
                         </p>
-                        <p className="text-[11px] text-muted-foreground/70 mt-0.5 line-clamp-2">{n.message}</p>
+                        <p className="text-[11px] text-muted-foreground/70 mt-0.5 line-clamp-2">{n.mensagem}</p>
                         <p className="text-[10px] text-muted-foreground/40 mt-1 font-medium">
-                          {new Date(n.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(n.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
-                      {!n.read && (
+                      {!n.lida && (
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
@@ -132,6 +135,20 @@ export function NotificationCenter({ notifications, unreadCount, markAsRead, mar
             </div>
           )}
         </ScrollArea>
+        
+        {/* Footer */}
+        {notifications.length > 0 && (
+          <div className="border-t p-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full text-xs text-primary hover:bg-primary/10"
+              onClick={() => navigate("/alertas")}
+            >
+              Ver todos os alertas
+            </Button>
+          </div>
+        )}
       </PopoverContent>
     </Popover>
   );
