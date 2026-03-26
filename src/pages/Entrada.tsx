@@ -491,6 +491,7 @@ const Entrada = () => {
                     <div className="space-y-1.5">
                       <Label className="text-xs">Quantidade *</Label>
                       <Input
+                        ref={qtdInputRef}
                         type="number"
                         min={1}
                         value={curQtd || ""}
