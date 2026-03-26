@@ -396,9 +396,10 @@ const Prescricoes = () => {
                 })}
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" onClick={() => setDispensarDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleDispensar} className="gradient-primary text-primary-foreground gap-2">
-                <Syringe className="h-4 w-4" /> Confirmar Dispensação
+              <Button variant="outline" onClick={() => setDispensarDialogOpen(false)} disabled={dispensing}>Cancelar</Button>
+              <Button onClick={handleDispensar} className="gradient-primary text-primary-foreground gap-2" disabled={dispensing}>
+                {dispensing ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <Syringe className="h-4 w-4" />}
+                {dispensing ? "Processando..." : "Confirmar Dispensação"}
               </Button>
             </div>
           </div>
