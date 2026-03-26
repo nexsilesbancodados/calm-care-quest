@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,13 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { ClipboardList, AlertTriangle, Search } from "lucide-react";
+import {
+  ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
+  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText
+} from "lucide-react";
 import type { Medicamento, Lote, Prescricao } from "@/types/database";
 
 const Dispensacao = () => {
@@ -24,38 +33,37 @@ const Dispensacao = () => {
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [prescricoes, setPrescricoes] = useState<Prescricao[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", setor: "", observacao: "", prescricao_id: "" });
   const [histSearch, setHistSearch] = useState("");
   const [histDateFrom, setHistDateFrom] = useState("");
   const [histDateTo, setHistDateTo] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [medSearch, setMedSearch] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [tab, setTab] = useState("dispensar");
 
   const loadData = async () => {
     const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }] = await Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
-      supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "dispensacao").order("created_at", { ascending: false }).limit(50),
+      supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "dispensacao").order("created_at", { ascending: false }).limit(100),
       supabase.from("prescricoes").select("*").in("status", ["ativa", "parcialmente_dispensada"]).order("created_at", { ascending: false }),
     ]);
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
-      // Sort lotes by validade ascending (FEFO)
       lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id).sort((a: any, b: any) => new Date(a.validade).getTime() - new Date(b.validade).getTime()),
     }));
     setMeds(medsWithLotes);
     setHistory(histData || []);
     setPrescricoes((prescData as Prescricao[]) || []);
 
-    // Pre-select from query param
     const medId = searchParams.get("medicamento_id");
     if (medId && medsWithLotes.find((m: any) => m.id === medId)) {
       const med = medsWithLotes.find((m: any) => m.id === medId);
-      setForm(prev => ({
-        ...prev,
-        medicamento_id: medId,
-        lote_id: med?.lotes?.[0]?.id || "",
-      }));
+      setForm(prev => ({ ...prev, medicamento_id: medId, lote_id: med?.lotes?.[0]?.id || "" }));
     }
+    setLoading(false);
   };
 
   useEffect(() => { loadData(); }, []);
@@ -63,82 +71,60 @@ const Dispensacao = () => {
   const selectedMed = meds.find(m => m.id === form.medicamento_id);
   const selectedLote = selectedMed?.lotes.find(l => l.id === form.lote_id);
 
-  // Auto-select FEFO lote when med changes
+  const filteredMeds = useMemo(() => {
+    const available = meds.filter(m => m.lotes.length > 0);
+    if (!medSearch) return available;
+    const s = medSearch.toLowerCase();
+    return available.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s) || m.principio_ativo.toLowerCase().includes(s));
+  }, [meds, medSearch]);
+
   const handleMedChange = (medId: string) => {
     const med = meds.find(m => m.id === medId);
-    const fefoLote = med?.lotes?.[0]; // Already sorted by validade
+    const fefoLote = med?.lotes?.[0];
     setForm({ ...form, medicamento_id: medId, lote_id: fefoLote?.id || "" });
   };
 
-  // Handle prescricao selection
   const handlePrescricaoChange = (prescId: string) => {
-    if (prescId === "none") {
-      setForm({ ...form, prescricao_id: "" });
-      return;
-    }
+    if (prescId === "none") { setForm({ ...form, prescricao_id: "" }); return; }
     const presc = prescricoes.find(p => p.id === prescId);
     if (presc) {
-      setForm({
-        ...form,
-        prescricao_id: prescId,
-        paciente: presc.paciente,
-        prontuario: presc.prontuario || "",
-        setor: presc.setor || "",
-      });
+      setForm({ ...form, prescricao_id: prescId, paciente: presc.paciente, prontuario: presc.prontuario || "", setor: presc.setor || "" });
     }
   };
 
-  // Check if user selected a non-FEFO lote
   const isNonFefoLote = selectedMed && selectedMed.lotes.length > 0 && form.lote_id && form.lote_id !== selectedMed.lotes[0]?.id;
+  const now = new Date();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!form.medicamento_id || !form.lote_id || !form.quantidade) { toast.error("Preencha todos os campos obrigatórios"); return; }
-
+    setConfirmOpen(false);
     setSubmitting(true);
 
-    // Server-side stock validation
-    const { data: freshLote, error: loteErr } = await supabase
-      .from("lotes")
-      .select("quantidade_atual")
-      .eq("id", form.lote_id)
-      .single();
-
-    if (loteErr || !freshLote) {
-      toast.error("Erro ao verificar estoque do lote");
-      setSubmitting(false);
-      return;
-    }
-
-    if (freshLote.quantidade_atual < form.quantidade) {
-      toast.error(`Estoque insuficiente! Disponível no servidor: ${freshLote.quantidade_atual} unidades`);
-      setSubmitting(false);
-      return;
-    }
+    const { data: freshLote, error: loteErr } = await supabase.from("lotes").select("quantidade_atual").eq("id", form.lote_id).single();
+    if (loteErr || !freshLote) { toast.error("Erro ao verificar estoque do lote"); setSubmitting(false); return; }
+    if (freshLote.quantidade_atual < form.quantidade) { toast.error(`Estoque insuficiente! Disponível: ${freshLote.quantidade_atual} un.`); setSubmitting(false); return; }
 
     await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual - form.quantidade }).eq("id", form.lote_id);
-
     await supabase.from("movimentacoes").insert({
-      tipo: "dispensacao" as any,
-      medicamento_id: form.medicamento_id,
-      lote_id: form.lote_id,
-      quantidade: form.quantidade,
-      usuario_id: user?.id,
-      paciente: form.paciente || null,
-      prontuario: form.prontuario || null,
-      setor: form.setor || null,
-      observacao: form.observacao,
-      prescricao_id: form.prescricao_id || null,
+      tipo: "dispensacao" as any, medicamento_id: form.medicamento_id, lote_id: form.lote_id,
+      quantidade: form.quantidade, usuario_id: user?.id, paciente: form.paciente || null,
+      prontuario: form.prontuario || null, setor: form.setor || null, observacao: form.observacao, prescricao_id: form.prescricao_id || null,
     });
-
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
-    toast.success("Dispensação registrada!");
+
+    toast.success("Dispensação registrada com sucesso!");
     setForm({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", setor: "", observacao: "", prescricao_id: "" });
     setSubmitting(false);
     loadData();
   };
 
-  // Filter history
+  // Stats
+  const todayStr = now.toISOString().slice(0, 10);
+  const todayCount = history.filter(h => h.created_at?.slice(0, 10) === todayStr).length;
+  const todayUnits = history.filter(h => h.created_at?.slice(0, 10) === todayStr).reduce((s: number, h: any) => s + h.quantidade, 0);
+  const totalUnits = history.reduce((s: number, h: any) => s + h.quantidade, 0);
+  const uniquePatients = new Set(history.filter(h => h.paciente).map(h => h.paciente)).size;
+
   const filteredHistory = history.filter(h => {
     const matchSearch = !histSearch || h.paciente?.toLowerCase().includes(histSearch.toLowerCase()) || h.prontuario?.toLowerCase().includes(histSearch.toLowerCase()) || h.medicamentos?.nome?.toLowerCase().includes(histSearch.toLowerCase());
     const d = h.created_at?.slice(0, 10);
@@ -147,104 +133,295 @@ const Dispensacao = () => {
     return matchSearch && matchFrom && matchTo;
   });
 
+  if (loading) return (
+    <AppLayout title="Dispensação">
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>
+        <Skeleton className="h-[400px] rounded-xl" />
+      </div>
+    </AppLayout>
+  );
+
   return (
     <AppLayout title="Dispensação" subtitle="Registrar saída de medicamentos">
-      <div className="grid lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2">
-          <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border bg-card p-6 shadow-card">
-            {/* Prescrição opcional */}
-            <div className="space-y-1.5">
-              <Label className="text-xs">Prescrição (opcional)</Label>
-              <Select value={form.prescricao_id || "none"} onValueChange={handlePrescricaoChange}>
-                <SelectTrigger><SelectValue placeholder="Vincular prescrição" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem prescrição</SelectItem>
-                  {prescricoes.map(p => <SelectItem key={p.id} value={p.id}>#{p.numero_receita} — {p.paciente}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+      <TooltipProvider>
+        {/* KPIs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: "Hoje", value: todayCount, sub: `${todayUnits} un.`, icon: ArrowUpCircle, color: "text-primary", bg: "bg-primary/10" },
+            { label: "Total Registros", value: history.length, sub: `${totalUnits} un.`, icon: ClipboardList, color: "text-info", bg: "bg-info/10" },
+            { label: "Pacientes", value: uniquePatients, sub: "atendidos", icon: User, color: "text-success", bg: "bg-success/10" },
+            { label: "Prescrições Ativas", value: prescricoes.length, sub: "pendentes", icon: FileText, color: "text-warning", bg: "bg-warning/10" },
+          ].map((kpi, i) => (
+            <motion.div key={kpi.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+              className="rounded-xl border bg-card p-3.5 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", kpi.bg)}>
+                  <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-muted-foreground">{kpi.label}</p>
+                  <p className="text-lg font-bold leading-tight">{kpi.value}</p>
+                  <p className="text-[10px] text-muted-foreground">{kpi.sub}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs">Medicamento *</Label>
-              <Select value={form.medicamento_id} onValueChange={handleMedChange}>
-                <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                <SelectContent>{meds.filter(m => m.lotes.length > 0).map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            {selectedMed && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">Lote * <span className="text-muted-foreground">(FEFO automático)</span></Label>
-                <Select value={form.lote_id} onValueChange={v => setForm({ ...form, lote_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
-                  <SelectContent>{selectedMed.lotes.map((l, i) => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {i === 0 ? "⚡ " : ""}Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
-                    </SelectItem>
-                  ))}</SelectContent>
-                </Select>
-                {isNonFefoLote && (
-                  <div className="flex items-center gap-1.5 text-warning text-[11px] mt-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Você está selecionando um lote com validade mais distante. O FEFO recomenda o primeiro lote da lista.
+        <Tabs value={tab} onValueChange={setTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="dispensar" className="gap-1.5"><Syringe className="h-3.5 w-3.5" /> Nova Dispensação</TabsTrigger>
+            <TabsTrigger value="historico" className="gap-1.5"><History className="h-3.5 w-3.5" /> Histórico</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="dispensar">
+            <div className="grid lg:grid-cols-5 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Syringe className="h-4 w-4 text-primary" />
+                    Registrar Dispensação
                   </div>
-                )}
-              </div>
-            )}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5"><Label className="text-xs">Quantidade *</Label><Input type="number" min={1} value={form.quantidade || ""} onChange={e => setForm({ ...form, quantidade: Number(e.target.value) })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Setor</Label><Input value={form.setor} onChange={e => setForm({ ...form, setor: e.target.value })} placeholder="Ala A, B..." /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Paciente</Label><Input value={form.paciente} onChange={e => setForm({ ...form, paciente: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Prontuário</Label><Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} /></div>
-            </div>
-            <div className="space-y-1.5"><Label className="text-xs">Observação</Label><Textarea value={form.observacao} onChange={e => setForm({ ...form, observacao: e.target.value })} rows={2} /></div>
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={submitting}>
-              {submitting ? "Processando..." : "Registrar Dispensação"}
-            </Button>
-          </form>
-        </div>
 
-        <div className="lg:col-span-3">
-          <div className="rounded-xl border bg-card shadow-card overflow-hidden">
-            <div className="flex items-center gap-2 p-4 border-b">
-              <ClipboardList className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold">Últimas Dispensações</h3>
-            </div>
-            {/* Filters */}
-            <div className="flex flex-wrap gap-2 p-3 border-b bg-muted/30">
-              <div className="relative flex-1 min-w-[150px]">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input placeholder="Paciente/prontuário..." value={histSearch} onChange={e => setHistSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                  {/* Prescrição */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs flex items-center gap-1">
+                      Prescrição
+                      <Tooltip><TooltipTrigger><Info className="h-3 w-3 text-muted-foreground" /></TooltipTrigger>
+                      <TooltipContent className="text-xs max-w-[200px]">Vincular uma prescrição preenche automaticamente paciente, prontuário e setor.</TooltipContent></Tooltip>
+                    </Label>
+                    <Select value={form.prescricao_id || "none"} onValueChange={handlePrescricaoChange}>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Vincular prescrição" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sem prescrição</SelectItem>
+                        {prescricoes.map(p => <SelectItem key={p.id} value={p.id}>#{p.numero_receita} — {p.paciente}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Medicamento */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Medicamento *</Label>
+                    <Select value={form.medicamento_id} onValueChange={handleMedChange}>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 pb-2">
+                          <Input placeholder="Buscar..." value={medSearch} onChange={e => setMedSearch(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                        {filteredMeds.slice(0, 50).map(m => (
+                          <SelectItem key={m.id} value={m.id}>
+                            <span className="flex items-center gap-2">
+                              {m.nome} {m.concentracao}
+                              {m.controlado && <ShieldAlert className="h-3 w-3 text-warning shrink-0" />}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Med info */}
+                  {selectedMed && (
+                    <div className="rounded-lg bg-muted/40 border border-border/50 p-3 text-xs space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{selectedMed.nome}</span>
+                        {selectedMed.controlado && <Badge variant="outline" className="text-[9px] border-warning/30 text-warning">Controlado</Badge>}
+                      </div>
+                      <p className="text-muted-foreground">{selectedMed.forma_farmaceutica} • {selectedMed.concentracao} • {selectedMed.lotes.length} lote(s)</p>
+                    </div>
+                  )}
+
+                  {/* Lote */}
+                  {selectedMed && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Lote * <span className="text-muted-foreground">(FEFO automático)</span></Label>
+                      <Select value={form.lote_id} onValueChange={v => setForm({ ...form, lote_id: v })}>
+                        <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
+                        <SelectContent>
+                          {selectedMed.lotes.map((l, i) => {
+                            const days = Math.ceil((new Date(l.validade).getTime() - now.getTime()) / 86400000);
+                            return (
+                              <SelectItem key={l.id} value={l.id}>
+                                {i === 0 ? "⚡ " : ""}Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
+                                {days <= 60 && days > 0 ? ` (${days}d)` : ""}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      {isNonFefoLote && (
+                        <div className="flex items-center gap-1.5 text-warning text-[11px] bg-warning/10 rounded-md p-2">
+                          <AlertTriangle className="h-3 w-3 shrink-0" /> Lote fora da ordem FEFO. O primeiro lote tem validade mais próxima.
+                        </div>
+                      )}
+                      {selectedLote && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Disponível: <span className="font-semibold">{selectedLote.quantidade_atual} un.</span> • Val: {new Date(selectedLote.validade).toLocaleDateString("pt-BR")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Quantidade *</Label>
+                      <Input type="number" min={1} max={selectedLote?.quantidade_atual} value={form.quantidade || ""} onChange={e => setForm({ ...form, quantidade: Number(e.target.value) })} />
+                      {form.quantidade > 0 && selectedLote && form.quantidade > selectedLote.quantidade_atual && (
+                        <p className="text-[10px] text-destructive">Excede o estoque disponível!</p>
+                      )}
+                    </div>
+                    <div className="space-y-1.5"><Label className="text-xs">Setor</Label><Input value={form.setor} onChange={e => setForm({ ...form, setor: e.target.value })} placeholder="Ala A, B..." maxLength={100} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Paciente</Label><Input value={form.paciente} onChange={e => setForm({ ...form, paciente: e.target.value })} maxLength={200} /></div>
+                    <div className="space-y-1.5"><Label className="text-xs">Prontuário</Label><Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} maxLength={50} /></div>
+                  </div>
+
+                  <div className="space-y-1.5"><Label className="text-xs">Observação</Label><Textarea value={form.observacao} onChange={e => setForm({ ...form, observacao: e.target.value })} rows={2} maxLength={500} /></div>
+
+                  <Button
+                    className="w-full gradient-primary text-primary-foreground gap-2"
+                    disabled={submitting || !form.medicamento_id || !form.lote_id || !form.quantidade}
+                    onClick={() => setConfirmOpen(true)}
+                    size="lg"
+                  >
+                    {submitting ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> :
+                      <><Syringe className="h-4 w-4" /> Registrar Dispensação</>}
+                  </Button>
+                </Card>
               </div>
-              <Input type="date" value={histDateFrom} onChange={e => setHistDateFrom(e.target.value)} className="h-8 text-xs w-[130px]" />
-              <Input type="date" value={histDateTo} onChange={e => setHistDateTo(e.target.value)} className="h-8 text-xs w-[130px]" />
+
+              {/* Quick recent */}
+              <div className="lg:col-span-3">
+                <Card className="shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
+                    <History className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Dispensações Recentes</h3>
+                    <Badge variant="secondary" className="ml-auto text-[10px]">{history.length}</Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-2 p-3 border-b">
+                    <div className="relative flex-1 min-w-[150px]">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input placeholder="Paciente, medicamento..." value={histSearch} onChange={e => setHistSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                    </div>
+                    <Input type="date" value={histDateFrom} onChange={e => setHistDateFrom(e.target.value)} className="h-8 text-xs w-[130px]" />
+                    <Input type="date" value={histDateTo} onChange={e => setHistDateTo(e.target.value)} className="h-8 text-xs w-[130px]" />
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableHead className="text-xs font-semibold">Data</TableHead>
+                        <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                        <TableHead className="text-xs font-semibold text-center">Qtd</TableHead>
+                        <TableHead className="text-xs font-semibold">Paciente</TableHead>
+                        <TableHead className="text-xs font-semibold">Setor</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredHistory.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                          <ClipboardList className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                          <p className="text-sm">Nenhuma dispensação encontrada</p>
+                        </TableCell></TableRow>
+                      ) : filteredHistory.slice(0, 50).map(h => (
+                        <TableRow key={h.id}>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(h.created_at).toLocaleDateString("pt-BR")} {new Date(h.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">{h.medicamentos?.nome || "—"} <span className="text-xs text-muted-foreground">{h.medicamentos?.concentracao || ""}</span></TableCell>
+                          <TableCell className="text-center font-semibold text-destructive">-{h.quantidade}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{h.paciente || "—"}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{h.setor || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </div>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="text-xs">Data</TableHead>
-                  <TableHead className="text-xs">Medicamento</TableHead>
-                  <TableHead className="text-xs text-center">Qtd</TableHead>
-                  <TableHead className="text-xs">Paciente</TableHead>
-                  <TableHead className="text-xs">Setor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredHistory.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">Nenhuma dispensação registrada</TableCell></TableRow>
-                ) : filteredHistory.map(h => (
-                  <TableRow key={h.id}>
-                    <TableCell className="text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</TableCell>
-                    <TableCell className="text-sm font-medium">{h.medicamentos?.nome || "—"}</TableCell>
-                    <TableCell className="text-center font-semibold text-sm">{h.quantidade}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{h.paciente || "—"}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{h.setor || "—"}</TableCell>
+          </TabsContent>
+
+          <TabsContent value="historico">
+            <Card className="shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
+                <History className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold">Histórico Completo</h3>
+              </div>
+              <div className="flex flex-wrap gap-2 p-3 border-b">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input placeholder="Buscar por paciente, prontuário ou medicamento..." value={histSearch} onChange={e => setHistSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Input type="date" value={histDateFrom} onChange={e => setHistDateFrom(e.target.value)} className="h-8 text-xs w-[130px]" />
+                  <span className="text-xs text-muted-foreground">até</span>
+                  <Input type="date" value={histDateTo} onChange={e => setHistDateTo(e.target.value)} className="h-8 text-xs w-[130px]" />
+                </div>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="text-xs font-semibold">Data/Hora</TableHead>
+                    <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                    <TableHead className="text-xs font-semibold text-center">Quantidade</TableHead>
+                    <TableHead className="text-xs font-semibold">Paciente</TableHead>
+                    <TableHead className="text-xs font-semibold">Prontuário</TableHead>
+                    <TableHead className="text-xs font-semibold">Setor</TableHead>
+                    <TableHead className="text-xs font-semibold">Observação</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredHistory.length === 0 ? (
+                    <TableRow><TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
+                      <ClipboardList className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
+                      <p className="text-sm font-medium">Nenhuma dispensação encontrada</p>
+                    </TableCell></TableRow>
+                  ) : filteredHistory.map(h => (
+                    <TableRow key={h.id}>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {new Date(h.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">{h.medicamentos?.nome || "—"} <span className="text-xs text-muted-foreground">{h.medicamentos?.concentracao || ""}</span></TableCell>
+                      <TableCell className="text-center font-semibold text-destructive">-{h.quantidade}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{h.paciente || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground font-mono">{h.prontuario || "—"}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{h.setor || "—"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{h.observacao || "—"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Confirm Dialog */}
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent className="sm:max-w-[420px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><CheckCircle2 className="h-5 w-5 text-success" /> Confirmar Dispensação</DialogTitle>
+              <DialogDescription>Revise os dados antes de confirmar.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 mt-2">
+              <div className="rounded-lg bg-muted/40 p-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Medicamento</span><span className="font-medium text-right max-w-[200px] truncate">{selectedMed?.nome} {selectedMed?.concentracao}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Lote</span><span className="font-mono">{selectedLote?.numero_lote}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Quantidade</span><span className="font-bold text-destructive">-{form.quantidade} un.</span></div>
+                {form.paciente && <div className="flex justify-between"><span className="text-muted-foreground">Paciente</span><span className="font-medium">{form.paciente}</span></div>}
+                {form.setor && <div className="flex justify-between"><span className="text-muted-foreground">Setor</span><span>{form.setor}</span></div>}
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+                <Button onClick={handleSubmit} disabled={submitting} className="gradient-primary text-primary-foreground gap-2">
+                  {submitting ? "Processando..." : <><CheckCircle2 className="h-4 w-4" /> Confirmar</>}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </TooltipProvider>
     </AppLayout>
   );
 };
