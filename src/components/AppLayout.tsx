@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
-import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useAutomations } from "@/hooks/useAutomations";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useEffect } from "react";
 
@@ -73,11 +73,13 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
   const { profile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll, requestPermission } = useRealtimeNotifications();
+  const { notificacoes: notifications, unreadCount, markAsRead, markAllRead, markAsResolved } = useAutomations();
   useOnlinePresence(location.pathname);
 
   useEffect(() => {
-    requestPermission();
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   }, []);
 
   const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
@@ -146,8 +148,8 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                 notifications={notifications}
                 unreadCount={unreadCount}
                 markAsRead={markAsRead}
-                markAllAsRead={markAllAsRead}
-                clearAll={clearAll}
+                markAllRead={markAllRead}
+                markAsResolved={markAsResolved}
               />
 
               {/* Theme toggle */}
