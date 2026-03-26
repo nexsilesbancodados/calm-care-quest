@@ -2,14 +2,17 @@ import {
   LayoutDashboard, Pill, AlertTriangle, ClipboardList, Package,
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Activity, Shield, FileText,
-  User, ClipboardCheck, ChevronRight, Sparkles,
+  User, ClipboardCheck, ChevronRight, Sparkles, LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { ROLE_LABELS } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -19,6 +22,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 type MenuItem = {
   title: string;
@@ -65,7 +69,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { profile, logout } = useAuth();
   const isActive = (path: string) => location.pathname === path;
   const [badgeCounts, setBadgeCounts] = useState<{ alerts: number; transfers: number; prescricoes: number }>({ alerts: 0, transfers: 0, prescricoes: 0 });
 
@@ -108,6 +113,16 @@ export function AppSidebar() {
     if (key === "transfers") return badgeCounts.transfers;
     if (key === "prescricoes") return badgeCounts.prescricoes;
     return 0;
+  };
+
+  const displayName = profile?.nome || "Usuário";
+  const displayInitials = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
+  const displayRole = profile ? ROLE_LABELS[profile.role] : "—";
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Sessão encerrada");
+    navigate("/login");
   };
 
   const renderMenuItem = (item: MenuItem, index: number) => {
@@ -211,10 +226,14 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarHeader className="p-4 pb-5">
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-hero shadow-lg shadow-primary/25">
+          <motion.div
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-hero shadow-lg shadow-primary/25"
+            whileHover={{ scale: 1.05, rotate: 3 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          >
             <Activity className="h-5 w-5 text-primary-foreground" />
             <div className="absolute inset-0 rounded-xl bg-white/10 animate-pulse" style={{ animationDuration: '3s' }} />
-          </div>
+          </motion.div>
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight flex items-center gap-1.5">
@@ -236,23 +255,39 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3">
-        {!collapsed && (
-          <div className="rounded-xl bg-gradient-to-br from-sidebar-accent/50 to-sidebar-accent/20 border border-sidebar-border/40 p-3 backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-1.5">
+        {!collapsed ? (
+          <div className="rounded-xl bg-gradient-to-br from-sidebar-accent/60 to-sidebar-accent/20 border border-sidebar-border/40 p-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="h-2 w-2 rounded-full bg-success" />
-                <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping opacity-40" />
+                <Avatar className="h-9 w-9 ring-2 ring-sidebar-primary/20">
+                  <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/25 to-sidebar-primary/10 text-sidebar-ring text-[11px] font-bold">
+                    {displayInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success border-2 border-sidebar-accent" />
               </div>
-              <span className="text-[10px] font-semibold text-sidebar-foreground/70 uppercase tracking-wider">Online</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-sidebar-accent-foreground truncate leading-tight">{displayName}</p>
+                <p className="text-[10px] text-sidebar-foreground/40 font-medium truncate">{displayRole}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-sidebar-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-all"
+                title="Sair"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <p className="text-[10px] text-sidebar-foreground/35 font-medium">PsiRumoCerto v2.1</p>
           </div>
-        )}
-        {collapsed && (
-          <div className="flex justify-center">
+        ) : (
+          <div className="flex flex-col items-center gap-2">
             <div className="relative">
-              <div className="h-2 w-2 rounded-full bg-success" />
-              <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping opacity-40" />
+              <Avatar className="h-8 w-8 ring-2 ring-sidebar-primary/20">
+                <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/25 to-sidebar-primary/10 text-sidebar-ring text-[10px] font-bold">
+                  {displayInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success border-2 border-sidebar-background" />
             </div>
           </div>
         )}
