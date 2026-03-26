@@ -124,14 +124,15 @@ export function useAutomations() {
         _usuario_id: user?.id,
       });
       if (error) throw error;
-      if (data?.success) {
+      const result = data as any;
+      if (result?.success) {
         toast.success("Dispensação automática concluída", {
-          description: `${data.total_dispensado} unidades dispensadas`,
+          description: `${result.total_dispensado} unidades dispensadas`,
         });
       } else {
-        toast.error(data?.error || "Erro na dispensação");
+        toast.error(result?.error || "Erro na dispensação");
       }
-      return data;
+      return result;
     } catch (e: any) {
       toast.error("Erro na dispensação automática", { description: e.message });
       return null;
