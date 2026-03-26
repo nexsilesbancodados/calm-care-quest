@@ -1,19 +1,28 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import logoImg from "@/assets/logo.jpg";
 
 export const PageLoader = () => (
-  <div className="min-h-screen bg-background p-6 space-y-6">
-    <div className="flex items-center gap-4">
-      <Skeleton className="h-10 w-10 rounded-xl" />
-      <div className="space-y-2">
-        <Skeleton className="h-5 w-48" />
-        <Skeleton className="h-3 w-32" />
-      </div>
+  <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6">
+    <div className="relative">
+      <img
+        src={logoImg}
+        alt="PsiRumoCerto"
+        className="h-20 w-20 rounded-full object-cover ring-4 ring-primary/20 shadow-xl animate-pulse"
+        style={{ animationDuration: "2s" }}
+      />
+      <div className="absolute inset-0 rounded-full ring-2 ring-primary/30 animate-ping" style={{ animationDuration: "1.5s" }} />
     </div>
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Skeleton key={i} className="h-24 rounded-xl" />
+    <div className="text-center space-y-1.5">
+      <h2 className="text-lg font-bold text-foreground font-display tracking-tight">PsiRumoCerto</h2>
+      <p className="text-xs text-muted-foreground">Carregando sistema...</p>
+    </div>
+    <div className="flex gap-1.5">
+      {[0, 1, 2].map(i => (
+        <div
+          key={i}
+          className="h-2 w-2 rounded-full bg-primary/60 animate-bounce"
+          style={{ animationDelay: `${i * 0.15}s`, animationDuration: "0.8s" }}
+        />
       ))}
     </div>
-    <Skeleton className="h-64 rounded-xl" />
   </div>
 );
