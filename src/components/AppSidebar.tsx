@@ -91,27 +91,26 @@ export function AppSidebar() {
           to={item.url}
           end={item.url === "/"}
           className={cn(
-            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 transition-all duration-200 group relative",
-            "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground",
-            active && "bg-sidebar-accent text-sidebar-primary font-medium shadow-sm"
+            "irish-btn flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 group relative",
+            active && "irish-active"
           )}
           activeClassName=""
         >
-          {active && (
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-sidebar-primary" />
-          )}
-          <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary" : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground")} />
-          {!collapsed && (
-            <span className="text-[13px] flex-1">{item.title}</span>
-          )}
-          {!collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
-            <Badge variant="outline" className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-destructive/15 text-destructive border-destructive/20 tabular-nums">
-              {getBadgeCount(item.badgeKey)}
-            </Badge>
-          )}
-          {collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
-            <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
-          )}
+          <div className="irish-liquid" />
+          <div className="irish-content gap-3 w-full">
+            <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary-foreground")} />
+            {!collapsed && (
+              <span className={cn("text-[13px] flex-1", active ? "font-semibold" : "group-hover:text-sidebar-primary-foreground")}>{item.title}</span>
+            )}
+            {!collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
+              <Badge variant="outline" className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-destructive/15 text-destructive border-destructive/20 tabular-nums relative z-[2]">
+                {getBadgeCount(item.badgeKey)}
+              </Badge>
+            )}
+            {collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
+              <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive animate-pulse z-[2]" />
+            )}
+          </div>
         </NavLink>
       </SidebarMenuButton>
     </SidebarMenuItem>
