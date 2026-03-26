@@ -104,18 +104,27 @@ const Fornecedores = () => {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((s, i) => (
-          <motion.div key={s.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-            <Card className={cn("p-4 shadow-card hover:shadow-card-hover transition-all cursor-pointer", !s.ativo && "opacity-50")} onClick={() => openEdit(s)}>
-              <div className="flex items-start justify-between mb-2">
-                <div><p className="text-sm font-semibold">{s.nome}</p><p className="text-[11px] text-muted-foreground font-mono">{s.cnpj}</p></div>
-                <Badge variant="outline" className={cn("text-[9px]", s.ativo ? "bg-success/10 text-success" : "bg-muted")}>{s.ativo ? "Ativo" : "Inativo"}</Badge>
-              </div>
-              <div className="space-y-1 text-xs text-muted-foreground">
-                {s.telefone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" />{s.telefone}</div>}
-                {s.email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{s.email}</div>}
-              </div>
-              <div className="mt-3 pt-2 border-t">
-                <Button size="sm" variant={s.ativo ? "destructive" : "outline"} className="text-[10px] h-6" onClick={(e) => { e.stopPropagation(); confirmToggle(s.id); }}>{s.ativo ? "Desativar" : "Reativar"}</Button>
+          <motion.div key={s.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          >
+            <Card className={cn("p-0 shadow-card hover:shadow-card-hover transition-all cursor-pointer overflow-hidden", !s.ativo && "opacity-50")} onClick={() => openEdit(s)}>
+              {/* Top accent */}
+              <div className="h-[2px] bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+              <div className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="text-sm font-bold font-display">{s.nome}</p>
+                    <p className="text-[11px] text-muted-foreground font-mono mt-0.5">{s.cnpj}</p>
+                  </div>
+                  <Badge variant="outline" className={cn("text-[9px] font-semibold", s.ativo ? "bg-success/10 text-success border-success/20" : "bg-muted border-muted")}>{s.ativo ? "Ativo" : "Inativo"}</Badge>
+                </div>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  {s.telefone && <div className="flex items-center gap-2"><Phone className="h-3 w-3 text-primary/50" />{s.telefone}</div>}
+                  {s.email && <div className="flex items-center gap-2"><Mail className="h-3 w-3 text-primary/50" />{s.email}</div>}
+                </div>
+                <div className="mt-3 pt-3 border-t border-border/40">
+                  <Button size="sm" variant={s.ativo ? "destructive" : "outline"} className="text-[10px] h-7 rounded-lg" onClick={(e) => { e.stopPropagation(); confirmToggle(s.id); }}>{s.ativo ? "Desativar" : "Reativar"}</Button>
+                </div>
               </div>
             </Card>
           </motion.div>

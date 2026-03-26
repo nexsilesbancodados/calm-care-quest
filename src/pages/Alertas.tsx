@@ -208,16 +208,23 @@ const Alertas = () => {
           { key: "validade" as AlertType, icon: Clock, color: "text-warning", bg: "bg-warning/10" },
         ].map((item, i) => (
           <motion.div key={item.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className={cn("rounded-xl border bg-card p-4 shadow-card cursor-pointer transition-all hover:shadow-card-hover", tab === item.key && "ring-2 ring-primary")}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+            className={cn(
+              "group relative rounded-xl border bg-card p-4 shadow-card cursor-pointer transition-all hover:shadow-card-hover overflow-hidden",
+              tab === item.key && "ring-2 ring-primary"
+            )}
             onClick={() => setTab(tab === item.key ? "all" : item.key)}
           >
-            <div className="flex items-center gap-3">
-              <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", item.bg)}>
-                <item.icon className={cn("h-4 w-4", item.color)} />
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/4 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative flex items-center gap-3">
+              <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110", item.bg)}>
+                <item.icon className={cn("h-4.5 w-4.5", item.color)} />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">{typeCfg[item.key].label}</p>
-                <p className="text-xl font-bold">{counts[item.key]}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">{typeCfg[item.key].label}</p>
+                <p className="text-xl sm:text-2xl font-bold font-display leading-tight">{counts[item.key]}</p>
               </div>
             </div>
           </motion.div>
@@ -268,7 +275,8 @@ const Alertas = () => {
             const cfg = typeCfg[a.type];
             return (
               <motion.div key={a.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                className="flex items-start gap-4 rounded-xl border bg-card p-4 shadow-card hover:shadow-card-hover transition-all"
+                className="group flex items-start gap-3 sm:gap-4 rounded-xl border bg-card p-3 sm:p-4 shadow-card hover:shadow-card-hover transition-all relative overflow-hidden"
+              >
               >
                 <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", cfg.className)}>
                   <cfg.icon className="h-5 w-5" />
