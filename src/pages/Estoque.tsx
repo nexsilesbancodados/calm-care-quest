@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
@@ -22,7 +22,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Respon
 import {
   Package, AlertTriangle, CheckCircle, TrendingDown, Search, ChevronDown, ChevronRight,
   Calendar, Wrench, ShieldAlert, DollarSign, Clock, ArrowUpDown, ChevronLeft,
-  Filter, X, BarChart3, TableIcon, AlertCircle, Info, TrendingUp
+  Filter, X, BarChart3, TableIcon, AlertCircle, Info, TrendingUp, ShoppingCart
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Medicamento, Lote, Categoria } from "@/types/database";
@@ -39,12 +39,13 @@ const MOTIVOS_AJUSTE = [
   { value: "outro", label: "Outro" },
 ];
 
-type SortKey = "nome" | "estoque" | "status" | "valor" | "validade";
+type SortKey = "nome" | "estoque" | "status" | "valor" | "validade" | "cobertura";
 type SortDir = "asc" | "desc";
 
 const Estoque = () => {
   const { log } = useAudit();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -59,6 +60,9 @@ const Estoque = () => {
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
 
+  // Consumo 30d para CMM
+  const [consumo30d, setConsumo30d] = useState<Record<string, number>>({});
+
   // Ajuste dialog
   const [ajusteOpen, setAjusteOpen] = useState(false);
   const [ajusteMed, setAjusteMed] = useState<(Medicamento & { lotes: Lote[] }) | null>(null);
@@ -68,16 +72,30 @@ const Estoque = () => {
   const now = useMemo(() => new Date(), []);
 
   const fetchData = async () => {
-    const [{ data: medsData }, { data: lotesData }, { data: catsData }] = await Promise.all([
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: movData }] = await Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true),
       supabase.from("categorias_medicamento").select("*"),
+      supabase.from("movimentacoes").select("medicamento_id, quantidade")
+        .in("tipo", ["saida", "dispensacao"])
+        .gte("created_at", thirtyDaysAgo),
     ]);
     setCategorias(catsData as Categoria[] || []);
     setMeds((medsData || []).map((m: any) => ({
       ...m,
       lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
     })));
+
+    // Agregar consumo por medicamento
+    const cMap: Record<string, number> = {};
+    (movData || []).forEach((m: any) => {
+      if (m.medicamento_id) {
+        cMap[m.medicamento_id] = (cMap[m.medicamento_id] || 0) + m.quantidade;
+      }
+    });
+    setConsumo30d(cMap);
+
     setLoading(false);
   };
 
@@ -107,7 +125,7 @@ const Estoque = () => {
     return fefo ? new Date(fefo.validade) : null;
   };
 
-  // Computed data
+  // Computed data with coverage
   const enriched = useMemo(() => meds.map(m => {
     const total = getEstoqueTotal(m.lotes);
     const status = getEstoqueStatus(total, m.estoque_minimo);
@@ -118,8 +136,15 @@ const Estoque = () => {
       const d = Math.ceil((new Date(l.validade).getTime() - now.getTime()) / 86400000);
       return d > 0 && d <= 60;
     }).length;
-    return { ...m, total, status, valorTotal, proxValidade, lotesVencidos, lotesProxVenc };
-  }), [meds, now]);
+
+    // Cobertura em dias
+    const consumo = consumo30d[m.id] || 0;
+    const cmmDiario = consumo / 30;
+    const coberturaDias = cmmDiario > 0 ? Math.round(total / cmmDiario) : (consumo === 0 ? -1 : Infinity);
+    // -1 = sem histórico, Infinity = estoque mas sem consumo
+
+    return { ...m, total, status, valorTotal, proxValidade, lotesVencidos, lotesProxVenc, coberturaDias };
+  }), [meds, now, consumo30d]);
 
   const filtered = useMemo(() => {
     let items = enriched.filter(m => {
@@ -148,6 +173,13 @@ const Estoque = () => {
         case "validade": {
           const av = a.proxValidade?.getTime() ?? Infinity;
           const bv = b.proxValidade?.getTime() ?? Infinity;
+          cmp = av - bv;
+          break;
+        }
+        case "cobertura": {
+          // -1 (sem histórico) goes to end
+          const av = a.coberturaDias === -1 ? Infinity : a.coberturaDias;
+          const bv = b.coberturaDias === -1 ? Infinity : b.coberturaDias;
           cmp = av - bv;
           break;
         }
@@ -219,6 +251,15 @@ const Estoque = () => {
     ).sort((a, b) => a.dias - b.dias).slice(0, 10),
     [enriched, now]
   );
+
+  // Coverage badge helper
+  const renderCobertura = (dias: number) => {
+    if (dias === -1) return <Badge variant="outline" className="text-[9px] bg-muted text-muted-foreground border-muted">—</Badge>;
+    if (dias === Infinity || dias > 999) return <Badge variant="outline" className="text-[9px] bg-success/10 text-success border-success/20">∞</Badge>;
+    if (dias > 30) return <Badge variant="outline" className="text-[9px] bg-success/10 text-success border-success/20">{dias > 90 ? "> 90d" : `${dias}d`}</Badge>;
+    if (dias > 15) return <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/20">{dias}d</Badge>;
+    return <Badge variant="outline" className="text-[9px] bg-destructive/10 text-destructive border-destructive/20">{dias}d</Badge>;
+  };
 
   // Ajuste handlers
   const openAjuste = (med: Medicamento & { lotes: Lote[] }) => {
@@ -404,6 +445,21 @@ const Estoque = () => {
               {formas.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
+          {/* Sort select */}
+          <Select value={`${sortKey}-${sortDir}`} onValueChange={v => {
+            const [k, d] = v.split("-") as [SortKey, SortDir];
+            setSortKey(k); setSortDir(d); setPage(1);
+          }}>
+            <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Ordenar" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nome-asc">Nome A-Z</SelectItem>
+              <SelectItem value="nome-desc">Nome Z-A</SelectItem>
+              <SelectItem value="estoque-desc">Estoque maior</SelectItem>
+              <SelectItem value="estoque-asc">Estoque menor</SelectItem>
+              <SelectItem value="cobertura-asc">Menor cobertura</SelectItem>
+              <SelectItem value="cobertura-desc">Maior cobertura</SelectItem>
+            </SelectContent>
+          </Select>
           <div className="flex rounded-lg border bg-card overflow-hidden">
             <Button variant={viewMode === "table" ? "default" : "ghost"} size="sm" className="rounded-none text-xs gap-1.5" onClick={() => setViewMode("table")}>
               <TableIcon className="h-3.5 w-3.5" /> Tabela
@@ -438,16 +494,17 @@ const Estoque = () => {
                     <TableHead>Forma / Concentração</TableHead>
                     <TableHead className="text-center"><SortHeader label="Estoque" field="estoque" /></TableHead>
                     <TableHead><SortHeader label="Status" field="status" /></TableHead>
+                    <TableHead className="text-center"><SortHeader label="Cobertura" field="cobertura" /></TableHead>
                     <TableHead className="text-center"><SortHeader label="Próx. Validade" field="validade" /></TableHead>
                     <TableHead>Local</TableHead>
                     <TableHead className="text-right"><SortHeader label="Valor" field="valor" /></TableHead>
-                    <TableHead className="w-10"></TableHead>
+                    <TableHead className="w-20"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginated.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-16 text-muted-foreground">
+                      <TableCell colSpan={10} className="text-center py-16 text-muted-foreground">
                         <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
                         <p className="text-sm font-medium">Nenhum item encontrado</p>
                         <p className="text-xs mt-1">Tente ajustar os filtros de busca</p>
@@ -458,6 +515,7 @@ const Estoque = () => {
                     const expanded = expandedIds.has(med.id);
                     const fefoLote = getFefoLote(med.lotes);
                     const progressPct = med.estoque_maximo > 0 ? Math.min(100, (med.total / med.estoque_maximo) * 100) : 0;
+                    const showReposicao = med.status === "esgotado" || med.status === "critico";
 
                     return (
                       <React.Fragment key={med.id}>
@@ -512,6 +570,20 @@ const Estoque = () => {
                             <Badge variant="outline" className={cn("text-[10px]", cfg.className)}>{cfg.label}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
+                            <Tooltip>
+                              <TooltipTrigger>
+                                {renderCobertura(med.coberturaDias)}
+                              </TooltipTrigger>
+                              <TooltipContent className="text-xs">
+                                {med.coberturaDias === -1
+                                  ? "Sem histórico de saídas nos últimos 30 dias"
+                                  : med.coberturaDias === Infinity || med.coberturaDias > 999
+                                    ? "Estoque disponível, sem consumo recente"
+                                    : `CMM diário: ${(consumo30d[med.id] / 30).toFixed(1)} un/dia`}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell className="text-center">
                             {med.proxValidade ? (
                               <span className={cn("text-xs", (() => {
                                 const d = Math.ceil((med.proxValidade.getTime() - now.getTime()) / 86400000);
@@ -530,15 +602,32 @@ const Estoque = () => {
                             R$ {med.valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={(e) => { e.stopPropagation(); openAjuste(med); }}
-                              title="Ajuste de Estoque"
-                            >
-                              <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              {showReposicao && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2 text-[10px] gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={(e) => { e.stopPropagation(); navigate(`/entrada?medicamento_id=${med.id}&nome=${encodeURIComponent(med.nome)}`); }}
+                                    >
+                                      <ShoppingCart className="h-3 w-3" /> Repor
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="text-xs">Pedir Reposição</TooltipContent>
+                                </Tooltip>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => { e.stopPropagation(); openAjuste(med); }}
+                                title="Ajuste de Estoque"
+                              >
+                                <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                         {expanded && med.lotes
@@ -573,6 +662,7 @@ const Estoque = () => {
                                     </span>
                                   </div>
                                 </TableCell>
+                                <TableCell></TableCell>
                                 <TableCell></TableCell>
                                 <TableCell></TableCell>
                                 <TableCell className="text-right text-xs text-muted-foreground">

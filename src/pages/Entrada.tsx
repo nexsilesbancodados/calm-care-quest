@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +76,8 @@ const Entrada = () => {
   // Active tab
   const [tab, setTab] = useState("entrada");
 
+  const qtdInputRef = React.useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
@@ -91,6 +93,8 @@ const Entrada = () => {
       const medId = searchParams.get("medicamento_id");
       if (medId && (m || []).find((med: any) => med.id === medId)) {
         setCurMedId(medId);
+        // Focus quantity field when coming from reposition
+        setTimeout(() => qtdInputRef.current?.focus(), 300);
       }
       setLoading(false);
     });
@@ -487,6 +491,7 @@ const Entrada = () => {
                     <div className="space-y-1.5">
                       <Label className="text-xs">Quantidade *</Label>
                       <Input
+                        ref={qtdInputRef}
                         type="number"
                         min={1}
                         value={curQtd || ""}
