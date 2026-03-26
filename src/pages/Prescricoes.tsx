@@ -3,6 +3,8 @@ import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAutomations } from "@/hooks/useAutomations";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,7 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe } from "lucide-react";
+import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap } from "lucide-react";
 import type { Prescricao, ItemPrescricao, Medicamento, Lote, StatusPrescricao } from "@/types/database";
 import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
 
@@ -274,9 +276,17 @@ const Prescricoes = () => {
                           <Plus className="h-3 w-3 mr-1" /> Item
                         </Button>
                         {(p.status === "ativa" || p.status === "parcialmente_dispensada") && (
-                          <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => { setSelectedPrescricao(p); setDispensarDialogOpen(true); }}>
-                            <Syringe className="h-3 w-3" /> Dispensar
-                          </Button>
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => { setSelectedPrescricao(p); setDispensarDialogOpen(true); }}>
+                              <Syringe className="h-3 w-3" /> Dispensar
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs h-7 gap-1 border-primary/30 text-primary hover:bg-primary/10" onClick={async () => {
+                              const result = await dispensarPrescricao(p.id);
+                              if (result?.success) fetchData();
+                            }}>
+                              <Zap className="h-3 w-3" /> Auto
+                            </Button>
+                          </>
                         )}
                       </div>
                     </TableCell>
