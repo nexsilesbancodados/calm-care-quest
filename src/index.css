@@ -62,10 +62,10 @@
     --gradient-sidebar: linear-gradient(180deg, hsl(162 40% 8%), hsl(162 45% 4%));
     --gradient-hero: linear-gradient(135deg, hsl(152 50% 18%), hsl(170 45% 22%), hsl(190 50% 26%));
     --gradient-accent: linear-gradient(135deg, hsl(190 55% 38%), hsl(190 60% 48%));
-    --shadow-card: 0 1px 3px hsl(160 30% 10% / 0.03), 0 6px 16px hsl(160 30% 10% / 0.04);
-    --shadow-card-hover: 0 4px 12px hsl(160 30% 10% / 0.06), 0 12px 28px hsl(160 30% 10% / 0.08);
-    --shadow-elevated: 0 8px 30px hsl(160 30% 10% / 0.12);
-    --shadow-glow: 0 0 24px hsl(152 58% 38% / 0.2);
+    --shadow-card: 0 1px 2px hsl(160 30% 10% / 0.02), 0 4px 12px hsl(160 30% 10% / 0.04), 0 8px 24px hsl(160 30% 10% / 0.03);
+    --shadow-card-hover: 0 4px 8px hsl(160 30% 10% / 0.04), 0 12px 32px hsl(160 30% 10% / 0.08), 0 0 0 1px hsl(152 58% 38% / 0.04);
+    --shadow-elevated: 0 8px 32px hsl(160 30% 10% / 0.1), 0 20px 48px hsl(160 30% 10% / 0.06);
+    --shadow-glow: 0 0 24px hsl(152 58% 38% / 0.2), 0 4px 16px hsl(152 58% 38% / 0.1);
   }
 
   .dark {
@@ -107,10 +107,10 @@
 
     --gradient-primary: linear-gradient(135deg, hsl(152 50% 40%), hsl(152 55% 52%));
     --gradient-hero: linear-gradient(135deg, hsl(152 45% 14%), hsl(170 40% 18%), hsl(190 45% 22%));
-    --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.2), 0 6px 16px hsl(0 0% 0% / 0.25);
-    --shadow-card-hover: 0 4px 12px hsl(0 0% 0% / 0.25), 0 12px 28px hsl(0 0% 0% / 0.35);
-    --shadow-elevated: 0 8px 30px hsl(0 0% 0% / 0.4);
-    --shadow-glow: 0 0 32px hsl(152 55% 48% / 0.25);
+    --shadow-card: 0 1px 2px hsl(0 0% 0% / 0.15), 0 4px 12px hsl(0 0% 0% / 0.2), 0 0 0 1px hsl(155 20% 20% / 0.15);
+    --shadow-card-hover: 0 4px 8px hsl(0 0% 0% / 0.2), 0 12px 32px hsl(0 0% 0% / 0.3), 0 0 0 1px hsl(152 55% 48% / 0.1);
+    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.35), 0 20px 48px hsl(0 0% 0% / 0.2);
+    --shadow-glow: 0 0 32px hsl(152 55% 48% / 0.25), 0 4px 16px hsl(152 55% 48% / 0.15);
   }
 }
 
