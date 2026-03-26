@@ -400,6 +400,34 @@
   }
 }
 
+/* Global mobile improvements */
+@media (max-width: 639px) {
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Smaller padding on mobile for dialogs/cards */
+  .sm\:p-6 {
+    padding: 0.75rem;
+  }
+
+  /* Fix select triggers on mobile */
+  [role="combobox"] {
+    font-size: 12px;
+  }
+
+  /* Tabs on mobile */
+  [role="tablist"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @media print {
   body * { visibility: hidden; }
   .print-area, .print-area * { visibility: visible; }
