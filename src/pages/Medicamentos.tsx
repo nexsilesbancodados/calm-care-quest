@@ -320,7 +320,7 @@ const Medicamentos = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border bg-card shadow-card overflow-hidden">
+      <div className="rounded-xl border border-border/50 bg-card shadow-card overflow-hidden hover:shadow-card-hover transition-all duration-300">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">

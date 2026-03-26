@@ -178,7 +178,7 @@ const Alertas = () => {
                   const meta = AUTOMACAO_LABELS[cfg.tipo];
                   if (!meta) return null;
                   return (
-                    <div key={cfg.id} className={cn("flex items-start gap-3 rounded-xl border p-4 transition-all", cfg.ativo ? "bg-card border-primary/20" : "bg-muted/30 border-border/50 opacity-70")}>
+                    <div key={cfg.id} className={cn("flex items-start gap-3 rounded-xl border p-4 transition-all overflow-hidden relative", cfg.ativo ? "bg-card border-primary/20 shadow-card" : "bg-muted/30 border-border/50 opacity-70")}>
                       <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", cfg.ativo ? "bg-primary/10" : "bg-muted")}>
                         <meta.icon className={cn("h-4 w-4", cfg.ativo ? "text-primary" : "text-muted-foreground")} />
                       </div>
