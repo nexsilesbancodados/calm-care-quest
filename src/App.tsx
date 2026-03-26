@@ -23,6 +23,9 @@ import LeitorBarcode from "./pages/LeitorBarcode";
 import Prescricoes from "./pages/Prescricoes";
 import Usuarios from "./pages/Usuarios";
 import AdminPanel from "./pages/AdminPanel";
+import Pacientes from "./pages/Pacientes";
+import Inventario from "./pages/Inventario";
+import Perfil from "./pages/Perfil";
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -63,6 +66,9 @@ const App = () => (
                 <Route path="/configuracoes" element={<P><Configuracoes /></P>} />
                 <Route path="/leitor" element={<P><LeitorBarcode /></P>} />
                 <Route path="/prescricoes" element={<P><Prescricoes /></P>} />
+                <Route path="/pacientes" element={<P><Pacientes /></P>} />
+                <Route path="/inventario" element={<P><Inventario /></P>} />
+                <Route path="/perfil" element={<P><Perfil /></P>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

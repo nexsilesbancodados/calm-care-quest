@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { Moon, Sun, LogOut, Settings, ChevronRight, Shield } from "lucide-react";
+import { Moon, Sun, LogOut, Settings, ChevronRight, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/components/ThemeProvider";
@@ -34,6 +34,9 @@ const pageTitles: Record<string, string> = {
   "/leitor": "Leitor de Código",
   "/admin": "Painel Admin",
   "/prescricoes": "Prescrições",
+  "/pacientes": "Pacientes",
+  "/inventario": "Inventário Físico",
+  "/perfil": "Meu Perfil",
 };
 
 interface AppLayoutProps {
@@ -139,6 +142,9 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/perfil")} className="gap-2 text-xs cursor-pointer">
+                    <User className="h-3.5 w-3.5" /> Meu Perfil
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-2 text-xs cursor-pointer">
                     <Settings className="h-3.5 w-3.5" /> Configurações
                   </DropdownMenuItem>
