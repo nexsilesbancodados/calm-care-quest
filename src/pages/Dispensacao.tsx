@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,14 +17,29 @@ import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
   ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
-  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText
+  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown
 } from "lucide-react";
 import type { Medicamento, Lote, Prescricao } from "@/types/database";
+
+// --- Paciente recorrente helpers ---
+interface PacienteRecorrente { nome: string; prontuario: string; setor: string; }
+const PACIENTES_KEY = "dispensacao_pacientes";
+function getPacientesRecorrentes(): PacienteRecorrente[] {
+  try { return JSON.parse(localStorage.getItem(PACIENTES_KEY) || "[]"); } catch { return []; }
+}
+function savePacienteRecorrente(p: PacienteRecorrente) {
+  const list = getPacientesRecorrentes().filter(x => x.nome !== p.nome || x.prontuario !== p.prontuario);
+  list.unshift(p);
+  localStorage.setItem(PACIENTES_KEY, JSON.stringify(list.slice(0, 10)));
+}
 
 const Dispensacao = () => {
   const { log } = useAudit();
@@ -42,6 +57,19 @@ const Dispensacao = () => {
   const [medSearch, setMedSearch] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tab, setTab] = useState("dispensar");
+
+  // 1a: Auto FEFO state
+  const [autoFefoLoteId, setAutoFefoLoteId] = useState<string>("");
+
+  // 1b: Paciente recorrente combobox
+  const [pacienteOpen, setPacienteOpen] = useState(false);
+  const pacientesRecorrentes = useMemo(() => getPacientesRecorrentes(), [history]);
+
+  // 1c: Quantidade incomum alert
+  const [qtyAlertOpen, setQtyAlertOpen] = useState(false);
+
+  // 1d: Show kept-patient message
+  const [showKeptMessage, setShowKeptMessage] = useState(false);
 
   const loadData = async () => {
     const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }] = await Promise.all([
@@ -61,12 +89,21 @@ const Dispensacao = () => {
     const medId = searchParams.get("medicamento_id");
     if (medId && medsWithLotes.find((m: any) => m.id === medId)) {
       const med = medsWithLotes.find((m: any) => m.id === medId);
-      setForm(prev => ({ ...prev, medicamento_id: medId, lote_id: med?.lotes?.[0]?.id || "" }));
+      const fefo = getValidFefoLote(med?.lotes || []);
+      setForm(prev => ({ ...prev, medicamento_id: medId, lote_id: fefo?.id || "" }));
+      setAutoFefoLoteId(fefo?.id || "");
     }
     setLoading(false);
   };
 
   useEffect(() => { loadData(); }, []);
+
+  const now = new Date();
+
+  // 1a: Get valid FEFO lote (not expired, qty > 0)
+  const getValidFefoLote = (lotes: Lote[]) => {
+    return lotes.find(l => new Date(l.validade) > now && l.quantidade_atual > 0);
+  };
 
   const selectedMed = meds.find(m => m.id === form.medicamento_id);
   const selectedLote = selectedMed?.lotes.find(l => l.id === form.lote_id);
@@ -78,10 +115,13 @@ const Dispensacao = () => {
     return available.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s) || m.principio_ativo.toLowerCase().includes(s));
   }, [meds, medSearch]);
 
+  // 1a: Enhanced handleMedChange with proper FEFO
   const handleMedChange = (medId: string) => {
     const med = meds.find(m => m.id === medId);
-    const fefoLote = med?.lotes?.[0];
-    setForm({ ...form, medicamento_id: medId, lote_id: fefoLote?.id || "" });
+    const fefoLote = getValidFefoLote(med?.lotes || []);
+    const fefoId = fefoLote?.id || "";
+    setAutoFefoLoteId(fefoId);
+    setForm({ ...form, medicamento_id: medId, lote_id: fefoId });
   };
 
   const handlePrescricaoChange = (prescId: string) => {
@@ -92,8 +132,22 @@ const Dispensacao = () => {
     }
   };
 
-  const isNonFefoLote = selectedMed && selectedMed.lotes.length > 0 && form.lote_id && form.lote_id !== selectedMed.lotes[0]?.id;
-  const now = new Date();
+  // 1a: Check if user manually changed lote away from FEFO
+  const isManualLoteChange = autoFefoLoteId && form.lote_id && form.lote_id !== autoFefoLoteId;
+  const isAutoFefo = autoFefoLoteId && form.lote_id === autoFefoLoteId;
+
+  // 1c: Intercept submit to check quantity
+  const handleSubmitClick = () => {
+    if (!form.medicamento_id || !form.lote_id || !form.quantidade) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+    if (form.quantidade > 20) {
+      setQtyAlertOpen(true);
+    } else {
+      setConfirmOpen(true);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!form.medicamento_id || !form.lote_id || !form.quantidade) { toast.error("Preencha todos os campos obrigatórios"); return; }
@@ -112,10 +166,31 @@ const Dispensacao = () => {
     });
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
 
+    // 1b: Save paciente recorrente
+    if (form.paciente.trim()) {
+      savePacienteRecorrente({ nome: form.paciente, prontuario: form.prontuario, setor: form.setor });
+    }
+
     toast.success("Dispensação registrada com sucesso!");
-    setForm({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", setor: "", observacao: "", prescricao_id: "" });
+
+    // 1d: Smart reset — keep medicamento_id, paciente, setor
+    setForm(prev => ({
+      ...prev,
+      quantidade: 0,
+      observacao: "",
+      prontuario: "",
+      lote_id: prev.lote_id, // keep lote for same med
+    }));
+    setShowKeptMessage(true);
     setSubmitting(false);
     loadData();
+  };
+
+  // 1d: Clear all patient fields
+  const clearPatientFields = () => {
+    setForm(prev => ({ ...prev, paciente: "", prontuario: "", setor: "", medicamento_id: "", lote_id: "", prescricao_id: "" }));
+    setAutoFefoLoteId("");
+    setShowKeptMessage(false);
   };
 
   // Stats
@@ -132,6 +207,13 @@ const Dispensacao = () => {
     const matchTo = !histDateTo || d <= histDateTo;
     return matchSearch && matchFrom && matchTo;
   });
+
+  // Filter pacientes for combobox
+  const filteredPacientes = useMemo(() => {
+    if (!form.paciente) return pacientesRecorrentes;
+    const s = form.paciente.toLowerCase();
+    return pacientesRecorrentes.filter(p => p.nome.toLowerCase().includes(s));
+  }, [form.paciente, pacientesRecorrentes]);
 
   if (loading) return (
     <AppLayout title="Dispensação">
@@ -239,7 +321,7 @@ const Dispensacao = () => {
                       <Select value={form.lote_id} onValueChange={v => setForm({ ...form, lote_id: v })}>
                         <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
                         <SelectContent>
-                          {selectedMed.lotes.map((l, i) => {
+                          {selectedMed.lotes.filter(l => new Date(l.validade) > now && l.quantidade_atual > 0).map((l, i) => {
                             const days = Math.ceil((new Date(l.validade).getTime() - now.getTime()) / 86400000);
                             return (
                               <SelectItem key={l.id} value={l.id}>
@@ -250,9 +332,16 @@ const Dispensacao = () => {
                           })}
                         </SelectContent>
                       </Select>
-                      {isNonFefoLote && (
+                      {/* 1a: FEFO auto chip */}
+                      {isAutoFefo && selectedLote && (
+                        <div className="flex items-center gap-1.5 text-success text-[11px] bg-success/10 rounded-md p-2">
+                          <CheckCircle2 className="h-3 w-3 shrink-0" /> Lote FEFO selecionado automaticamente — Val: {new Date(selectedLote.validade).toLocaleDateString("pt-BR")}
+                        </div>
+                      )}
+                      {/* 1a: Manual lote warning */}
+                      {isManualLoteChange && (
                         <div className="flex items-center gap-1.5 text-warning text-[11px] bg-warning/10 rounded-md p-2">
-                          <AlertTriangle className="h-3 w-3 shrink-0" /> Lote fora da ordem FEFO. O primeiro lote tem validade mais próxima.
+                          <AlertTriangle className="h-3 w-3 shrink-0" /> Lote com validade posterior ao recomendado. Confirme se necessário.
                         </div>
                       )}
                       {selectedLote && (
@@ -274,7 +363,66 @@ const Dispensacao = () => {
                       )}
                     </div>
                     <div className="space-y-1.5"><Label className="text-xs">Setor</Label><Input value={form.setor} onChange={e => setForm({ ...form, setor: e.target.value })} placeholder="Ala A, B..." maxLength={100} /></div>
-                    <div className="space-y-1.5"><Label className="text-xs">Paciente</Label><Input value={form.paciente} onChange={e => setForm({ ...form, paciente: e.target.value })} maxLength={200} /></div>
+
+                    {/* 1b: Paciente Combobox */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs">Paciente</Label>
+                        {form.paciente && (
+                          <button onClick={clearPatientFields} className="text-muted-foreground hover:text-foreground transition-colors">
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                      <Popover open={pacienteOpen} onOpenChange={setPacienteOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={pacienteOpen}
+                            className="w-full justify-between h-10 text-xs font-normal bg-card"
+                          >
+                            {form.paciente || "Selecionar ou digitar..."}
+                            <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[260px] p-0" align="start">
+                          <Command>
+                            <CommandInput
+                              placeholder="Buscar paciente..."
+                              value={form.paciente}
+                              onValueChange={v => setForm({ ...form, paciente: v })}
+                            />
+                            <CommandList>
+                              <CommandEmpty>
+                                <span className="text-xs">Nenhum paciente recente. Digite o nome.</span>
+                              </CommandEmpty>
+                              {filteredPacientes.length > 0 && (
+                                <CommandGroup heading="Pacientes recentes">
+                                  {filteredPacientes.map((p, i) => (
+                                    <CommandItem
+                                      key={`${p.nome}-${i}`}
+                                      value={p.nome}
+                                      onSelect={() => {
+                                        setForm({ ...form, paciente: p.nome, prontuario: p.prontuario, setor: p.setor });
+                                        setPacienteOpen(false);
+                                      }}
+                                    >
+                                      <Check className={cn("mr-2 h-3 w-3", form.paciente === p.nome ? "opacity-100" : "opacity-0")} />
+                                      <div>
+                                        <p className="text-xs font-medium">{p.nome}</p>
+                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario || "—"} • {p.setor || "—"}</p>
+                                      </div>
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
                     <div className="space-y-1.5"><Label className="text-xs">Prontuário</Label><Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} maxLength={50} /></div>
                   </div>
 
@@ -283,12 +431,20 @@ const Dispensacao = () => {
                   <Button
                     className="w-full gradient-primary text-primary-foreground gap-2"
                     disabled={submitting || !form.medicamento_id || !form.lote_id || !form.quantidade}
-                    onClick={() => setConfirmOpen(true)}
+                    onClick={handleSubmitClick}
                     size="lg"
                   >
                     {submitting ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> :
                       <><Syringe className="h-4 w-4" /> Registrar Dispensação</>}
                   </Button>
+
+                  {/* 1d: Kept message */}
+                  {showKeptMessage && form.paciente && (
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground bg-muted/40 rounded-md p-2">
+                      <span>Paciente e setor mantidos para próxima dispensação.</span>
+                      <button onClick={clearPatientFields} className="text-xs text-primary hover:underline ml-2 shrink-0">Limpar</button>
+                    </div>
+                  )}
                 </Card>
               </div>
 
@@ -421,6 +577,27 @@ const Dispensacao = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* 1c: Quantity alert dialog */}
+        <AlertDialog open={qtyAlertOpen} onOpenChange={setQtyAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-warning" />
+                Quantidade incomum
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Atenção: você está dispensando <strong>{form.quantidade}</strong> unidades de <strong>{selectedMed?.nome}</strong>. Confirmar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Corrigir</AlertDialogCancel>
+              <AlertDialogAction onClick={() => { setQtyAlertOpen(false); setConfirmOpen(true); }}>
+                Confirmar mesmo assim
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </TooltipProvider>
     </AppLayout>
   );
