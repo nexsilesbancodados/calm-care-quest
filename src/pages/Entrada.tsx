@@ -309,27 +309,27 @@ const Entrada = () => {
     <AppLayout title="Entrada de Medicamentos" subtitle="Registrar recebimento de itens">
       <TooltipProvider>
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-5 sm:mb-6">
           {[
             { label: "Itens na Lista", value: items.length, icon: Package, color: "text-primary", bg: "bg-primary/10" },
             { label: "Total Unidades", value: totalUnits.toLocaleString("pt-BR"), icon: PackagePlus, color: "text-success", bg: "bg-success/10" },
             { label: "Valor Total", value: `R$ ${totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, icon: DollarSign, color: "text-info", bg: "bg-info/10" },
-            { label: "Medicamentos Cadastrados", value: meds.length, icon: CheckCircle2, color: "text-muted-foreground", bg: "bg-muted" },
+            { label: "Medicamentos Cad.", value: meds.length, icon: CheckCircle2, color: "text-muted-foreground", bg: "bg-muted" },
           ].map((kpi, i) => (
             <motion.div
               key={kpi.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
-              className="rounded-xl border bg-card p-3.5 shadow-sm"
+              className="rounded-xl border bg-card p-3 sm:p-4 shadow-sm"
             >
-              <div className="flex items-center gap-2.5">
-                <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", kpi.bg)}>
-                  <kpi.icon className={cn("h-4 w-4", kpi.color)} />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className={cn("flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl shrink-0", kpi.bg)}>
+                  <kpi.icon className={cn("h-4 w-4 sm:h-[18px] sm:w-[18px]", kpi.color)} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground truncate">{kpi.label}</p>
-                  <p className="text-lg font-bold leading-tight">{kpi.value}</p>
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{kpi.label}</p>
+                  <p className="text-base sm:text-lg font-bold leading-tight truncate">{kpi.value}</p>
                 </div>
               </div>
             </motion.div>
@@ -337,47 +337,49 @@ const Entrada = () => {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="entrada" className="gap-1.5">
+          <TabsList className="mb-4 sm:mb-5">
+            <TabsTrigger value="entrada" className="gap-1.5 text-xs sm:text-sm">
               <PackagePlus className="h-3.5 w-3.5" /> Nova Entrada
             </TabsTrigger>
-            <TabsTrigger value="historico" className="gap-1.5">
+            <TabsTrigger value="historico" className="gap-1.5 text-xs sm:text-sm">
               <History className="h-3.5 w-3.5" /> Últimas Entradas
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="entrada">
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid lg:grid-cols-3 gap-4 sm:gap-5">
               {/* Left - Forms */}
               <div className="lg:col-span-2 space-y-4">
                 {/* NF Card */}
-                <Card className="p-5 shadow-sm space-y-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold">
-                    <FileText className="h-4 w-4 text-primary" />
+                <Card className="p-4 sm:p-5 shadow-sm">
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-4">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                    </div>
                     Dados da Nota Fiscal
                   </div>
-                  <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Fornecedor</Label>
+                      <Label className="text-xs font-medium">Fornecedor</Label>
                       <Select value={fornecedorId} onValueChange={setFornecedorId}>
-                        <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar fornecedor" /></SelectTrigger>
+                        <SelectTrigger className="bg-background h-10"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
                         <SelectContent>
                           {fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Número da NF</Label>
-                      <Input value={notaFiscal} onChange={e => setNotaFiscal(e.target.value)} placeholder="Ex: 001234" className="font-mono" maxLength={50} />
+                      <Label className="text-xs font-medium">Número da NF</Label>
+                      <Input value={notaFiscal} onChange={e => setNotaFiscal(e.target.value)} placeholder="Ex: 001234" className="font-mono h-10" maxLength={50} />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs">Anexar NF (PDF/imagem)</Label>
+                    <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                      <Label className="text-xs font-medium">Anexar NF (PDF/imagem)</Label>
                       <div className="flex items-center gap-2">
-                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setNfFile(e.target.files?.[0] || null)} className="text-xs" />
+                        <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={e => setNfFile(e.target.files?.[0] || null)} className="text-xs h-10" />
                         {nfFile && (
                           <Badge variant="outline" className="text-[10px] shrink-0 gap-1">
                             <Upload className="h-3 w-3" />
-                            {nfFile.name.length > 18 ? nfFile.name.slice(0, 18) + "…" : nfFile.name}
+                            {nfFile.name.length > 12 ? nfFile.name.slice(0, 12) + "…" : nfFile.name}
                           </Badge>
                         )}
                       </div>
@@ -386,24 +388,26 @@ const Entrada = () => {
                 </Card>
 
                 {/* Add Item Card */}
-                <Card className="p-5 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between">
+                <Card className="p-4 sm:p-5 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
-                      <PackagePlus className="h-4 w-4 text-primary" />
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10">
+                        <PackagePlus className="h-3.5 w-3.5 text-accent" />
+                      </div>
                       {editIdx !== null ? "Editar Item" : "Adicionar Item"}
                     </div>
                     {editIdx !== null && (
                       <Button variant="ghost" size="sm" onClick={resetForm} className="text-xs gap-1 text-muted-foreground">
-                        <X className="h-3 w-3" /> Cancelar edição
+                        <X className="h-3 w-3" /> Cancelar
                       </Button>
                     )}
                   </div>
 
                   {/* Medicamento select with search */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Medicamento *</Label>
+                  <div className="space-y-1.5 mb-4">
+                    <Label className="text-xs font-medium">Medicamento *</Label>
                     <Select value={curMedId} onValueChange={v => { setCurMedId(v); setLoteExistente("new"); setCurLote(""); setCurValidade(""); setCurPreco(0); }}>
-                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
+                      <SelectTrigger className="bg-background h-10"><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
                       <SelectContent>
                         <div className="px-2 pb-2">
                           <Input
@@ -430,12 +434,12 @@ const Entrada = () => {
 
                   {/* Selected med info */}
                   {selectedMed && (
-                    <div className="rounded-lg bg-muted/40 border border-border/50 p-3 text-xs space-y-1">
+                    <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-xs space-y-1 mb-4">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{selectedMed.nome} {selectedMed.concentracao}</span>
-                        {selectedMed.controlado && <Badge variant="outline" className="text-[9px] border-warning/30 text-warning">Controlado</Badge>}
+                        <span className="font-semibold text-foreground">{selectedMed.nome} {selectedMed.concentracao}</span>
+                        {selectedMed.controlado && <Badge variant="outline" className="text-[9px] border-warning/30 text-warning bg-warning/5">Controlado</Badge>}
                       </div>
-                      <div className="flex gap-4 text-muted-foreground">
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-muted-foreground">
                         <span>{selectedMed.forma_farmaceutica}</span>
                         <span>Mín: {selectedMed.estoque_minimo}</span>
                         <span>Local: {selectedMed.localizacao || "—"}</span>
@@ -445,8 +449,8 @@ const Entrada = () => {
 
                   {/* Lote existente ou novo */}
                   {curMedId && medLotes.length > 0 && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs flex items-center gap-1">
+                    <div className="space-y-1.5 mb-4">
+                      <Label className="text-xs font-medium flex items-center gap-1">
                         Lote
                         <Tooltip>
                           <TooltipTrigger><Info className="h-3 w-3 text-muted-foreground" /></TooltipTrigger>
@@ -454,7 +458,7 @@ const Entrada = () => {
                         </Tooltip>
                       </Label>
                       <Select value={loteExistente} onValueChange={handleLoteExistenteChange}>
-                        <SelectTrigger className="bg-card"><SelectValue placeholder="Novo lote ou existente" /></SelectTrigger>
+                        <SelectTrigger className="bg-background h-10"><SelectValue placeholder="Novo lote ou existente" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new">🆕 Criar novo lote</SelectItem>
                           {medLotes.map(l => (
@@ -467,29 +471,30 @@ const Entrada = () => {
                     </div>
                   )}
 
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Nº Lote *</Label>
+                      <Label className="text-xs font-medium">Nº Lote *</Label>
                       <Input
                         value={curLote}
                         onChange={e => setCurLote(e.target.value)}
-                        className="font-mono"
+                        className="font-mono h-10"
                         placeholder="ABC123"
                         maxLength={50}
                         disabled={loteExistente !== "new"}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Validade *</Label>
+                      <Label className="text-xs font-medium">Validade *</Label>
                       <Input
                         type="date"
                         value={curValidade}
                         onChange={e => setCurValidade(e.target.value)}
                         disabled={loteExistente !== "new"}
+                        className="h-10"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Quantidade *</Label>
+                      <Label className="text-xs font-medium">Quantidade *</Label>
                       <Input
                         ref={qtdInputRef}
                         type="number"
@@ -497,10 +502,11 @@ const Entrada = () => {
                         value={curQtd || ""}
                         onChange={e => setCurQtd(Number(e.target.value))}
                         placeholder="0"
+                        className="h-10"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs">Preço Unit. (R$)</Label>
+                      <Label className="text-xs font-medium">Preço Unit. (R$)</Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -509,6 +515,7 @@ const Entrada = () => {
                         onChange={e => setCurPreco(Number(e.target.value))}
                         placeholder="0.00"
                         disabled={loteExistente !== "new"}
+                        className="h-10"
                       />
                     </div>
                   </div>
@@ -517,12 +524,12 @@ const Entrada = () => {
                   {curValidade && (() => {
                     const diffDays = Math.ceil((new Date(curValidade).getTime() - now.getTime()) / 86400000);
                     if (diffDays <= 0) return (
-                      <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 rounded-lg p-2">
+                      <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 rounded-xl p-3 mb-4">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" /> Este lote já está vencido!
                       </div>
                     );
                     if (diffDays <= 90) return (
-                      <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 rounded-lg p-2">
+                      <div className="flex items-center gap-2 text-xs text-warning bg-warning/10 rounded-xl p-3 mb-4">
                         <Clock className="h-3.5 w-3.5 shrink-0" /> Vence em {diffDays} dias — atenção ao prazo
                       </div>
                     );
@@ -541,7 +548,7 @@ const Entrada = () => {
                   {items.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                       <Card className="shadow-sm overflow-hidden">
-                        <div className="px-4 py-3 border-b bg-muted/30 flex items-center justify-between">
+                        <div className="px-4 py-3 border-b bg-muted/20 flex items-center justify-between">
                           <h3 className="text-sm font-semibold flex items-center gap-2">
                             <Package className="h-4 w-4 text-primary" />
                             Itens da Entrada ({items.length})
@@ -552,13 +559,13 @@ const Entrada = () => {
                         </div>
                         <Table>
                           <TableHeader>
-                            <TableRow className="bg-muted/50 hover:bg-muted/50">
-                              <TableHead className="text-xs font-semibold">Medicamento</TableHead>
-                              <TableHead className="text-xs font-semibold">Lote</TableHead>
-                              <TableHead className="text-xs font-semibold">Validade</TableHead>
-                              <TableHead className="text-xs font-semibold text-center">Qtd</TableHead>
-                              <TableHead className="text-xs font-semibold text-right">Preço Unit.</TableHead>
-                              <TableHead className="text-xs font-semibold text-right">Subtotal</TableHead>
+                            <TableRow className="hover:bg-muted/30">
+                              <TableHead>Medicamento</TableHead>
+                              <TableHead>Lote</TableHead>
+                              <TableHead>Validade</TableHead>
+                              <TableHead className="text-center">Qtd</TableHead>
+                              <TableHead className="text-right">Preço Unit.</TableHead>
+                              <TableHead className="text-right">Subtotal</TableHead>
                               <TableHead className="w-24"></TableHead>
                             </TableRow>
                           </TableHeader>
@@ -624,35 +631,38 @@ const Entrada = () => {
               </div>
 
               {/* Right - Summary */}
-              <div className="space-y-4">
-                <Card className="p-5 shadow-sm space-y-4 sticky top-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
+              <div>
+                <Card className="p-4 sm:p-5 shadow-sm sticky top-[72px]">
+                  <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                    </div>
                     Resumo da Entrada
                   </h3>
-                  <Separator />
+                  <Separator className="mb-4" />
                   <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Itens</span>
-                      <span className="font-semibold">{items.length}</span>
+                      <span className="font-bold text-base tabular-nums">{items.length}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Total unidades</span>
-                      <span className="font-semibold">{totalUnits.toLocaleString("pt-BR")}</span>
+                      <span className="font-bold text-base tabular-nums">{totalUnits.toLocaleString("pt-BR")}</span>
                     </div>
-                    <div className="flex justify-between">
+                    <Separator />
+                    <div className="flex justify-between items-center">
                       <span className="text-muted-foreground">Valor total</span>
-                      <span className="font-bold text-success">R$ {totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                      <span className="font-bold text-lg text-success tabular-nums">R$ {totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
                     </div>
                     {fornecedorId && (
                       <div className="flex justify-between items-start">
-                        <span className="text-muted-foreground">Fornecedor</span>
-                        <span className="font-medium text-xs text-right max-w-[120px] truncate">{fornecedores.find(f => f.id === fornecedorId)?.nome}</span>
+                        <span className="text-muted-foreground text-xs">Fornecedor</span>
+                        <span className="font-medium text-xs text-right max-w-[140px] truncate">{fornecedores.find(f => f.id === fornecedorId)?.nome}</span>
                       </div>
                     )}
                     {notaFiscal && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Nota Fiscal</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground text-xs">Nota Fiscal</span>
                         <span className="font-mono text-xs">{notaFiscal}</span>
                       </div>
                     )}
@@ -660,10 +670,10 @@ const Entrada = () => {
 
                   {items.length > 0 && (
                     <>
-                      <Separator />
+                      <Separator className="my-4" />
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Observação geral</Label>
-                        <Textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={2} placeholder="Opcional..." maxLength={500} />
+                        <Label className="text-xs font-medium">Observação geral</Label>
+                        <Textarea value={observacao} onChange={e => setObservacao(e.target.value)} rows={2} placeholder="Opcional..." maxLength={500} className="rounded-xl" />
                       </div>
                     </>
                   )}
@@ -671,7 +681,7 @@ const Entrada = () => {
                   <Button
                     onClick={() => items.length > 0 ? setConfirmOpen(true) : toast.error("Adicione itens primeiro")}
                     disabled={saving || items.length === 0}
-                    className="w-full gradient-primary text-primary-foreground gap-2"
+                    className="w-full gradient-primary text-primary-foreground gap-2 mt-4"
                     size="lg"
                   >
                     {saving ? (
@@ -685,9 +695,9 @@ const Entrada = () => {
                   </Button>
 
                   {items.length === 0 && (
-                    <div className="text-center py-4">
-                      <Package className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-                      <p className="text-xs text-muted-foreground">Adicione itens à lista para confirmar a entrada</p>
+                    <div className="text-center py-6 mt-2">
+                      <Package className="h-10 w-10 mx-auto text-muted-foreground/20 mb-2" />
+                      <p className="text-xs text-muted-foreground">Adicione itens à lista para<br/>confirmar a entrada</p>
                     </div>
                   )}
                 </Card>
