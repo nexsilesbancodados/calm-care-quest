@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const COLORS = ["hsl(258, 68%, 52%)", "hsl(172, 60%, 42%)", "hsl(210, 80%, 55%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(280, 60%, 55%)", "hsl(252, 10%, 46%)"];
+const COLORS = ["hsl(152, 58%, 38%)", "hsl(190, 55%, 42%)", "hsl(210, 80%, 55%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(160, 50%, 50%)", "hsl(155, 10%, 46%)"];
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
