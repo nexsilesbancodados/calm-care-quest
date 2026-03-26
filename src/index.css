@@ -37,15 +37,15 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 162 40% 6%;
-    --sidebar-foreground: 155 12% 62%;
-    --sidebar-primary: 152 55% 45%;
+    --sidebar-background: 150 10% 97%;
+    --sidebar-foreground: 160 15% 40%;
+    --sidebar-primary: 152 55% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 162 30% 12%;
-    --sidebar-accent-foreground: 155 12% 90%;
-    --sidebar-border: 162 28% 14%;
-    --sidebar-ring: 152 55% 45%;
-    --sidebar-muted: 162 22% 18%;
+    --sidebar-accent: 150 12% 92%;
+    --sidebar-accent-foreground: 160 30% 12%;
+    --sidebar-border: 155 12% 90%;
+    --sidebar-ring: 152 55% 38%;
+    --sidebar-muted: 150 10% 88%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 38 92% 15%;
