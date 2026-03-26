@@ -7,76 +7,95 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AuditProvider } from "@/contexts/AuditContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
-import Medicamentos from "./pages/Medicamentos";
-import Alertas from "./pages/Alertas";
-import Movimentacoes from "./pages/Movimentacoes";
-import Estoque from "./pages/Estoque";
-import Configuracoes from "./pages/Configuracoes";
-import Etiquetas from "./pages/Etiquetas";
-import Transferencias from "./pages/Transferencias";
-import Fornecedores from "./pages/Fornecedores";
-import Relatorios from "./pages/Relatorios";
-import Entrada from "./pages/Entrada";
-import Dispensacao from "./pages/Dispensacao";
-import LeitorBarcode from "./pages/LeitorBarcode";
-import Prescricoes from "./pages/Prescricoes";
-import Usuarios from "./pages/Usuarios";
-import AdminPanel from "./pages/AdminPanel";
-import Pacientes from "./pages/Pacientes";
-import Inventario from "./pages/Inventario";
-import Perfil from "./pages/Perfil";
-import Login from "./pages/Login";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PageLoader } from "@/components/PageLoader";
 import { CommandPalette } from "@/components/CommandPalette";
+import { lazy, Suspense } from "react";
 
-const queryClient = new QueryClient();
+// Lazy-loaded pages
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Medicamentos = lazy(() => import("./pages/Medicamentos"));
+const Alertas = lazy(() => import("./pages/Alertas"));
+const Movimentacoes = lazy(() => import("./pages/Movimentacoes"));
+const Estoque = lazy(() => import("./pages/Estoque"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const Etiquetas = lazy(() => import("./pages/Etiquetas"));
+const Transferencias = lazy(() => import("./pages/Transferencias"));
+const Fornecedores = lazy(() => import("./pages/Fornecedores"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Entrada = lazy(() => import("./pages/Entrada"));
+const Dispensacao = lazy(() => import("./pages/Dispensacao"));
+const LeitorBarcode = lazy(() => import("./pages/LeitorBarcode"));
+const Prescricoes = lazy(() => import("./pages/Prescricoes"));
+const Usuarios = lazy(() => import("./pages/Usuarios"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const Pacientes = lazy(() => import("./pages/Pacientes"));
+const Inventario = lazy(() => import("./pages/Inventario"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Login = lazy(() => import("./pages/Login"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: true,
+    },
+  },
+});
 
 const P = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>{children}</ProtectedRoute>
 );
 
+const S = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoader />}>{children}</Suspense>
+);
+
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <AuditProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <CommandPalette />
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/" element={<P><Dashboard /></P>} />
-                <Route path="/medicamentos" element={<P><Medicamentos /></P>} />
-                <Route path="/entrada" element={<P><Entrada /></P>} />
-                <Route path="/dispensacao" element={<P><Dispensacao /></P>} />
-                <Route path="/alertas" element={<P><Alertas /></P>} />
-                <Route path="/movimentacoes" element={<P><Movimentacoes /></P>} />
-                <Route path="/estoque" element={<P><Estoque /></P>} />
-                <Route path="/etiquetas" element={<P><Etiquetas /></P>} />
-                <Route path="/transferencias" element={<P><Transferencias /></P>} />
-                <Route path="/fornecedores" element={<P><Fornecedores /></P>} />
-                <Route path="/relatorios" element={<P><Relatorios /></P>} />
-                <Route path="/usuarios" element={<P><Usuarios /></P>} />
-                <Route path="/admin" element={<P><AdminPanel /></P>} />
-                <Route path="/configuracoes" element={<P><Configuracoes /></P>} />
-                <Route path="/leitor" element={<P><LeitorBarcode /></P>} />
-                <Route path="/prescricoes" element={<P><Prescricoes /></P>} />
-                <Route path="/pacientes" element={<P><Pacientes /></P>} />
-                <Route path="/inventario" element={<P><Inventario /></P>} />
-                <Route path="/perfil" element={<P><Perfil /></P>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuditProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <AuditProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <CommandPalette />
+                <Routes>
+                  <Route path="/login" element={<S><Login /></S>} />
+                  <Route path="/reset-password" element={<S><ResetPassword /></S>} />
+                  <Route path="/" element={<P><S><Dashboard /></S></P>} />
+                  <Route path="/medicamentos" element={<P><S><Medicamentos /></S></P>} />
+                  <Route path="/entrada" element={<P><S><Entrada /></S></P>} />
+                  <Route path="/dispensacao" element={<P><S><Dispensacao /></S></P>} />
+                  <Route path="/alertas" element={<P><S><Alertas /></S></P>} />
+                  <Route path="/movimentacoes" element={<P><S><Movimentacoes /></S></P>} />
+                  <Route path="/estoque" element={<P><S><Estoque /></S></P>} />
+                  <Route path="/etiquetas" element={<P><S><Etiquetas /></S></P>} />
+                  <Route path="/transferencias" element={<P><S><Transferencias /></S></P>} />
+                  <Route path="/fornecedores" element={<P><S><Fornecedores /></S></P>} />
+                  <Route path="/relatorios" element={<P><S><Relatorios /></S></P>} />
+                  <Route path="/usuarios" element={<P><S><Usuarios /></S></P>} />
+                  <Route path="/admin" element={<P><S><AdminPanel /></S></P>} />
+                  <Route path="/configuracoes" element={<P><S><Configuracoes /></S></P>} />
+                  <Route path="/leitor" element={<P><S><LeitorBarcode /></S></P>} />
+                  <Route path="/prescricoes" element={<P><S><Prescricoes /></S></P>} />
+                  <Route path="/pacientes" element={<P><S><Pacientes /></S></P>} />
+                  <Route path="/inventario" element={<P><S><Inventario /></S></P>} />
+                  <Route path="/perfil" element={<P><S><Perfil /></S></P>} />
+                  <Route path="*" element={<S><NotFound /></S>} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuditProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
