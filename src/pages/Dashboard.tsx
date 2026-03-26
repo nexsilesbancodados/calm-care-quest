@@ -215,10 +215,13 @@ const Dashboard = () => {
       {/* Consumo Chart + Quick Actions */}
       <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }} className="lg:col-span-2">
-          <Card className="p-5 shadow-card h-full">
+          <Card className="p-5 h-full relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-info/30 to-transparent rounded-t-2xl" />
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-primary" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                </div>
                 Consumo
               </h3>
               <div className="flex items-center gap-2">
@@ -256,17 +259,24 @@ const Dashboard = () => {
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }}>
-          <Card className="p-5 shadow-card h-full">
-            <h3 className="text-sm font-semibold mb-4">Ações Rápidas</h3>
-            <div className="grid grid-cols-2 gap-2.5">
+          <Card className="p-5 h-full relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-success/40 via-info/30 to-transparent rounded-t-2xl" />
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10">
+                <Sparkles className="h-3.5 w-3.5 text-success" />
+              </div>
+              Ações Rápidas
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
               {quickActions.map((a, i) => (
                 <motion.button key={a.label} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + i * 0.06 }}
                   onClick={() => navigate(a.path)}
-                  className="flex flex-col items-center justify-center gap-2 rounded-xl border p-4 hover:shadow-card-hover transition-all hover:scale-[1.02] active:scale-[0.97] group">
-                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110", a.color)}>
+                  className="group relative flex flex-col items-center justify-center gap-2.5 rounded-xl border border-border/60 p-4 hover:border-primary/30 hover:shadow-card-hover transition-all duration-300 hover:scale-[1.02] active:scale-[0.96] overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-muted/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className={cn("relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-lg", a.color)}>
                     <a.icon className="h-5 w-5" />
                   </div>
-                  <div className="text-center">
+                  <div className="relative text-center">
                     <span className="text-xs font-semibold text-foreground leading-tight">{a.label}</span>
                     <p className="text-[9px] text-muted-foreground mt-0.5">{a.desc}</p>
                   </div>
@@ -280,9 +290,12 @@ const Dashboard = () => {
       {/* Top Stock + Categories */}
       <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
-          <Card className="p-5 shadow-card h-full">
+          <Card className="p-5 h-full relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-accent-foreground/10 to-transparent rounded-t-2xl" />
             <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <Package className="h-4 w-4 text-primary" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+                <Package className="h-3.5 w-3.5 text-primary" />
+              </div>
               Top Estoques
             </h3>
             {topStocked.length === 0 ? (
@@ -302,8 +315,14 @@ const Dashboard = () => {
 
         {catData.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}>
-            <Card className="p-5 shadow-card h-full">
-              <h3 className="text-sm font-semibold mb-4">Distribuição por Categoria</h3>
+          <Card className="p-5 h-full relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-info/40 via-success/20 to-transparent rounded-t-2xl" />
+              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-info/10">
+                  <Pill className="h-3.5 w-3.5 text-info" />
+                </div>
+                Distribuição por Categoria
+              </h3>
               <div className="flex items-center">
                 <ResponsiveContainer width="50%" height={200}>
                   <PieChart>
@@ -331,10 +350,13 @@ const Dashboard = () => {
       {/* Alerts */}
       {(expiredMeds.length > 0 || lowStockMeds.length > 0 || pendingTransfers > 0) && (
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.46 }}>
-          <Card className="p-5 shadow-card">
+          <Card className="p-5 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-warning/50 via-destructive/30 to-transparent rounded-t-2xl" />
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-warning" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/10">
+                  <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+                </div>
                 Alertas em Destaque
               </h3>
               <Button variant="ghost" size="sm" className="text-xs gap-1 font-semibold" onClick={() => navigate("/alertas")}>
