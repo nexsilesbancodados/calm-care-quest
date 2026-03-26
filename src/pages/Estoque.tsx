@@ -557,7 +557,16 @@ const Estoque = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2.5">
+                              {(() => {
+                                const fv = getFormaVisual(med.forma_farmaceutica);
+                                const FormaIcon = fv.icon;
+                                return (
+                                  <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", fv.bg)}>
+                                    <FormaIcon className={cn("h-4 w-4", fv.color)} />
+                                  </div>
+                                );
+                              })()}
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <p className="text-sm font-medium">{med.nome}</p>
