@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse } from "lucide-react";
+import logoImg from "@/assets/logo.jpg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -134,9 +135,7 @@ const Login = () => {
             transition={{ delay: 0.2 }}
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/30 to-accent/20 backdrop-blur-md border border-white/[0.08] shadow-lg shadow-black/20">
-                <Activity className="h-7 w-7 text-white" />
-              </div>
+              <img src={logoImg} alt="PsiRumoCerto" className="h-14 w-14 rounded-full object-cover ring-2 ring-white/20 shadow-lg shadow-black/20" />
               <div>
                 <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "var(--font-display)" }}>PsiRumoCerto</h1>
                 <p className="text-xs text-white/50 font-medium tracking-wide uppercase">Gestão Farmacêutica Hospitalar</p>
@@ -235,9 +234,7 @@ const Login = () => {
         >
           {/* Mobile header */}
           <div className="flex lg:hidden items-center gap-3 mb-10">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25">
-              <Activity className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={logoImg} alt="PsiRumoCerto" className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/25 shadow-lg shadow-primary/15" />
             <div>
               <h1 className="text-lg font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>PsiRumoCerto</h1>
               <p className="text-[11px] text-muted-foreground font-medium">Farmácia Hospitalar</p>

@@ -4,6 +4,7 @@ import {
   ScanLine, ArrowDownCircle, ArrowUpCircle, Activity, Shield, FileText,
   User, ClipboardCheck, ChevronRight, Sparkles, LogOut,
 } from "lucide-react";
+import logoImg from "@/assets/logo.jpg";
 import { NavLink } from "@/components/NavLink";
 import { prefetchPage } from "@/lib/lazyPages";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -229,12 +230,11 @@ export function AppSidebar() {
       <SidebarHeader className="p-4 pb-5">
         <div className="flex items-center gap-3">
           <motion.div
-            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25"
+            className="relative shrink-0"
             whileHover={{ scale: 1.05, rotate: 3 }}
             transition={{ type: "spring", stiffness: 400, damping: 15 }}
           >
-            <Activity className="h-5 w-5 text-primary-foreground" />
-            <div className="absolute inset-0 rounded-xl bg-white/10 animate-pulse" style={{ animationDuration: '3s' }} />
+            <img src={logoImg} alt="PsiRumoCerto" className="h-10 w-10 rounded-full object-cover ring-2 ring-primary/30 shadow-lg" />
           </motion.div>
           {!collapsed && (
             <div className="flex flex-col">
