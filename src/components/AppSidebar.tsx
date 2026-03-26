@@ -2,6 +2,7 @@ import {
   LayoutDashboard, Pill, AlertTriangle, ClipboardList, Package,
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Activity, Shield, FileText,
+  User, ClipboardCheck,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -30,6 +31,8 @@ const allItems = [
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null, badgeKey: null },
   { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
   { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: "prescricoes" as const },
+  { title: "Pacientes", url: "/pacientes", icon: User, roles: null, badgeKey: null },
+  { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"], badgeKey: null },
 ];
 
 const systemItems = [
