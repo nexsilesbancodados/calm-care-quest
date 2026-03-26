@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from "recharts";
-import { Download, Printer, Filter, Pill, Package, TrendingUp, Calendar, Clock, ArrowLeftRight, FileText } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
+import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
@@ -32,9 +33,14 @@ function downloadCSV(headers: string[], rows: any[][], filename: string) {
   a.click();
 }
 
-function printReport(title: string, content: string) {
+function printReport(title: string, content: string, hospitalNome?: string, userName?: string) {
   const pw = window.open("", "_blank");
   if (!pw) return;
+  const header = hospitalNome
+    ? `<div style="text-align:center;margin-bottom:12px"><h1 style="margin:0;font-size:20px;color:#1e3a5f">${hospitalNome}</h1><p style="margin:2px 0 0;font-size:10px;color:#999">Sistema PsiRumoCerto — Farmácia Hospitalar</p></div><hr style="border:none;border-top:2px solid #1e3a5f;margin-bottom:12px">`
+    : "";
+  const footerUser = userName || "—";
+  const timestamp = new Date().toLocaleString("pt-BR");
   pw.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
     <style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
     h1{font-size:18px;color:#1e3a5f;margin-bottom:4px}
@@ -45,13 +51,17 @@ function printReport(title: string, content: string) {
     .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600}
     .green{background:#dcfce7;color:#16a34a}.yellow{background:#fef3c7;color:#d97706}
     .red{background:#fee2e2;color:#dc2626}.gray{background:#f3f4f6;color:#6b7280}
+    .footer{margin-top:24px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#888;display:flex;justify-content:space-between}
+    .nota{margin-top:12px;padding:8px;background:#f8f9fa;border-left:3px solid #1e3a5f;font-size:10px;color:#555}
     @media print{@page{margin:12mm}}</style></head>
-    <body><h1>PsiRumoCerto — ${title}</h1><h2>Gerado em: ${new Date().toLocaleString("pt-BR")}</h2>${content}
+    <body>${header}<h1>PsiRumoCerto — ${title}</h1><h2>Gerado em: ${timestamp}</h2>${content}
+    <div class="footer"><span>Usuário: ${footerUser}</span><span>${timestamp}</span></div>
     <script>window.onload=function(){window.print()}<\/script></body></html>`);
   pw.document.close();
 }
 
 const Relatorios = () => {
+  const { profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
@@ -61,20 +71,26 @@ const Relatorios = () => {
   const [dateFrom, setDateFrom] = useState(() => new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
   const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10));
   const [venDays, setVenDays] = useState("60");
+  const [hospitalNome, setHospitalNome] = useState("");
+
+  // Psicotrópicos filter
+  const [psicoMonth, setPsicoMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
   useEffect(() => {
-    const fetch = async () => {
-      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: movData }, { data: transData }] =
+    const fetchAll = async () => {
+      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: movData }, { data: transData }, { data: configData }] =
         await Promise.all([
           supabase.from("medicamentos").select("*").eq("ativo", true),
           supabase.from("lotes").select("*").eq("ativo", true),
           supabase.from("categorias_medicamento").select("*"),
           supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").order("created_at", { ascending: false }).limit(500),
           supabase.from("transferencias").select("*, medicamentos(nome, concentracao), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome)").order("created_at", { ascending: false }).limit(200),
+          supabase.from("configuracoes_hospital").select("nome").limit(1),
         ]);
       setCategorias((catsData as Categoria[]) || []);
       setMovements(movData || []);
       setTransfers(transData || []);
+      if (configData && configData.length > 0) setHospitalNome(configData[0].nome);
       setMeds(
         (medsData || []).map((m: any) => ({
           ...m,
@@ -83,11 +99,12 @@ const Relatorios = () => {
       );
       setLoading(false);
     };
-    fetch();
+    fetchAll();
   }, []);
 
   const filteredMeds = catFilter === "all" ? meds : meds.filter((m) => m.categoria_id === catFilter);
   const totalUnits = filteredMeds.reduce((s, m) => s + getEstoqueTotal(m.lotes), 0);
+  const userName = profile?.nome || "—";
 
   // Movimentações filtradas por período
   const filteredMov = movements.filter((m) => {
@@ -135,9 +152,60 @@ const Relatorios = () => {
   ];
 
   const topStock = [...filteredMeds].map((m) => ({ name: m.nome.length > 20 ? m.nome.slice(0, 20) + "…" : m.nome, qty: getEstoqueTotal(m.lotes) })).sort((a, b) => b.qty - a.qty).slice(0, 8);
-
-  // Valor total do estoque
   const totalValue = filteredMeds.reduce((s, m) => s + m.lotes.reduce((sl, l) => sl + l.quantidade_atual * l.preco_unitario, 0), 0);
+
+  // === PSICOTRÓPICOS ===
+  const controlledMeds = meds.filter(m => m.controlado);
+  const psicoMonthStart = psicoMonth + "-01";
+  const psicoMonthEnd = (() => {
+    const [y, m] = psicoMonth.split("-").map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return `${psicoMonth}-${String(last).padStart(2, "0")}`;
+  })();
+
+  const psicoData = useMemo(() => {
+    return controlledMeds.flatMap(med =>
+      med.lotes.map(lote => {
+        const entradas = movements.filter(m =>
+          m.medicamento_id === med.id && m.lote_id === lote.id && m.tipo === "entrada" &&
+          m.created_at.slice(0, 10) >= psicoMonthStart && m.created_at.slice(0, 10) <= psicoMonthEnd
+        ).reduce((s: number, m: any) => s + m.quantidade, 0);
+        const saidas = movements.filter(m =>
+          m.medicamento_id === med.id && m.lote_id === lote.id && ["saida", "dispensacao"].includes(m.tipo) &&
+          m.created_at.slice(0, 10) >= psicoMonthStart && m.created_at.slice(0, 10) <= psicoMonthEnd
+        ).reduce((s: number, m: any) => s + m.quantidade, 0);
+        return {
+          med,
+          lote,
+          entradas,
+          saidas,
+          saldo: lote.quantidade_atual,
+        };
+      })
+    );
+  }, [controlledMeds, movements, psicoMonthStart, psicoMonthEnd]);
+
+  // === CMM POR MEDICAMENTO ===
+  const cmmData = useMemo(() => {
+    const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    return meds.map(med => {
+      const dispensacoes = movements.filter(m =>
+        m.medicamento_id === med.id && ["saida", "dispensacao"].includes(m.tipo) && m.created_at >= threeMonthsAgo
+      );
+      const totalDisp = dispensacoes.reduce((s: number, m: any) => s + m.quantidade, 0);
+      const cmmVal = Math.round(totalDisp / 3);
+      const estoqueAtual = getEstoqueTotal(med.lotes);
+      const cobertura = cmmVal > 0 ? Math.round(estoqueAtual / (cmmVal / 30)) : estoqueAtual > 0 ? 999 : 0;
+      return { med, cmm: cmmVal, estoque: estoqueAtual, cobertura };
+    }).filter(d => d.cmm > 0 || d.estoque > 0).sort((a, b) => a.cobertura - b.cobertura);
+  }, [meds, movements]);
+
+  const getCoberturaStatus = (dias: number) => {
+    if (dias >= 999) return { label: ">30d", cls: "bg-success/10 text-success border-success/20" };
+    if (dias > 30) return { label: `${dias}d`, cls: "bg-success/10 text-success border-success/20" };
+    if (dias >= 15) return { label: `${dias}d`, cls: "bg-warning/10 text-warning border-warning/20" };
+    return { label: `${dias}d`, cls: "bg-destructive/10 text-destructive border-destructive/20" };
+  };
 
   if (loading) return <AppLayout title="Relatórios"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
@@ -172,6 +240,8 @@ const Relatorios = () => {
           <TabsTrigger value="vencimento" className="text-xs gap-1"><Clock className="h-3.5 w-3.5" /> Vencimento</TabsTrigger>
           <TabsTrigger value="consumo" className="text-xs gap-1"><TrendingUp className="h-3.5 w-3.5" /> Consumo por Setor</TabsTrigger>
           <TabsTrigger value="transferencias" className="text-xs gap-1"><ArrowLeftRight className="h-3.5 w-3.5" /> Transferências</TabsTrigger>
+          <TabsTrigger value="psicotropicos" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Psicotrópicos</TabsTrigger>
+          <TabsTrigger value="cmm" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> CMM</TabsTrigger>
         </TabsList>
 
         {/* TAB: Estoque Atual */}
@@ -195,7 +265,7 @@ const Relatorios = () => {
                 const cls = st === "normal" ? "green" : st === "baixo" ? "yellow" : st === "critico" ? "red" : "gray";
                 return `<tr><td>${m.nome}</td><td>${m.concentracao}</td><td style="text-align:center">${t}</td><td style="text-align:center">${m.estoque_minimo}</td><td><span class="badge ${cls}">${st}</span></td><td style="text-align:right">R$ ${(m.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0)).toFixed(2)}</td></tr>`;
               }).join("");
-              printReport("Relatório de Estoque Atual", `<p><strong>${filteredMeds.length}</strong> itens | <strong>${totalUnits.toLocaleString("pt-BR")}</strong> unidades | Valor: <strong>R$ ${totalValue.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Estoque</th><th>Mínimo</th><th>Status</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table>`);
+              printReport("Relatório de Estoque Atual", `<p><strong>${filteredMeds.length}</strong> itens | <strong>${totalUnits.toLocaleString("pt-BR")}</strong> unidades | Valor: <strong>R$ ${totalValue.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Estoque</th><th>Mínimo</th><th>Status</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
             }}><Printer className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
@@ -255,7 +325,7 @@ const Relatorios = () => {
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = filteredMov.map((m) => `<tr><td>${formatDate(m.created_at)}</td><td>${m.tipo}</td><td>${m.medicamentos?.nome || "—"}</td><td style="text-align:center">${m.quantidade}</td><td>${m.paciente || m.setor || "—"}</td></tr>`).join("");
-              printReport(`Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredMov.length}</strong> registros no período</p><table><thead><tr><th>Data</th><th>Tipo</th><th>Medicamento</th><th>Qtd</th><th>Paciente/Setor</th></tr></thead><tbody>${rows}</tbody></table>`);
+              printReport(`Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredMov.length}</strong> registros no período</p><table><thead><tr><th>Data</th><th>Tipo</th><th>Medicamento</th><th>Qtd</th><th>Paciente/Setor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
             }}><Printer className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredMov.length} movimentações no período</Badge>
@@ -311,7 +381,7 @@ const Relatorios = () => {
                   const cls = e.days <= 15 ? "red" : e.days <= 30 ? "yellow" : "green";
                   return `<tr><td>${e.med.nome}</td><td>${e.lote.numero_lote}</td><td>${formatDate(e.lote.validade)}</td><td style="text-align:center"><span class="badge ${cls}">${e.days}d</span></td><td style="text-align:center">${e.lote.quantidade_atual}</td></tr>`;
                 }).join("");
-                printReport(`Medicamentos a Vencer (${venDays} dias)`, `<p><strong>${expiring.length}</strong> lotes a vencer</p><table><thead><tr><th>Medicamento</th><th>Lote</th><th>Validade</th><th>Dias</th><th>Qtd</th></tr></thead><tbody>${rows}</tbody></table>`);
+                printReport(`Medicamentos a Vencer (${venDays} dias)`, `<p><strong>${expiring.length}</strong> lotes a vencer</p><table><thead><tr><th>Medicamento</th><th>Lote</th><th>Validade</th><th>Dias</th><th>Qtd</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
               }}><Printer className="h-3.5 w-3.5" />PDF</Button>
             </div>
           </div>
@@ -350,7 +420,7 @@ const Relatorios = () => {
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = consumoSetorData.map((c) => `<tr><td>${c.name}</td><td style="text-align:center">${c.value}</td></tr>`).join("");
-              printReport(`Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<table><thead><tr><th>Setor/Paciente</th><th>Quantidade</th></tr></thead><tbody>${rows}</tbody></table>`);
+              printReport(`Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<table><thead><tr><th>Setor/Paciente</th><th>Quantidade</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
             }}><Printer className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Card className="p-5 shadow-card">
@@ -382,7 +452,7 @@ const Relatorios = () => {
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = filteredTrans.map((t) => `<tr><td>${formatDate(t.created_at)}</td><td>${t.medicamentos?.nome || "—"}</td><td>${t.clinica_destino?.nome || "—"}</td><td style="text-align:center">${t.quantidade}</td><td>${t.status}</td></tr>`).join("");
-              printReport(`Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredTrans.length}</strong> transferências no período</p><table><thead><tr><th>Data</th><th>Medicamento</th><th>Destino</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
+              printReport(`Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredTrans.length}</strong> transferências no período</p><table><thead><tr><th>Data</th><th>Medicamento</th><th>Destino</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
             }}><Printer className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredTrans.length} transferências no período</Badge>
@@ -405,6 +475,138 @@ const Relatorios = () => {
                     <TableCell><Badge variant="outline" className="text-[10px]">{t.status}</Badge></TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: Psicotrópicos */}
+        <TabsContent value="psicotropicos" className="space-y-4">
+          <div className="flex items-center gap-3 mb-2">
+            <Label className="text-xs">Período</Label>
+            <Input type="month" value={psicoMonth} onChange={e => setPsicoMonth(e.target.value)} className="h-8 text-xs w-[160px]" />
+            <div className="ml-auto flex gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+                downloadCSV(
+                  ["Medicamento", "Concentração", "Forma", "Lote", "Entradas", "Saídas", "Saldo", "Validade"],
+                  psicoData.map(d => [d.med.nome, d.med.concentracao, d.med.forma_farmaceutica, d.lote.numero_lote, d.entradas, d.saidas, d.saldo, formatDate(d.lote.validade)]),
+                  `psicotropicos-${psicoMonth}`
+                );
+              }}><Download className="h-3.5 w-3.5" />CSV</Button>
+              <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+                const rows = psicoData.map(d => `<tr><td>${d.med.nome}</td><td>${d.med.concentracao}</td><td>${d.med.forma_farmaceutica}</td><td>${d.lote.numero_lote}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.saidas}</td><td style="text-align:center;font-weight:600">${d.saldo}</td><td>${formatDate(d.lote.validade)}</td></tr>`).join("");
+                printReport(
+                  `Mapa de Psicotrópicos — ${psicoMonth}`,
+                  `<div class="nota">Relatório para apresentação à ANVISA — Mapa de Psicotrópicos (Portaria SVS/MS nº 344/98)</div>
+                  <p style="margin-top:12px"><strong>${controlledMeds.length}</strong> medicamentos controlados | <strong>${psicoData.length}</strong> lotes</p>
+                  <table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Forma</th><th>Lote</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Validade</th></tr></thead><tbody>${rows}</tbody></table>`,
+                  hospitalNome, userName
+                );
+              }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-info/5 border-info/20 p-3 text-xs text-info flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 shrink-0" />
+            Relatório para apresentação à ANVISA — Mapa de Psicotrópicos (Portaria SVS/MS nº 344/98)
+          </div>
+
+          <Badge variant="outline" className="text-xs">{controlledMeds.length} medicamentos controlados • {psicoData.length} lotes</Badge>
+
+          <Card className="shadow-card overflow-hidden">
+            <Table>
+              <TableHeader><TableRow className="bg-muted/50">
+                <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                <TableHead className="text-xs font-semibold">Concentração</TableHead>
+                <TableHead className="text-xs font-semibold">Forma</TableHead>
+                <TableHead className="text-xs font-semibold">Lote</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Entradas</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Saídas</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Saldo</TableHead>
+                <TableHead className="text-xs font-semibold">Validade</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {psicoData.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground text-sm">Nenhum medicamento controlado encontrado</TableCell></TableRow>
+                ) : psicoData.map((d, i) => (
+                  <TableRow key={`${d.lote.id}-${i}`}>
+                    <TableCell className="text-sm font-medium">{d.med.nome}</TableCell>
+                    <TableCell className="text-sm">{d.med.concentracao}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{d.med.forma_farmaceutica}</TableCell>
+                    <TableCell className="text-sm font-mono">{d.lote.numero_lote}</TableCell>
+                    <TableCell className="text-center text-sm text-success font-medium">{d.entradas || "—"}</TableCell>
+                    <TableCell className="text-center text-sm text-destructive font-medium">{d.saidas || "—"}</TableCell>
+                    <TableCell className="text-center font-semibold">{d.saldo}</TableCell>
+                    <TableCell className="text-sm">{formatDate(d.lote.validade)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: CMM por Medicamento */}
+        <TabsContent value="cmm" className="space-y-4">
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+              downloadCSV(
+                ["Medicamento", "CMM (un/mês)", "Estoque Atual", "Cobertura (dias)", "Status"],
+                cmmData.map(d => [d.med.nome, d.cmm, d.estoque, d.cobertura >= 999 ? ">30" : d.cobertura, d.cobertura > 30 ? "OK" : d.cobertura >= 15 ? "Atenção" : "Crítico"]),
+                "cmm-medicamentos"
+              );
+            }}><Download className="h-3.5 w-3.5" />CSV</Button>
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+              const rows = cmmData.map(d => {
+                const cs = getCoberturaStatus(d.cobertura);
+                const cls = d.cobertura > 30 ? "green" : d.cobertura >= 15 ? "yellow" : "red";
+                return `<tr><td>${d.med.nome}</td><td style="text-align:center">${d.cmm}</td><td style="text-align:center">${d.estoque}</td><td style="text-align:center"><span class="badge ${cls}">${cs.label}</span></td></tr>`;
+              }).join("");
+              printReport("CMM por Medicamento", `<p>Consumo Médio Mensal — Média dos últimos 3 meses</p><table><thead><tr><th>Medicamento</th><th>CMM (un/mês)</th><th>Estoque</th><th>Cobertura</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 mb-2">
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card p-4 shadow-card">
+              <p className="text-[11px] text-muted-foreground uppercase mb-1">Medicamentos</p>
+              <p className="text-xl font-bold">{cmmData.length}</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border bg-card p-4 shadow-card">
+              <p className="text-[11px] text-muted-foreground uppercase mb-1">Cobertura &lt;15d</p>
+              <p className="text-xl font-bold text-destructive">{cmmData.filter(d => d.cobertura < 15).length}</p>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border bg-card p-4 shadow-card">
+              <p className="text-[11px] text-muted-foreground uppercase mb-1">Cobertura 15-30d</p>
+              <p className="text-xl font-bold text-warning">{cmmData.filter(d => d.cobertura >= 15 && d.cobertura <= 30).length}</p>
+            </motion.div>
+          </div>
+
+          <Card className="shadow-card overflow-hidden">
+            <Table>
+              <TableHeader><TableRow className="bg-muted/50">
+                <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                <TableHead className="text-xs font-semibold text-center">CMM (un/mês)</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Estoque Atual</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Cobertura</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {cmmData.length === 0 ? (
+                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-sm">Nenhum dado de consumo nos últimos 3 meses</TableCell></TableRow>
+                ) : cmmData.map(d => {
+                  const cs = getCoberturaStatus(d.cobertura);
+                  return (
+                    <TableRow key={d.med.id}>
+                      <TableCell>
+                        <p className="text-sm font-medium">{d.med.nome}</p>
+                        <p className="text-[11px] text-muted-foreground">{d.med.concentracao} • {d.med.forma_farmaceutica}</p>
+                      </TableCell>
+                      <TableCell className="text-center font-semibold">{d.cmm}</TableCell>
+                      <TableCell className="text-center">{d.estoque}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={cn("text-[10px]", cs.cls)}>{cs.label}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </Card>
