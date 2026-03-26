@@ -1,23 +1,22 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useAudit } from "@/contexts/AuditContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Building2, Phone, Mail } from "lucide-react";
+import { Search, Plus, Phone, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { Fornecedor } from "@/types/database";
+
+const PAGE_SIZE = 30;
 
 const Fornecedores = () => {
   const { log } = useAudit();
@@ -27,16 +26,26 @@ const Fornecedores = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Fornecedor | null>(null);
   const [form, setForm] = useState({ nome: "", cnpj: "", contato: "", email: "", telefone: "", endereco: "" });
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [deactivateConfirm, setDeactivateConfirm] = useState<{ id: string; nome: string; medsCount: number; ativo: boolean } | null>(null);
 
-  useEffect(() => {
-    supabase.from("fornecedores").select("*").order("nome").then(({ data }) => {
-      setSuppliers(data as Fornecedor[] || []);
-      setLoading(false);
-    });
-  }, []);
+  const fetchData = async () => {
+    setLoading(true);
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { count } = await supabase.from("fornecedores").select("id", { count: "exact", head: true });
+    setTotalCount(count || 0);
+    const { data } = await supabase.from("fornecedores").select("*").order("nome").range(from, to);
+    setSuppliers(data as Fornecedor[] || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, [page]);
 
   const filtered = suppliers.filter(s => !search || s.nome.toLowerCase().includes(search.toLowerCase()) || s.cnpj.includes(search));
   const activeCount = suppliers.filter(s => s.ativo).length;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   const openNew = () => { setEditItem(null); setForm({ nome: "", cnpj: "", contato: "", email: "", telefone: "", endereco: "" }); setDialogOpen(true); };
   const openEdit = (s: Fornecedor) => { setEditItem(s); setForm({ nome: s.nome, cnpj: s.cnpj, contato: s.contato, email: s.email, telefone: s.telefone, endereco: s.endereco }); setDialogOpen(true); };
@@ -58,17 +67,33 @@ const Fornecedores = () => {
     setDialogOpen(false);
   };
 
-  const toggleActive = async (id: string) => {
+  const confirmToggle = async (id: string) => {
     const s = suppliers.find(x => x.id === id);
     if (!s) return;
-    await supabase.from("fornecedores").update({ ativo: !s.ativo }).eq("id", id);
-    setSuppliers(prev => prev.map(x => x.id === id ? { ...x, ativo: !x.ativo } as Fornecedor : x));
+    if (s.ativo) {
+      // Count linked meds
+      const { count } = await supabase.from("medicamentos").select("id", { count: "exact", head: true }).eq("fornecedor_id", id).eq("ativo", true);
+      setDeactivateConfirm({ id, nome: s.nome, medsCount: count || 0, ativo: s.ativo });
+    } else {
+      // Reactivate directly
+      await supabase.from("fornecedores").update({ ativo: true }).eq("id", id);
+      setSuppliers(prev => prev.map(x => x.id === id ? { ...x, ativo: true } as Fornecedor : x));
+      toast.success("Fornecedor reativado");
+    }
+  };
+
+  const handleToggle = async () => {
+    if (!deactivateConfirm) return;
+    await supabase.from("fornecedores").update({ ativo: false }).eq("id", deactivateConfirm.id);
+    setSuppliers(prev => prev.map(x => x.id === deactivateConfirm.id ? { ...x, ativo: false } as Fornecedor : x));
+    toast.success("Fornecedor desativado");
+    setDeactivateConfirm(null);
   };
 
   if (loading) return <AppLayout title="Fornecedores"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
   return (
-    <AppLayout title="Fornecedores" subtitle={`${suppliers.length} fornecedores • ${activeCount} ativos`}>
+    <AppLayout title="Fornecedores" subtitle={`${totalCount} fornecedores • ${activeCount} ativos`}>
       <div className="flex gap-3 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -90,12 +115,41 @@ const Fornecedores = () => {
                 {s.email && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" />{s.email}</div>}
               </div>
               <div className="mt-3 pt-2 border-t">
-                <Button size="sm" variant={s.ativo ? "destructive" : "outline"} className="text-[10px] h-6" onClick={(e) => { e.stopPropagation(); toggleActive(s.id); }}>{s.ativo ? "Desativar" : "Reativar"}</Button>
+                <Button size="sm" variant={s.ativo ? "destructive" : "outline"} className="text-[10px] h-6" onClick={(e) => { e.stopPropagation(); confirmToggle(s.id); }}>{s.ativo ? "Desativar" : "Reativar"}</Button>
               </div>
             </Card>
           </motion.div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-muted-foreground">Página {page + 1} de {totalPages}</p>
+          <div className="flex gap-1">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="h-8 w-8 p-0"><ChevronLeft className="h-4 w-4" /></Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="h-8 w-8 p-0"><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivate confirm */}
+      <AlertDialog open={!!deactivateConfirm} onOpenChange={() => setDeactivateConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar {deactivateConfirm?.nome}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deactivateConfirm && deactivateConfirm.medsCount > 0
+                ? `Este fornecedor tem ${deactivateConfirm.medsCount} medicamento(s) vinculado(s). Deseja continuar?`
+                : "Este fornecedor não tem medicamentos vinculados. Deseja continuar?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleToggle} className="bg-destructive text-destructive-foreground">Desativar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[480px]">

@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { BarcodeCanvas } from "@/components/BarcodeCanvas";
@@ -35,13 +36,13 @@ function generateBarcodeSvgString(value: string): string {
 }
 
 const Etiquetas = () => {
+  const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [codeType, setCodeType] = useState<CodeType>("barcode");
   const [labelSize, setLabelSize] = useState<LabelSize>("medium");
   const [copies, setCopies] = useState(1);
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -49,7 +50,14 @@ const Etiquetas = () => {
         supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
         supabase.from("lotes").select("*").eq("ativo", true),
       ]);
-      setMeds((medsData || []).map((m: any) => ({ ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id) })));
+      const allMeds = (medsData || []).map((m: any) => ({ ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id) }));
+      setMeds(allMeds);
+
+      // Pre-select from query param
+      const medId = searchParams.get("medicamento_id");
+      if (medId && allMeds.find((m: any) => m.id === medId)) {
+        setSelectedIds(new Set([medId]));
+      }
     };
     fetch();
   }, []);
@@ -146,7 +154,6 @@ const Etiquetas = () => {
             <Button className="w-full gap-2 gradient-primary text-primary-foreground" onClick={handlePrint} disabled={selectedMeds.length === 0}><Printer className="h-4 w-4" />Imprimir</Button>
           </Card>
 
-          {/* Preview */}
           {selectedMeds.length > 0 && (
             <Card className="p-4 shadow-card">
               <p className="text-xs font-semibold mb-3 flex items-center gap-1.5"><Eye className="h-3.5 w-3.5 text-primary" />Pré-visualização</p>

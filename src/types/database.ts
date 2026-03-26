@@ -1,6 +1,7 @@
 export type AppRole = "admin" | "farmaceutico" | "auxiliar_farmacia" | "enfermeiro" | "visualizador";
 export type TipoMovimentacao = "entrada" | "saida" | "transferencia" | "ajuste" | "dispensacao";
 export type StatusTransferencia = "pendente" | "aprovado" | "enviado" | "recebido" | "cancelado";
+export type StatusPrescricao = "ativa" | "parcialmente_dispensada" | "totalmente_dispensada" | "vencida" | "cancelada";
 
 export interface Profile {
   id: string;
@@ -67,6 +68,7 @@ export interface Movimentacao {
   setor: string | null;
   nota_fiscal: string | null;
   observacao: string;
+  prescricao_id: string | null;
   created_at: string;
   medicamento?: Medicamento;
 }
@@ -134,6 +136,35 @@ export interface AuditEntry {
   created_at: string;
 }
 
+export interface Prescricao {
+  id: string;
+  numero_receita: string;
+  paciente: string;
+  prontuario: string | null;
+  medico: string;
+  crm: string | null;
+  setor: string | null;
+  data_prescricao: string;
+  validade_dias: number;
+  status: StatusPrescricao;
+  observacao: string;
+  usuario_id: string | null;
+  created_at: string;
+  updated_at: string;
+  itens?: ItemPrescricao[];
+}
+
+export interface ItemPrescricao {
+  id: string;
+  prescricao_id: string;
+  medicamento_id: string;
+  quantidade_prescrita: number;
+  quantidade_dispensada: number;
+  posologia: string;
+  created_at: string;
+  medicamento?: Medicamento;
+}
+
 export const ROLE_LABELS: Record<AppRole, string> = {
   admin: "Administrador",
   farmaceutico: "Farmacêutico",
@@ -148,6 +179,14 @@ export const ROLE_PERMISSIONS: Record<AppRole, string[]> = {
   auxiliar_farmacia: ["add_entry", "read_stock", "scan_barcode"],
   enfermeiro: ["read_stock", "request_meds", "register_admin"],
   visualizador: ["read_stock", "view_basic_reports"],
+};
+
+export const PRESCRICAO_STATUS_CONFIG: Record<StatusPrescricao, { label: string; className: string }> = {
+  ativa: { label: "Ativa", className: "bg-success/10 text-success border-success/20" },
+  parcialmente_dispensada: { label: "Parcial", className: "bg-warning/10 text-warning border-warning/20" },
+  totalmente_dispensada: { label: "Dispensada", className: "bg-info/10 text-info border-info/20" },
+  vencida: { label: "Vencida", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  cancelada: { label: "Cancelada", className: "bg-muted text-muted-foreground border-muted" },
 };
 
 export function getEstoqueTotal(lotes: Lote[]): number {

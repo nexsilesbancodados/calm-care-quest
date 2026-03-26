@@ -5,23 +5,47 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  BarChart, Bar, LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell,
+  BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell,
   CartesianGrid, Area, AreaChart,
 } from "recharts";
 import {
   Pill, AlertTriangle, XCircle, Clock, Package, ShieldCheck,
   ClipboardList, Barcode, ArrowLeftRight, TrendingUp, ArrowRight,
-  ArrowDownCircle, ArrowUpCircle, Sparkles,
+  ArrowDownCircle, ArrowUpCircle, Sparkles, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { Medicamento, Lote } from "@/types/database";
 
 const COLORS = ["hsl(220, 65%, 38%)", "hsl(210, 80%, 55%)", "hsl(160, 60%, 42%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(250, 55%, 55%)", "hsl(220, 10%, 46%)"];
+
+const PERIOD_OPTIONS = [
+  { value: "7", label: "Últimos 7 dias" },
+  { value: "30", label: "Últimos 30 dias" },
+  { value: "90", label: "Últimos 90 dias" },
+  { value: "this_month", label: "Este mês" },
+  { value: "last_month", label: "Mês anterior" },
+];
+
+function getPeriodDates(period: string) {
+  const now = new Date();
+  let from: Date;
+  let to = now;
+  if (period === "this_month") {
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (period === "last_month") {
+    from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    to = new Date(now.getFullYear(), now.getMonth(), 0);
+  } else {
+    from = new Date(Date.now() - Number(period) * 24 * 60 * 60 * 1000);
+  }
+  return { from, to };
+}
 
 const quickActions = [
   { label: "Entrada", desc: "Receber medicamentos", icon: ArrowDownCircle, path: "/entrada", color: "bg-success/10 text-success" },
@@ -34,65 +58,90 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
-  const [consumo30d, setConsumo30d] = useState<{ day: string; qty: number }[]>([]);
+  const [consumoData, setConsumoData] = useState<{ day: string; qty: number }[]>([]);
   const [pendingTransfers, setPendingTransfers] = useState(0);
   const [totalMovements, setTotalMovements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
   const [catData, setCatData] = useState<{ name: string; value: number }[]>([]);
+  const [period, setPeriod] = useState("30");
+  const [cmm, setCmm] = useState(0);
+  const [prescricoesAtivas, setPrescricoesAtivas] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch consumo based on period
+  const fetchConsumo = async (p: string) => {
+    const { from, to } = getPeriodDates(p);
+    const { data: movData } = await supabase.from("movimentacoes").select("created_at, quantidade, tipo")
+      .in("tipo", ["saida", "dispensacao"])
+      .gte("created_at", from.toISOString())
+      .lte("created_at", to.toISOString())
+      .order("created_at");
+
+    const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const dayMap: Record<string, number> = {};
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(to.getTime() - i * 24 * 60 * 60 * 1000);
+      dayMap[d.toISOString().slice(0, 10)] = 0;
+    }
+    (movData || []).forEach((m: any) => {
+      const day = m.created_at.slice(0, 10);
+      if (dayMap[day] !== undefined) dayMap[day] += m.quantidade;
+    });
+
+    const interval = days > 60 ? 6 : days > 14 ? 2 : 1;
+    setConsumoData(Object.entries(dayMap).map(([day, qty]) => ({
+      day: new Date(day).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), qty,
+    })));
+  };
+
   useEffect(() => {
     const fetchAll = async () => {
-      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: movData }, { data: transData }, { count }] =
+      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: transData }, { count }, { count: prescCount }] =
         await Promise.all([
           supabase.from("medicamentos").select("*").eq("ativo", true),
           supabase.from("lotes").select("*").eq("ativo", true),
           supabase.from("categorias_medicamento").select("*"),
-          supabase.from("movimentacoes").select("created_at, quantidade, tipo")
-            .in("tipo", ["saida", "dispensacao"])
-            .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
-            .order("created_at"),
           supabase.from("transferencias").select("id", { count: "exact" }).eq("status", "pendente"),
           supabase.from("movimentacoes").select("id", { count: "exact", head: true }),
+          supabase.from("prescricoes").select("id", { count: "exact", head: true }).eq("status", "ativa"),
         ]);
 
       setPendingTransfers(transData?.length || 0);
       setTotalMovements(count || 0);
+      setPrescricoesAtivas(prescCount || 0);
 
       const medsWithLotes = (medsData || []).map((m: any) => ({
         ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
       }));
       setMeds(medsWithLotes);
 
-      // Categories
       setCatData((catsData || []).map((c: any) => ({
         name: c.nome,
         value: medsWithLotes.filter((m: any) => m.categoria_id === c.id).reduce((s: number, m: any) => s + m.lotes.reduce((sl: number, l: any) => sl + l.quantidade_atual, 0), 0),
       })).filter((c: any) => c.value > 0));
 
-      // Consumo 30d
-      const dayMap: Record<string, number> = {};
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-        dayMap[d.toISOString().slice(0, 10)] = 0;
-      }
-      (movData || []).forEach((m: any) => {
-        const day = m.created_at.slice(0, 10);
-        if (dayMap[day] !== undefined) dayMap[day] += m.quantidade;
-      });
-      setConsumo30d(Object.entries(dayMap).map(([day, qty]) => ({
-        day: new Date(day).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), qty,
-      })));
+      // CMM: average of last 3 months
+      const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+      const { data: cmmData } = await supabase.from("movimentacoes").select("quantidade")
+        .in("tipo", ["saida", "dispensacao"])
+        .gte("created_at", threeMonthsAgo.toISOString());
+      const totalDisp = (cmmData || []).reduce((s: number, m: any) => s + m.quantidade, 0);
+      setCmm(Math.round(totalDisp / 3));
 
+      await fetchConsumo("30");
       setLoading(false);
     };
     fetchAll();
   }, []);
+
+  useEffect(() => {
+    if (!loading) fetchConsumo(period);
+  }, [period]);
 
   const stats = {
     total: meds.length,
@@ -151,7 +200,7 @@ const Dashboard = () => {
       </motion.div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 gap-3 mb-6">
         <StatCard title="Total" value={stats.total} icon={Pill} variant="info" delay={0} onClick={() => navigate("/medicamentos")} />
         <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.04} />
         <StatCard title="Est. Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.08} onClick={() => navigate("/alertas")} />
@@ -159,6 +208,8 @@ const Dashboard = () => {
         <StatCard title="Esgotados" value={stats.outOfStock} icon={XCircle} variant="critical" delay={0.16} />
         <StatCard title="Vence 60d" value={stats.expiringSoon} icon={Clock} variant="warning" delay={0.2} />
         <StatCard title="Transf." value={stats.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.24} onClick={() => navigate("/transferencias")} />
+        <StatCard title="CMM" value={cmm} icon={TrendingUp} variant="default" delay={0.28} />
+        <StatCard title="Prescrições" value={prescricoesAtivas} icon={FileText} variant="info" delay={0.32} onClick={() => navigate("/prescricoes")} />
       </div>
 
       {/* Consumo Chart + Quick Actions */}
@@ -168,17 +219,25 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-primary" />
-                Consumo — 30 dias
+                Consumo
               </h3>
-              <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5">
-                {consumo30d.reduce((s, d) => s + d.qty, 0).toLocaleString("pt-BR")} un.
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Select value={period} onValueChange={setPeriod}>
+                  <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PERIOD_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5">
+                  {consumoData.reduce((s, d) => s + d.qty, 0).toLocaleString("pt-BR")} un.
+                </Badge>
+              </div>
             </div>
-            {consumo30d.every(d => d.qty === 0) ? (
-              <p className="text-sm text-muted-foreground text-center py-16">Nenhuma saída nos últimos 30 dias</p>
+            {consumoData.every(d => d.qty === 0) ? (
+              <p className="text-sm text-muted-foreground text-center py-16">Nenhuma saída no período</p>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={consumo30d} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
+                <AreaChart data={consumoData} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorQty" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
@@ -186,7 +245,7 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval={4} />
+                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(consumoData.length / 10))} />
                   <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={30} />
                   <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
                   <Area type="monotone" dataKey="qty" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorQty)" name="Unidades" />
