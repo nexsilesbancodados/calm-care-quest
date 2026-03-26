@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      automacao_config: {
+        Row: {
+          ativo: boolean
+          id: string
+          parametros: Json
+          tipo: string
+          ultima_execucao: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          id?: string
+          parametros?: Json
+          tipo: string
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          id?: string
+          parametros?: Json
+          tipo?: string
+          ultima_execucao?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categorias_medicamento: {
         Row: {
           ativo: boolean
@@ -398,6 +425,79 @@ export type Database = {
           },
         ]
       }
+      notificacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lida: boolean
+          link: string | null
+          lote_id: string | null
+          medicamento_id: string | null
+          mensagem: string
+          metadata: Json | null
+          prescricao_id: string | null
+          resolvida: boolean
+          severidade: string
+          tipo: string
+          titulo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          lote_id?: string | null
+          medicamento_id?: string | null
+          mensagem?: string
+          metadata?: Json | null
+          prescricao_id?: string | null
+          resolvida?: boolean
+          severidade?: string
+          tipo?: string
+          titulo: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lida?: boolean
+          link?: string | null
+          lote_id?: string | null
+          medicamento_id?: string | null
+          mensagem?: string
+          metadata?: Json | null
+          prescricao_id?: string | null
+          resolvida?: boolean
+          severidade?: string
+          tipo?: string
+          titulo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificacoes_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_prescricao_id_fkey"
+            columns: ["prescricao_id"]
+            isOneToOne: false
+            referencedRelation: "prescricoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescricoes: {
         Row: {
           created_at: string | null
@@ -576,6 +676,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_estoque_baixo: { Args: never; Returns: number }
+      check_vencimento_lotes: { Args: never; Returns: number }
+      dispensar_prescricao: {
+        Args: { _prescricao_id: string; _usuario_id: string }
+        Returns: Json
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
