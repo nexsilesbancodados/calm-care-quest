@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Pill, AlertTriangle, ClipboardList, Package,
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Activity, Shield, FileText,
-  User, ClipboardCheck, ChevronRight, LogOut,
+  User, ClipboardCheck, ChevronRight, Sparkles, LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { prefetchPage } from "@/lib/lazyPages";
@@ -23,6 +23,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 type MenuItem = {
   title: string;
@@ -125,40 +126,40 @@ export function AppSidebar() {
     navigate("/login");
   };
 
-  const renderMenuItem = (item: MenuItem) => {
+  const renderMenuItem = (item: MenuItem, index: number) => {
     const active = isActive(item.url);
     const count = getBadgeCount(item.badgeKey);
 
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-          <NavLink
-            to={item.url}
-            end={item.url === "/"}
-            onMouseEnter={() => prefetchPage(item.url)}
-            onFocus={() => prefetchPage(item.url)}
-            className={cn(
-              "group relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sidebar-foreground/65 transition-all duration-100",
-              "hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
-              active && "bg-sidebar-primary/12 text-sidebar-accent-foreground border border-sidebar-primary/20"
-            )}
-            activeClassName=""
-          >
+            <NavLink
+              to={item.url}
+              end={item.url === "/"}
+              onMouseEnter={() => prefetchPage(item.url)}
+              onFocus={() => prefetchPage(item.url)}
+              className={cn(
+                "group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sidebar-foreground/70 transition-colors duration-75",
+                "hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60",
+                active && "bg-sidebar-primary/15 text-sidebar-primary-foreground border border-sidebar-primary/25 shadow-[0_0_12px_hsl(var(--sidebar-primary)/0.15)]"
+              )}
+              activeClassName=""
+            >
             <div className="relative">
               <item.icon className={cn(
-                "h-4 w-4 shrink-0 transition-colors duration-100",
+                "h-[17px] w-[17px] shrink-0 transition-colors duration-75",
                 active
-                  ? "text-sidebar-ring"
-                  : "text-sidebar-foreground/40 group-hover:text-sidebar-accent-foreground"
+                  ? "text-sidebar-ring drop-shadow-[0_0_4px_hsl(var(--sidebar-primary)/0.5)]"
+                  : "text-sidebar-foreground/45 group-hover:text-sidebar-accent-foreground"
               )} />
               {collapsed && count > 0 && (
-                <div className="absolute -top-1 -right-1.5 h-1.5 w-1.5 rounded-full bg-destructive animate-pulse" />
+                <div className="absolute -top-1 -right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar-background animate-pulse" />
               )}
             </div>
             {!collapsed && (
               <>
                 <span className={cn(
-                  "text-[12px] flex-1 transition-colors duration-100",
+                  "text-[13px] flex-1 transition-colors duration-75",
                   active ? "font-semibold text-sidebar-accent-foreground" : "font-medium"
                 )}>
                   {item.title}
@@ -167,12 +168,11 @@ export function AppSidebar() {
                   <Badge
                     variant="outline"
                     className={cn(
-                      "h-4.5 min-w-[18px] px-1 text-[9px] font-bold tabular-nums border-0 rounded-md",
+                      "h-5 min-w-[22px] px-1.5 text-[10px] font-bold tabular-nums border-0 shadow-sm",
                       item.badgeKey === "alerts"
                         ? "bg-destructive/20 text-destructive"
-                        : "bg-sidebar-primary/18 text-sidebar-ring"
+                        : "bg-sidebar-primary/20 text-sidebar-ring"
                     )}
-                    style={{ fontFamily: "var(--font-mono)" }}
                   >
                     {count}
                   </Badge>
@@ -196,7 +196,7 @@ export function AppSidebar() {
         <SidebarGroup key={label}>
           <SidebarGroupContent>
             <SidebarMenu>
-              {filtered.map((item) => renderMenuItem(item))}
+              {filtered.map((item, i) => renderMenuItem(item, i))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -207,17 +207,15 @@ export function AppSidebar() {
       <Collapsible key={label} defaultOpen={defaultOpen || hasActiveItem} className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex items-center w-full text-[9px] uppercase tracking-[0.15em] text-sidebar-foreground/25 px-2.5 mb-0.5 font-bold hover:text-sidebar-foreground/45 transition-colors cursor-pointer"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
+            <CollapsibleTrigger className="flex items-center w-full text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/30 px-3 mb-0.5 font-semibold hover:text-sidebar-foreground/50 transition-colors cursor-pointer">
               <span className="flex-1 text-left">{label}</span>
-              <ChevronRight className="h-2.5 w-2.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+              <ChevronRight className="h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent className="transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">
-                {filtered.map((item) => renderMenuItem(item))}
+                {filtered.map((item, i) => renderMenuItem(item, i))}
               </SidebarMenu>
             </SidebarGroupContent>
           </CollapsibleContent>
@@ -228,70 +226,70 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-4 pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gradient-primary">
-            <Activity className="h-4.5 w-4.5 text-primary-foreground" />
-          </div>
+      <SidebarHeader className="p-4 pb-5">
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/25"
+            whileHover={{ scale: 1.05, rotate: 3 }}
+            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+          >
+            <Activity className="h-5 w-5 text-primary-foreground" />
+            <div className="absolute inset-0 rounded-xl bg-white/10 animate-pulse" style={{ animationDuration: '3s' }} />
+          </motion.div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-[13px] font-bold text-sidebar-accent-foreground tracking-tight">
+              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight flex items-center gap-1.5" style={{ fontFamily: "var(--font-display)" }}>
                 PsiRumoCerto
+                <Sparkles className="h-3 w-3 text-sidebar-ring" />
               </span>
-              <span className="text-[9px] text-sidebar-foreground/30 font-bold uppercase tracking-[0.12em]"
-                style={{ fontFamily: "var(--font-mono)" }}
-              >
-                Farmácia Hospitalar
-              </span>
+              <span className="text-[10px] text-sidebar-foreground/40 font-medium">Farmácia Hospitalar</span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 space-y-0.5">
+      <SidebarContent className="px-2 space-y-1">
         {renderGroup("Principal", mainItems)}
         {renderGroup("Operações", operationItems)}
         {renderGroup("Ferramentas", toolItems)}
-        {renderGroup("Cadastros", reportItems)}
-        {renderGroup("Sistema", systemItems, false)}
+        {renderGroup("Cadastros & Relatórios", reportItems)}
+        {renderGroup("Administração", systemItems, false)}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
         {!collapsed ? (
-          <div className="rounded-lg bg-sidebar-accent/40 border border-sidebar-border/30 p-2.5">
-            <div className="flex items-center gap-2.5">
+          <div className="rounded-xl bg-gradient-to-br from-sidebar-accent/60 to-sidebar-accent/20 border border-sidebar-border/40 p-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <Avatar className="h-8 w-8 ring-1.5 ring-sidebar-primary/15">
-                  <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-ring text-[10px] font-bold">
+                <Avatar className="h-9 w-9 ring-2 ring-primary/30 hover:ring-primary/60 transition-all">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/25 to-accent/15 text-sidebar-ring text-[11px] font-bold">
                     {displayInitials}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success border-[1.5px] border-sidebar-accent" />
+                <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success border-2 border-sidebar-accent" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-sidebar-accent-foreground truncate leading-tight">{displayName}</p>
-                <p className="text-[9px] text-sidebar-foreground/35 font-bold uppercase tracking-[0.1em] truncate"
-                  style={{ fontFamily: "var(--font-mono)" }}
-                >{displayRole}</p>
+                <p className="text-[12px] font-semibold text-sidebar-accent-foreground truncate leading-tight">{displayName}</p>
+                <p className="text-[10px] text-sidebar-foreground/40 font-medium truncate">{displayRole}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-sidebar-foreground/25 hover:text-destructive hover:bg-destructive/10 transition-all"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-sidebar-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-all"
                 title="Sair"
               >
-                <LogOut className="h-3 w-3" />
+                <LogOut className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
             <div className="relative">
-              <Avatar className="h-7 w-7 ring-1.5 ring-sidebar-primary/15">
-                <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-ring text-[9px] font-bold">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/30 hover:ring-primary/60 transition-all">
+                <AvatarFallback className="bg-gradient-to-br from-primary/25 to-accent/15 text-sidebar-ring text-[10px] font-bold">
                   {displayInitials}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute -bottom-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-success border-[1.5px] border-sidebar-background" />
+              <div className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full bg-success border-2 border-sidebar-background" />
             </div>
           </div>
         )}
