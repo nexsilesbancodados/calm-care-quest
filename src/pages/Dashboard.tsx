@@ -16,26 +16,26 @@ import {
 import {
   Pill, AlertTriangle, XCircle, Clock, Package, ShieldCheck,
   ClipboardList, Barcode, ArrowLeftRight, TrendingUp, ArrowRight,
-  ArrowDownCircle, ArrowUpCircle, Sparkles, FileText,
+  ArrowDownCircle, ArrowUpCircle, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const COLORS = ["hsl(220, 65%, 38%)", "hsl(210, 80%, 55%)", "hsl(160, 60%, 42%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(250, 55%, 55%)", "hsl(220, 10%, 46%)"];
+const COLORS = ["hsl(172, 55%, 32%)", "hsl(200, 75%, 50%)", "hsl(162, 55%, 40%)", "hsl(36, 95%, 54%)", "hsl(4, 80%, 56%)", "hsl(250, 50%, 50%)", "hsl(200, 10%, 44%)"];
 
 const PERIOD_OPTIONS = [
-  { value: "7", label: "Últimos 7 dias" },
-  { value: "30", label: "Últimos 30 dias" },
-  { value: "90", label: "Últimos 90 dias" },
+  { value: "7", label: "7 dias" },
+  { value: "30", label: "30 dias" },
+  { value: "90", label: "90 dias" },
   { value: "this_month", label: "Este mês" },
   { value: "last_month", label: "Mês anterior" },
 ];
 
 const quickActions = [
-  { label: "Entrada", desc: "Receber medicamentos", icon: ArrowDownCircle, path: "/entrada", color: "bg-success/10 text-success" },
-  { label: "Dispensação", desc: "Registrar saída", icon: ArrowUpCircle, path: "/dispensacao", color: "bg-info/10 text-info" },
-  { label: "Etiquetas", desc: "Imprimir códigos", icon: Barcode, path: "/etiquetas", color: "bg-primary/10 text-primary" },
-  { label: "Transferência", desc: "Entre clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "bg-warning/10 text-warning" },
+  { label: "Entrada", desc: "Receber", icon: ArrowDownCircle, path: "/entrada", color: "bg-success/8 text-success" },
+  { label: "Dispensar", desc: "Registrar saída", icon: ArrowUpCircle, path: "/dispensacao", color: "bg-info/8 text-info" },
+  { label: "Etiquetas", desc: "Imprimir", icon: Barcode, path: "/etiquetas", color: "bg-primary/8 text-primary" },
+  { label: "Transferir", desc: "Entre clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "bg-warning/8 text-warning" },
 ];
 
 const Dashboard = () => {
@@ -85,116 +85,120 @@ const Dashboard = () => {
   if (isLoading)
     return (
       <AppLayout title="Dashboard" subtitle="Carregando...">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-lg" />)}
         </div>
-        <div className="grid lg:grid-cols-3 gap-6">
-          <Skeleton className="h-72 rounded-xl lg:col-span-2" />
-          <Skeleton className="h-72 rounded-xl" />
+        <div className="grid lg:grid-cols-3 gap-5">
+          <Skeleton className="h-64 rounded-lg lg:col-span-2" />
+          <Skeleton className="h-64 rounded-lg" />
         </div>
       </AppLayout>
     );
 
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral da farmácia hospitalar">
-      {/* Welcome + Time */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 rounded-2xl gradient-hero text-white relative overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+      {/* Welcome banner */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-lg gradient-hero text-white relative overflow-hidden border border-white/[0.06]">
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: `
+              linear-gradient(0deg, transparent 24%, hsla(172,60%,44%,0.1) 25%, hsla(172,60%,44%,0.1) 26%, transparent 27%),
+              linear-gradient(90deg, transparent 24%, hsla(172,60%,44%,0.1) 25%, hsla(172,60%,44%,0.1) 26%, transparent 27%)
+            `,
+            backgroundSize: "40px 40px",
+          }} />
           <div className="relative">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="h-4 w-4 text-white/70" />
-              <span className="text-xs font-medium text-white/60">{now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}</span>
-            </div>
-            <h2 className="text-xl font-bold">{greeting()}, {profile?.nome?.split(" ")[0] || "Usuário"}!</h2>
-            <p className="text-sm text-white/60 mt-0.5">{totalUnits.toLocaleString("pt-BR")} unidades em estoque • {totalMovements} movimentações registradas</p>
+            <p className="text-[9px] font-bold text-white/30 uppercase tracking-[0.15em] mb-1 font-mono-ui">
+              {now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+            <h2 className="text-lg font-bold tracking-tight">{greeting()}, {profile?.nome?.split(" ")[0] || "Usuário"}</h2>
+            <p className="text-xs text-white/40 mt-0.5 font-body">
+              {totalUnits.toLocaleString("pt-BR")} unidades em estoque · {totalMovements} movimentações
+            </p>
           </div>
           <div className="relative text-right">
-            <p className="text-3xl font-bold tabular-nums">{now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
+            <p className="text-3xl font-bold tabular-nums tracking-tighter">{now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</p>
           </div>
         </div>
       </motion.div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-2 sm:gap-3 mb-6">
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-2 mb-5">
         <StatCard title="Total" value={stats.total} icon={Pill} variant="info" delay={0} onClick={() => navigate("/medicamentos")} />
-        <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.04} />
-        <StatCard title="Est. Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.08} onClick={() => navigate("/alertas")} />
-        <StatCard title="Crítico" value={stats.critical} icon={AlertTriangle} variant="critical" delay={0.12} onClick={() => navigate("/alertas")} />
-        <StatCard title="Esgotados" value={stats.outOfStock} icon={XCircle} variant="critical" delay={0.16} />
-        <StatCard title="Vence 60d" value={stats.expiringSoon} icon={Clock} variant="warning" delay={0.2} />
-        <StatCard title="Transf." value={stats.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.24} onClick={() => navigate("/transferencias")} />
-        <StatCard title="CMM" value={cmm} icon={TrendingUp} variant="default" delay={0.28} />
-        <StatCard title="Prescrições" value={prescricoesAtivas} icon={FileText} variant="info" delay={0.32} onClick={() => navigate("/prescricoes")} />
+        <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.03} />
+        <StatCard title="Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.06} onClick={() => navigate("/alertas")} />
+        <StatCard title="Crítico" value={stats.critical} icon={AlertTriangle} variant="critical" delay={0.09} onClick={() => navigate("/alertas")} />
+        <StatCard title="Esgotado" value={stats.outOfStock} icon={XCircle} variant="critical" delay={0.12} />
+        <StatCard title="Vence 60d" value={stats.expiringSoon} icon={Clock} variant="warning" delay={0.15} />
+        <StatCard title="Transf." value={stats.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.18} onClick={() => navigate("/transferencias")} />
+        <StatCard title="CMM" value={cmm} icon={TrendingUp} variant="default" delay={0.21} />
+        <StatCard title="Prescrições" value={prescricoesAtivas} icon={FileText} variant="info" delay={0.24} onClick={() => navigate("/prescricoes")} />
       </div>
 
-      {/* Consumo Chart + Quick Actions */}
-      <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }} className="lg:col-span-2">
-          <Card className="p-5 h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-info/30 to-transparent rounded-t-2xl" />
+      {/* Charts + Quick Actions */}
+      <div className="grid lg:grid-cols-3 gap-4 mb-5">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-2">
+          <Card className="p-5 h-full">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/8">
+                  <TrendingUp className="h-3 w-3 text-primary" />
                 </div>
-                Consumo
-              </h3>
+                <h3 className="text-xs font-bold tracking-tight">Consumo</h3>
+              </div>
               <div className="flex items-center gap-2">
                 <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="h-7 text-[11px] w-[150px]"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-7 text-[10px] w-[120px] font-mono-ui"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PERIOD_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Badge variant="outline" className="text-[10px] font-semibold bg-primary/5">
-                  {consumoData.reduce((s, d) => s + d.qty, 0).toLocaleString("pt-BR")} un.
+                <Badge variant="outline" className="text-[9px] font-bold bg-primary/5 font-mono-ui">
+                  {consumoData.reduce((s, d) => s + d.qty, 0).toLocaleString("pt-BR")} un
                 </Badge>
               </div>
             </div>
             {consumoData.every(d => d.qty === 0) ? (
-              <p className="text-sm text-muted-foreground text-center py-16">Nenhuma saída no período</p>
+              <p className="text-xs text-muted-foreground text-center py-14 font-body">Nenhuma saída no período</p>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={190}>
                 <AreaChart data={consumoData} margin={{ left: 0, right: 8, top: 4, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorQty" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.12} />
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} interval={Math.max(0, Math.floor(consumoData.length / 10))} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} width={30} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
-                  <Area type="monotone" dataKey="qty" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorQty)" name="Unidades" />
+                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))", fontFamily: "var(--font-mono)" }} interval={Math.max(0, Math.floor(consumoData.length / 10))} />
+                  <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))", fontFamily: "var(--font-mono)" }} width={28} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                  <Area type="monotone" dataKey="qty" stroke="hsl(var(--primary))" strokeWidth={1.5} fill="url(#colorQty)" name="Unidades" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </Card>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.34 }}>
-          <Card className="p-5 h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-success/40 via-info/30 to-transparent rounded-t-2xl" />
-            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-success/10">
-                <Sparkles className="h-3.5 w-3.5 text-success" />
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.28 }}>
+          <Card className="p-5 h-full">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-success/8">
+                <ArrowRight className="h-3 w-3 text-success" />
               </div>
-              Ações Rápidas
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
+              <h3 className="text-xs font-bold tracking-tight">Ações Rápidas</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               {quickActions.map((a, i) => (
-                <motion.button key={a.label} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + i * 0.06 }}
+                <motion.button key={a.label} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.35 + i * 0.05 }}
                   onClick={() => navigate(a.path)}
-                  className="group relative flex flex-col items-center justify-center gap-2.5 rounded-xl border border-border/60 p-4 hover:border-primary/30 hover:shadow-card-hover transition-all duration-300 hover:scale-[1.02] active:scale-[0.96] overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-muted/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className={cn("relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-lg", a.color)}>
-                    <a.icon className="h-5 w-5" />
+                  className="group flex flex-col items-center justify-center gap-2 rounded-lg border border-border/40 p-3 hover:border-primary/25 hover:shadow-card-hover transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]">
+                  <div className={cn("flex h-9 w-9 items-center justify-center rounded-md transition-transform duration-200 group-hover:scale-105", a.color)}>
+                    <a.icon className="h-4 w-4" />
                   </div>
-                  <div className="relative text-center">
-                    <span className="text-xs font-semibold text-foreground leading-tight">{a.label}</span>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">{a.desc}</p>
+                  <div className="text-center">
+                    <span className="text-[11px] font-semibold text-foreground leading-tight">{a.label}</span>
+                    <p className="text-[9px] text-muted-foreground mt-0.5 font-body">{a.desc}</p>
                   </div>
                 </motion.button>
               ))}
@@ -204,25 +208,24 @@ const Dashboard = () => {
       </div>
 
       {/* Top Stock + Categories */}
-      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.38 }}>
-          <Card className="p-5 h-full relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/40 via-accent-foreground/10 to-transparent rounded-t-2xl" />
-            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
-                <Package className="h-3.5 w-3.5 text-primary" />
+      <div className="grid lg:grid-cols-2 gap-4 mb-5">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
+          <Card className="p-5 h-full">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/8">
+                <Package className="h-3 w-3 text-primary" />
               </div>
-              Top Estoques
-            </h3>
+              <h3 className="text-xs font-bold tracking-tight">Top Estoques</h3>
+            </div>
             {topStocked.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Nenhum medicamento</p>
+              <p className="text-xs text-muted-foreground text-center py-10 font-body">Nenhum medicamento</p>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={190}>
                 <BarChart data={topStocked} layout="vertical" margin={{ left: 0, right: 8 }}>
-                  <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11 }} />
-                  <Bar dataKey="qty" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} barSize={14} name="Unidades" />
+                  <XAxis type="number" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))", fontFamily: "var(--font-mono)" }} />
+                  <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                  <Bar dataKey="qty" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={12} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -230,30 +233,29 @@ const Dashboard = () => {
         </motion.div>
 
         {catData.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.42 }}>
-          <Card className="p-5 h-full relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-info/40 via-success/20 to-transparent rounded-t-2xl" />
-              <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-info/10">
-                  <Pill className="h-3.5 w-3.5 text-info" />
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}>
+            <Card className="p-5 h-full">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-info/8">
+                  <Pill className="h-3 w-3 text-info" />
                 </div>
-                Distribuição por Categoria
-              </h3>
+                <h3 className="text-xs font-bold tracking-tight">Por Categoria</h3>
+              </div>
               <div className="flex items-center">
-                <ResponsiveContainer width="50%" height={200}>
+                <ResponsiveContainer width="50%" height={190}>
                   <PieChart>
-                    <Pie data={catData} cx="50%" cy="50%" innerRadius={42} outerRadius={78} dataKey="value" stroke="none" paddingAngle={2}>
+                    <Pie data={catData} cx="50%" cy="50%" innerRadius={40} outerRadius={72} dataKey="value" stroke="none" paddingAngle={2}>
                       {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="space-y-2.5 flex-1">
+                <div className="space-y-2 flex-1">
                   {catData.map((c, i) => (
-                    <div key={c.name} className="flex items-center gap-2 text-xs">
-                      <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <span className="text-muted-foreground truncate">{c.name}</span>
-                      <span className="ml-auto font-semibold tabular-nums">{c.value}</span>
+                    <div key={c.name} className="flex items-center gap-2 text-[11px]">
+                      <div className="h-2 w-2 rounded-sm shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-muted-foreground truncate font-body">{c.name}</span>
+                      <span className="ml-auto font-bold tabular-nums font-mono-ui text-[10px]">{c.value}</span>
                     </div>
                   ))}
                 </div>
@@ -265,40 +267,39 @@ const Dashboard = () => {
 
       {/* Alerts */}
       {(expiredMeds.length > 0 || lowStockMeds.length > 0 || pendingTransfers > 0) && (
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.46 }}>
-          <Card className="p-5 relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-warning/50 via-destructive/30 to-transparent rounded-t-2xl" />
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-warning/10">
-                  <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-md bg-warning/8">
+                  <AlertTriangle className="h-3 w-3 text-warning" />
                 </div>
-                Alertas em Destaque
-              </h3>
-              <Button variant="ghost" size="sm" className="text-xs gap-1 font-semibold" onClick={() => navigate("/alertas")}>
+                <h3 className="text-xs font-bold tracking-tight">Alertas</h3>
+              </div>
+              <Button variant="ghost" size="sm" className="text-[10px] gap-1 font-semibold h-7" onClick={() => navigate("/alertas")}>
                 Ver todos <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {expiredMeds.slice(0, 3).map(m => (
-                <div key={m.id} className="flex items-center gap-3 text-sm rounded-xl border border-destructive/15 bg-destructive/5 p-3">
-                  <XCircle className="h-4 w-4 text-destructive shrink-0" />
+                <div key={m.id} className="flex items-center gap-3 text-xs rounded-lg border border-destructive/10 bg-destructive/4 p-2.5">
+                  <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
                   <span className="font-medium">{m.nome}</span>
-                  <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive ml-auto">Vencido</Badge>
+                  <Badge variant="outline" className="text-[8px] bg-destructive/8 text-destructive ml-auto font-mono-ui uppercase tracking-wider font-bold">Vencido</Badge>
                 </div>
               ))}
               {lowStockMeds.slice(0, 3).map(m => (
-                <div key={m.id} className="flex items-center gap-3 text-sm rounded-xl border border-warning/15 bg-warning/5 p-3">
-                  <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
+                <div key={m.id} className="flex items-center gap-3 text-xs rounded-lg border border-warning/10 bg-warning/4 p-2.5">
+                  <AlertTriangle className="h-3.5 w-3.5 text-warning shrink-0" />
                   <span className="font-medium">{m.nome}</span>
-                  <Badge variant="outline" className="text-[10px] bg-warning/10 text-warning ml-auto">Estoque Baixo</Badge>
+                  <Badge variant="outline" className="text-[8px] bg-warning/8 text-warning ml-auto font-mono-ui uppercase tracking-wider font-bold">Baixo</Badge>
                 </div>
               ))}
               {pendingTransfers > 0 && (
-                <div className="flex items-center gap-3 text-sm rounded-xl border border-info/15 bg-info/5 p-3 cursor-pointer hover:bg-info/8 transition-colors" onClick={() => navigate("/transferencias")}>
-                  <ArrowLeftRight className="h-4 w-4 text-info shrink-0" />
-                  <span className="font-medium">{pendingTransfers} transferência(s) aguardando</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-info ml-auto" />
+                <div className="flex items-center gap-3 text-xs rounded-lg border border-info/10 bg-info/4 p-2.5 cursor-pointer hover:bg-info/6 transition-colors" onClick={() => navigate("/transferencias")}>
+                  <ArrowLeftRight className="h-3.5 w-3.5 text-info shrink-0" />
+                  <span className="font-medium">{pendingTransfers} transferência(s) pendente(s)</span>
+                  <ArrowRight className="h-3 w-3 text-info ml-auto" />
                 </div>
               )}
             </div>

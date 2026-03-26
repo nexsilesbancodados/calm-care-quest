@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse } from "lucide-react";
+import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,18 +9,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 const features = [
-  { icon: Package, title: "Gestão de Estoque", desc: "Controle granular por lotes e validade com FEFO" },
-  { icon: Shield, title: "Substâncias Controladas", desc: "Rastreabilidade total com auditoria ANVISA" },
-  { icon: BarChart3, title: "Relatórios Avançados", desc: "CMM, psicotrópicos e análises por setor" },
-  { icon: Zap, title: "Transferências Ágeis", desc: "Logística entre clínicas parceiras em tempo real" },
-];
-
-const floatingIcons = [
-  { icon: Pill, x: "15%", y: "20%", delay: 0, size: 20 },
-  { icon: HeartPulse, x: "75%", y: "15%", delay: 1.5, size: 18 },
-  { icon: Shield, x: "85%", y: "65%", delay: 3, size: 16 },
-  { icon: Activity, x: "10%", y: "75%", delay: 2, size: 22 },
-  { icon: Package, x: "60%", y: "80%", delay: 4, size: 14 },
+  { icon: Package, title: "Gestão de Estoque", desc: "Controle por lotes e validade FEFO" },
+  { icon: Shield, title: "Controlados", desc: "Rastreabilidade ANVISA completa" },
+  { icon: BarChart3, title: "Relatórios", desc: "CMM e análises por setor" },
+  { icon: Zap, title: "Transferências", desc: "Logística entre clínicas" },
 ];
 
 const Login = () => {
@@ -59,229 +51,173 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Left panel — immersive hero */}
+      {/* Left — bold geometric hero */}
       <div className="hidden lg:flex lg:w-[55%] xl:w-[58%] relative overflow-hidden flex-col justify-between">
-        {/* Gradient layers */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,65%,18%)] via-[hsl(230,55%,22%)] to-[hsl(260,50%,20%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-        {/* Animated mesh */}
-        <div className="absolute inset-0 opacity-[0.035]" style={{
-          backgroundImage: `
-            linear-gradient(30deg, white 12%, transparent 12.5%, transparent 87%, white 87.5%, white),
-            linear-gradient(150deg, white 12%, transparent 12.5%, transparent 87%, white 87.5%, white),
-            linear-gradient(30deg, white 12%, transparent 12.5%, transparent 87%, white 87.5%, white),
-            linear-gradient(150deg, white 12%, transparent 12.5%, transparent 87%, white 87.5%, white),
-            linear-gradient(60deg, hsla(0,0%,100%,0.06) 25%, transparent 25.5%, transparent 75%, hsla(0,0%,100%,0.06) 75%, hsla(0,0%,100%,0.06)),
-            linear-gradient(60deg, hsla(0,0%,100%,0.06) 25%, transparent 25.5%, transparent 75%, hsla(0,0%,100%,0.06) 75%, hsla(0,0%,100%,0.06))
-          `,
-          backgroundSize: "80px 140px",
-          backgroundPosition: "0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px",
+        {/* Base gradient */}
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(145deg, hsl(200 35% 7%), hsl(172 30% 12%), hsl(200 40% 5%))"
         }} />
 
-        {/* Glowing orbs */}
-        <motion.div
-          className="absolute w-[500px] h-[500px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, hsla(220,80%,60%,0.15) 0%, transparent 70%)",
-            top: "-10%", right: "-10%",
-          }}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute w-[400px] h-[400px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, hsla(280,60%,55%,0.12) 0%, transparent 70%)",
-            bottom: "-5%", left: "-5%",
-          }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
-        <motion.div
-          className="absolute w-[300px] h-[300px] rounded-full"
-          style={{
-            background: "radial-gradient(circle, hsla(200,70%,50%,0.1) 0%, transparent 70%)",
-            top: "40%", left: "30%",
-          }}
-          animate={{ scale: [1, 1.1, 1], x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-        />
+        {/* Geometric pattern */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{
+          backgroundImage: `
+            linear-gradient(0deg, transparent 24%, hsla(172,60%,44%,0.08) 25%, hsla(172,60%,44%,0.08) 26%, transparent 27%, transparent 74%, hsla(172,60%,44%,0.08) 75%, hsla(172,60%,44%,0.08) 76%, transparent 77%),
+            linear-gradient(90deg, transparent 24%, hsla(172,60%,44%,0.08) 25%, hsla(172,60%,44%,0.08) 26%, transparent 27%, transparent 74%, hsla(172,60%,44%,0.08) 75%, hsla(172,60%,44%,0.08) 76%, transparent 77%)
+          `,
+          backgroundSize: "60px 60px",
+        }} />
 
-        {/* Floating icons */}
-        {floatingIcons.map((fi, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-white/[0.07]"
-            style={{ left: fi.x, top: fi.y }}
-            animate={{
-              y: [0, -15, 0],
-              rotate: [0, 10, -10, 0],
-              opacity: [0.04, 0.08, 0.04],
-            }}
-            transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut", delay: fi.delay }}
-          >
-            <fi.icon style={{ width: fi.size, height: fi.size }} />
-          </motion.div>
-        ))}
+        {/* Accent shapes */}
+        <div className="absolute top-0 right-0 w-96 h-96 opacity-10"
+          style={{ background: "radial-gradient(circle at 70% 30%, hsl(172 60% 44%), transparent 60%)" }} />
+        <div className="absolute bottom-0 left-0 w-80 h-80 opacity-8"
+          style={{ background: "radial-gradient(circle at 30% 70%, hsl(200 70% 50%), transparent 60%)" }} />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-14">
           {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/[0.08] shadow-lg shadow-black/20">
-                <Activity className="h-7 w-7 text-white" />
+          <motion.div initial={{ opacity: 0, y: -15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/20 border border-primary/15">
+                <Activity className="h-5 w-5 text-primary" style={{ color: "hsl(172 60% 44%)" }} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">PsiRumoCerto</h1>
-                <p className="text-xs text-white/50 font-medium tracking-wide uppercase">Gestão Farmacêutica Hospitalar</p>
+                <h1 className="text-xl font-bold text-white tracking-tight">PsiRumoCerto</h1>
+                <p className="text-[9px] text-white/30 font-bold tracking-[0.15em] uppercase" style={{ fontFamily: "var(--font-mono)" }}>
+                  Gestão Farmacêutica Hospitalar
+                </p>
               </div>
             </div>
           </motion.div>
 
           {/* Main copy */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 25 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
             className="space-y-10"
           >
             <div>
               <motion.h2
-                className="text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] tracking-tight"
-                initial={{ opacity: 0, y: 20 }}
+                className="text-4xl xl:text-[3.2rem] font-bold text-white leading-[1.05] tracking-tight"
+                initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
               >
-                Controle Total
+                Controle
                 <br />
-                <span className="bg-gradient-to-r from-blue-300 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
-                  da Sua Farmácia
+                <span style={{ color: "hsl(172 60% 44%)" }}>
+                  Preciso.
                 </span>
               </motion.h2>
               <motion.p
-                className="text-base text-white/50 leading-relaxed mt-5 max-w-md"
+                className="text-sm text-white/35 leading-relaxed mt-4 max-w-sm font-body"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
               >
-                Plataforma completa para gestão de medicamentos em hospitais psiquiátricos.
-                Segurança, rastreabilidade e eficiência em um só lugar.
+                Plataforma de gestão de medicamentos para hospitais psiquiátricos.
+                Segurança e rastreabilidade em cada etapa.
               </motion.p>
             </div>
 
-            {/* Feature cards */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Feature grid */}
+            <div className="grid grid-cols-2 gap-2.5">
               {features.map((feat, i) => (
                 <motion.div
                   key={feat.title}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 + i * 0.12 }}
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  className="group relative p-4 rounded-2xl bg-white/[0.05] backdrop-blur-sm border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.12] transition-all duration-300 cursor-default"
+                  transition={{ delay: 0.8 + i * 0.1 }}
+                  className="group p-3.5 rounded-lg border border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/[0.1] transition-all duration-200"
                 >
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="relative">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.08] mb-3 group-hover:bg-white/[0.12] transition-colors">
-                      <feat.icon className="h-4.5 w-4.5 text-white/70 group-hover:text-white/90 transition-colors" />
-                    </div>
-                    <p className="text-[13px] font-semibold text-white/85 group-hover:text-white transition-colors">{feat.title}</p>
-                    <p className="text-[11px] text-white/35 mt-0.5 leading-relaxed group-hover:text-white/45 transition-colors">{feat.desc}</p>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/[0.06] mb-2.5">
+                    <feat.icon className="h-3.5 w-3.5 text-white/50 group-hover:text-white/70 transition-colors" />
                   </div>
+                  <p className="text-[11px] font-semibold text-white/75 group-hover:text-white/90 transition-colors">{feat.title}</p>
+                  <p className="text-[10px] text-white/25 mt-0.5 leading-relaxed font-body">{feat.desc}</p>
                 </motion.div>
               ))}
             </div>
           </motion.div>
 
           {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.4 }}
-            className="flex items-center justify-between"
-          >
-            <p className="text-[11px] text-white/25">© 2026 PsiRumoCerto — v2.1</p>
-            <div className="flex items-center gap-1.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/60 animate-pulse" />
-              <span className="text-[11px] text-white/30">Sistema Operacional</span>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}>
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] text-white/15 font-mono-ui tracking-wider">© 2026 PSI.RC — v2.1</p>
+              <div className="flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "hsl(162 55% 40%)" }} />
+                <span className="text-[10px] text-white/20 font-mono-ui tracking-wider">ONLINE</span>
+              </div>
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* Right panel — login form */}
+      {/* Right — login form */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-10 relative">
-        {/* Subtle bg pattern for right side */}
-        <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]" style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
+        <div className="absolute inset-0 opacity-[0.02]" style={{
+          backgroundImage: "radial-gradient(circle at 1px 1px, hsl(var(--foreground)) 0.5px, transparent 0.5px)",
+          backgroundSize: "20px 20px",
         }} />
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="w-full max-w-[400px] relative"
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="w-full max-w-[380px] relative"
         >
           {/* Mobile header */}
-          <div className="flex lg:hidden items-center gap-3 mb-10">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl gradient-hero shadow-lg shadow-primary/25">
-              <Activity className="h-6 w-6 text-primary-foreground" />
+          <div className="flex lg:hidden items-center gap-2.5 mb-10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg gradient-primary">
+              <Activity className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">PsiRumoCerto</h1>
-              <p className="text-[11px] text-muted-foreground font-medium">Farmácia Hospitalar</p>
+              <h1 className="text-base font-bold text-foreground tracking-tight">PsiRumoCerto</h1>
+              <p className="text-[9px] text-muted-foreground font-mono-ui uppercase tracking-wider">Farmácia Hospitalar</p>
             </div>
           </div>
 
           <AnimatePresence mode="wait">
             {forgotOpen ? (
-              <motion.div key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-foreground">Esqueceu a senha?</h2>
-                  <p className="text-sm text-muted-foreground mt-2">Informe seu e-mail e enviaremos um link de redefinição.</p>
+              <motion.div key="forgot" initial={{ opacity: 0, x: 15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -15 }} transition={{ duration: 0.25 }}>
+                <div className="mb-7">
+                  <h2 className="text-xl font-bold text-foreground tracking-tight">Esqueceu a senha?</h2>
+                  <p className="text-xs text-muted-foreground mt-1.5 font-body">Enviaremos um link de redefinição.</p>
                 </div>
-                <form onSubmit={handleForgotPassword} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-foreground">E-mail</Label>
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold text-foreground uppercase tracking-wider" style={{ fontFamily: "var(--font-mono)" }}>E-mail</Label>
                     <div className="relative group">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
+                        type="email" placeholder="seu@email.com" value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12 text-sm bg-card border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all rounded-xl"
+                        className="pl-10 h-11 text-sm bg-card border-border/50 focus:border-primary/40 focus:ring-1 focus:ring-primary/15 transition-all rounded-lg"
                       />
                     </div>
                   </div>
-                  <Button type="submit" disabled={loading} className="w-full h-12 font-semibold text-sm rounded-xl gradient-primary text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow">
-                    {loading ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : "Enviar Link de Redefinição"}
+                  <Button type="submit" disabled={loading} className="w-full h-11 font-semibold text-xs rounded-lg gradient-primary text-primary-foreground tracking-wide">
+                    {loading ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : "Enviar Link"}
                   </Button>
-                  <button type="button" onClick={() => setForgotOpen(false)} className="text-sm text-primary hover:text-primary/80 w-full text-center font-semibold transition-colors">
-                    ← Voltar ao login
+                  <button type="button" onClick={() => setForgotOpen(false)} className="text-xs text-primary hover:text-primary/80 w-full text-center font-semibold transition-colors">
+                    ← Voltar
                   </button>
                 </form>
               </motion.div>
             ) : (
-              <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
-                <div className="mb-8">
+              <motion.div key="login" initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 15 }} transition={{ duration: 0.25 }}>
+                <div className="mb-7">
                   <motion.h2
-                    className="text-2xl font-bold text-foreground"
-                    initial={{ opacity: 0, y: 10 }}
+                    className="text-xl font-bold text-foreground tracking-tight"
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
                   >
                     Bem-vindo de volta
                   </motion.h2>
                   <motion.p
-                    className="text-sm text-muted-foreground mt-2"
+                    className="text-xs text-muted-foreground mt-1.5 font-body"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
@@ -290,95 +226,60 @@ const Login = () => {
                   </motion.p>
                 </div>
 
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <motion.div
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.55 }}
-                  >
-                    <Label className="text-xs font-semibold text-foreground">E-mail</Label>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <motion.div className="space-y-1.5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
+                    <Label className="text-[10px] font-bold text-foreground uppercase tracking-wider" style={{ fontFamily: "var(--font-mono)" }}>E-mail</Label>
                     <div className="relative group">
-                      <Mail className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${focusedField === "email" ? "text-primary" : "text-muted-foreground"}`} />
+                      <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-150 ${focusedField === "email" ? "text-primary" : "text-muted-foreground"}`} />
                       <Input
-                        type="email"
-                        placeholder="seu@email.com"
-                        value={email}
+                        type="email" placeholder="seu@email.com" value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onFocus={() => setFocusedField("email")}
                         onBlur={() => setFocusedField(null)}
-                        className="pl-10 h-12 text-sm bg-card border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all rounded-xl"
+                        className="pl-10 h-11 text-sm bg-card border-border/50 focus:border-primary/40 focus:ring-1 focus:ring-primary/15 transition-all rounded-lg"
                         autoComplete="email"
                       />
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.65 }}
-                  >
+                  <motion.div className="space-y-1.5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }}>
                     <div className="flex items-center justify-between">
-                      <Label className="text-xs font-semibold text-foreground">Senha</Label>
-                      <button type="button" onClick={() => setForgotOpen(true)} className="text-[11px] text-primary hover:text-primary/80 font-semibold transition-colors">
-                        Esqueceu a senha?
+                      <Label className="text-[10px] font-bold text-foreground uppercase tracking-wider" style={{ fontFamily: "var(--font-mono)" }}>Senha</Label>
+                      <button type="button" onClick={() => setForgotOpen(true)} className="text-[10px] text-primary hover:text-primary/80 font-semibold transition-colors">
+                        Esqueceu?
                       </button>
                     </div>
                     <div className="relative group">
-                      <Lock className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-200 ${focusedField === "password" ? "text-primary" : "text-muted-foreground"}`} />
+                      <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors duration-150 ${focusedField === "password" ? "text-primary" : "text-muted-foreground"}`} />
                       <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
+                        type={showPassword ? "text" : "password"} placeholder="••••••••" value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         onFocus={() => setFocusedField("password")}
                         onBlur={() => setFocusedField(null)}
-                        className="pl-10 pr-11 h-12 text-sm bg-card border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all rounded-xl"
+                        className="pl-10 pr-10 h-11 text-sm bg-card border-border/50 focus:border-primary/40 focus:ring-1 focus:ring-primary/15 transition-all rounded-lg"
                         autoComplete="current-password"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5"
-                      >
+                      <button type="button" onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-0.5">
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </motion.div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.75 }}
-                  >
-                    <Button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full h-12 font-semibold text-sm rounded-xl gradient-primary text-primary-foreground gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
-                    >
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }}>
+                    <Button type="submit" disabled={loading}
+                      className="w-full h-11 font-semibold text-xs rounded-lg gradient-primary text-primary-foreground tracking-wide group">
                       {loading ? (
-                        <div className="h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                        <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
                       ) : (
                         <>
-                          <span>Entrar no Sistema</span>
-                          <ArrowRight className="h-4 w-4" />
+                          Entrar
+                          <ArrowRight className="h-3.5 w-3.5 ml-1 group-hover:translate-x-0.5 transition-transform" />
                         </>
                       )}
                     </Button>
                   </motion.div>
                 </form>
-
-                {/* Security badge */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 }}
-                  className="mt-8 flex items-center justify-center gap-2 text-[11px] text-muted-foreground/60"
-                >
-                  <Lock className="h-3 w-3" />
-                  <span>Conexão segura • Dados criptografados</span>
-                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
