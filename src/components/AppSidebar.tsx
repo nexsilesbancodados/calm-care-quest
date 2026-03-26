@@ -83,6 +83,7 @@ export function AppSidebar() {
   const getBadgeCount = (key: string | null) => {
     if (key === "alerts") return badgeCounts.alerts;
     if (key === "transfers") return badgeCounts.transfers;
+    if (key === "prescricoes") return badgeCounts.prescricoes;
     return 0;
   };
 

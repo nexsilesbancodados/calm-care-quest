@@ -8,15 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Pill } from "lucide-react";
+import { Search, Plus, Pill, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import type { Medicamento, Lote, Categoria, Fornecedor } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
+
+const PAGE_SIZE = 50;
 
 const Medicamentos = () => {
   const { log } = useAudit();
@@ -30,25 +32,39 @@ const Medicamentos = () => {
   const [editMed, setEditMed] = useState<Medicamento | null>(null);
   const [form, setForm] = useState({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
 
-  useEffect(() => {
-    const fetch = async () => {
-      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: fornData }] = await Promise.all([
-        supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
-        supabase.from("lotes").select("*").eq("ativo", true),
-        supabase.from("categorias_medicamento").select("*").eq("ativo", true),
-        supabase.from("fornecedores").select("*").eq("ativo", true).order("nome"),
-      ]);
-      setCategorias(catsData as Categoria[] || []);
-      setFornecedores(fornData as Fornecedor[] || []);
-      setMeds((medsData || []).map((m: any) => ({
-        ...m,
-        lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
-        categoria: (catsData || []).find((c: any) => c.id === m.categoria_id),
-      })));
-      setLoading(false);
-    };
-    fetch();
-  }, []);
+  // Pagination
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Deactivation confirm
+  const [deactivateConfirm, setDeactivateConfirm] = useState<{ id: string; nome: string; lotesAtivos: number; unidades: number } | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    // Get count
+    const { count } = await supabase.from("medicamentos").select("id", { count: "exact", head: true }).eq("ativo", true);
+    setTotalCount(count || 0);
+
+    const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: fornData }] = await Promise.all([
+      supabase.from("medicamentos").select("*").eq("ativo", true).order("nome").range(from, to),
+      supabase.from("lotes").select("*").eq("ativo", true),
+      supabase.from("categorias_medicamento").select("*").eq("ativo", true),
+      supabase.from("fornecedores").select("*").eq("ativo", true).order("nome"),
+    ]);
+    setCategorias(catsData as Categoria[] || []);
+    setFornecedores(fornData as Fornecedor[] || []);
+    setMeds((medsData || []).map((m: any) => ({
+      ...m,
+      lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
+      categoria: (catsData || []).find((c: any) => c.id === m.categoria_id),
+    })));
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchData(); }, [page]);
 
   const filtered = meds.filter(m => {
     const matchSearch = !search || m.nome.toLowerCase().includes(search.toLowerCase()) || m.generico.toLowerCase().includes(search.toLowerCase()) || m.codigo_barras?.includes(search);
@@ -88,17 +104,29 @@ const Medicamentos = () => {
     setDialogOpen(false);
   };
 
-  const handleDeactivate = async (id: string) => {
-    await supabase.from("medicamentos").update({ ativo: false }).eq("id", id);
-    setMeds(prev => prev.filter(m => m.id !== id));
-    await log({ acao: "Desativação", tabela: "medicamentos", registro_id: id });
-    toast.success("Medicamento desativado");
+  const confirmDeactivate = async (id: string) => {
+    const med = meds.find(m => m.id === id);
+    if (!med) return;
+    const lotesAtivos = med.lotes.filter(l => l.ativo && l.quantidade_atual > 0);
+    const unidades = lotesAtivos.reduce((s, l) => s + l.quantidade_atual, 0);
+    setDeactivateConfirm({ id, nome: med.nome, lotesAtivos: lotesAtivos.length, unidades });
   };
+
+  const handleDeactivate = async () => {
+    if (!deactivateConfirm) return;
+    await supabase.from("medicamentos").update({ ativo: false }).eq("id", deactivateConfirm.id);
+    setMeds(prev => prev.filter(m => m.id !== deactivateConfirm.id));
+    await log({ acao: "Desativação", tabela: "medicamentos", registro_id: deactivateConfirm.id });
+    toast.success("Medicamento desativado");
+    setDeactivateConfirm(null);
+  };
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   if (loading) return <AppLayout title="Medicamentos"><div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}</div></AppLayout>;
 
   return (
-    <AppLayout title="Medicamentos" subtitle={`${filtered.length} medicamentos cadastrados`}>
+    <AppLayout title="Medicamentos" subtitle={`${totalCount} medicamentos cadastrados`}>
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -152,7 +180,7 @@ const Medicamentos = () => {
                   <TableCell><Badge variant="outline" className={cn("text-[10px]", cfg.className)}>{cfg.label}</Badge></TableCell>
                   <TableCell className="text-sm text-muted-foreground font-mono">{med.localizacao}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={(e) => { e.stopPropagation(); handleDeactivate(med.id); }}>Desativar</Button>
+                    <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={(e) => { e.stopPropagation(); confirmDeactivate(med.id); }}>Desativar</Button>
                   </TableCell>
                 </TableRow>
               );
@@ -160,6 +188,39 @@ const Medicamentos = () => {
           </TableBody>
         </Table>
       </motion.div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-muted-foreground">Página {page + 1} de {totalPages} ({totalCount} registros)</p>
+          <div className="flex gap-1">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="h-8 w-8 p-0">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="h-8 w-8 p-0">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Deactivate Confirm */}
+      <AlertDialog open={!!deactivateConfirm} onOpenChange={() => setDeactivateConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desativar {deactivateConfirm?.nome}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deactivateConfirm && deactivateConfirm.lotesAtivos > 0
+                ? `Este medicamento tem ${deactivateConfirm.lotesAtivos} lote(s) ativo(s) com ${deactivateConfirm.unidades} unidade(s) em estoque. Deseja continuar?`
+                : "Este medicamento não tem estoque ativo. Deseja continuar?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivate} className="bg-destructive text-destructive-foreground">Desativar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
