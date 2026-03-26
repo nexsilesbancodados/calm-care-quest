@@ -245,17 +245,24 @@ const Medicamentos = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.03 }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
             className={cn(
-              "rounded-xl border bg-card p-3 shadow-card cursor-pointer hover:shadow-card-hover transition-all text-center",
+              "group relative rounded-xl border bg-card p-3 shadow-card cursor-pointer hover:shadow-card-hover transition-all text-center overflow-hidden",
               statusFilter === kpi.filter && kpi.filter !== "all" && "ring-2 ring-primary"
             )}
             onClick={() => kpi.filter !== "all" ? setStatusFilter(statusFilter === kpi.filter ? "all" : kpi.filter) : null}
           >
-            <div className={cn("flex h-8 w-8 mx-auto items-center justify-center rounded-lg mb-1", kpi.color)}>
-              <kpi.icon className="h-4 w-4" />
+            {/* Top accent line */}
+            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Hover gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="relative">
+              <div className={cn("flex h-9 w-9 mx-auto items-center justify-center rounded-xl mb-1.5 transition-all duration-300 group-hover:scale-110", kpi.color)}>
+                <kpi.icon className="h-4 w-4" />
+              </div>
+              <p className="text-xl font-bold leading-tight font-display">{kpi.value}</p>
+              <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{kpi.label}</p>
             </div>
-            <p className="text-lg font-bold leading-tight">{kpi.value}</p>
-            <p className="text-[10px] text-muted-foreground">{kpi.label}</p>
           </motion.div>
         ))}
       </div>
