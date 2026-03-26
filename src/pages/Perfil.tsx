@@ -101,53 +101,59 @@ const Perfil = () => {
       <div className="max-w-2xl space-y-6">
         {/* Profile Card */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <Card className="p-6 shadow-card">
-            <div className="flex items-center gap-5 mb-6">
-              <Avatar className="h-20 w-20 ring-4 ring-primary/10">
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary text-2xl font-bold">
-                  {displayInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-xl font-bold">{nome}</h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                  <Mail className="h-3.5 w-3.5" /> {user?.email}
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="outline" className={cn(
-                    "text-xs",
-                    profile?.role === "admin" ? "border-primary/30 text-primary bg-primary/5" : "border-info/30 text-info bg-info/5"
-                  )}>
-                    <Shield className="h-3 w-3 mr-1" />
-                    {profile ? ROLE_LABELS[profile.role] : "—"}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                    <Calendar className="h-3 w-3 mr-1" />
-                    Desde {profile ? new Date(profile.created_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }) : "—"}
-                  </Badge>
-                </div>
-              </div>
+          <Card className="p-0 shadow-card overflow-hidden">
+            {/* Header gradient */}
+            <div className="h-24 gradient-hero relative">
+              <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
             </div>
-
-            <Separator className="mb-5" />
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" /> Nome completo
-                </Label>
-                <div className="flex gap-2">
-                  <Input value={nome} onChange={e => setNome(e.target.value)} className="flex-1" />
-                  <Button onClick={handleSaveName} disabled={saving || nome === profile?.nome} className="gap-2">
-                    {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                    {saved ? "Salvo!" : "Salvar"}
-                  </Button>
+            <div className="px-6 pb-6 -mt-10 relative">
+              <div className="flex items-end gap-5 mb-6">
+                <Avatar className="h-20 w-20 ring-4 ring-card shadow-elevated">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 via-primary/10 to-info/10 text-primary text-2xl font-bold">
+                    {displayInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="pb-1">
+                  <h2 className="text-xl font-bold">{nome}</h2>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" /> {user?.email}
+                  </p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="outline" className={cn(
+                      "text-xs",
+                      profile?.role === "admin" ? "border-primary/30 text-primary bg-primary/5" : "border-info/30 text-info bg-info/5"
+                    )}>
+                      <Shield className="h-3 w-3 mr-1" />
+                      {profile ? ROLE_LABELS[profile.role] : "—"}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      Desde {profile ? new Date(profile.created_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" }) : "—"}
+                    </Badge>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">E-mail (não editável)</Label>
-                <Input value={user?.email || ""} disabled className="bg-muted/50" />
+              <Separator className="mb-5" />
+
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium flex items-center gap-1.5">
+                    <User className="h-3.5 w-3.5" /> Nome completo
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input value={nome} onChange={e => setNome(e.target.value)} className="flex-1 rounded-xl" />
+                    <Button onClick={handleSaveName} disabled={saving || nome === profile?.nome} className="gap-2 rounded-xl">
+                      {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+                      {saved ? "Salvo!" : "Salvar"}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">E-mail (não editável)</Label>
+                  <Input value={user?.email || ""} disabled className="bg-muted/50 rounded-xl" />
+                </div>
               </div>
             </div>
           </Card>

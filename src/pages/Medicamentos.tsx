@@ -123,23 +123,37 @@ const Medicamentos = () => {
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  if (loading) return <AppLayout title="Medicamentos"><div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}</div></AppLayout>;
+  if (loading) return (
+    <AppLayout title="Medicamentos">
+      <div className="space-y-3">
+        <div className="flex gap-3">
+          <Skeleton className="h-10 flex-1 rounded-xl" />
+          <Skeleton className="h-10 w-[180px] rounded-xl" />
+          <Skeleton className="h-10 w-[100px] rounded-xl" />
+        </div>
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <Skeleton className="h-11 w-full" />
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}
+        </div>
+      </div>
+    </AppLayout>
+  );
 
   return (
     <AppLayout title="Medicamentos" subtitle={`${totalCount} medicamentos cadastrados`}>
-      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar por nome, genérico ou código de barras..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Buscar por nome, genérico ou código de barras..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-card border-border/60 rounded-xl h-10" />
         </div>
         <Select value={catFilter} onValueChange={setCatFilter}>
-          <SelectTrigger className="w-[180px] bg-card"><SelectValue placeholder="Categoria" /></SelectTrigger>
+          <SelectTrigger className="w-[180px] bg-card rounded-xl h-10"><SelectValue placeholder="Categoria" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas categorias</SelectItem>
             {categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button onClick={openNew} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" /> Novo</Button>
+        <Button onClick={openNew} className="gradient-primary text-primary-foreground gap-2 rounded-xl h-10"><Plus className="h-4 w-4" /> Novo</Button>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-card overflow-hidden">
