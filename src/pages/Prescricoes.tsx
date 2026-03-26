@@ -111,6 +111,8 @@ const Prescricoes = () => {
   };
 
   // Dispensar prescription
+  const [dispensing, setDispensing] = useState(false);
+
   const handleDispensar = async () => {
     if (!selectedPrescricao) return;
     const itens = prescricoes.find(p => p.id === selectedPrescricao.id)?.itens || [];
@@ -118,20 +120,32 @@ const Prescricoes = () => {
 
     if (pendingItens.length === 0) { toast.error("Todos os itens já foram dispensados"); return; }
 
+    setDispensing(true);
     let dispensedCount = 0;
+    let skippedCount = 0;
 
     for (const item of pendingItens) {
       const qtdRestante = item.quantidade_prescrita - item.quantidade_dispensada;
       const med = meds.find(m => m.id === item.medicamento_id);
-      if (!med || !med.lotes.length) continue;
+      if (!med || !med.lotes.length) { skippedCount++; continue; }
 
       // FEFO: use first lote (already sorted by validade)
       const lote = med.lotes[0];
-      const qtdDispensar = Math.min(qtdRestante, lote.quantidade_atual);
-      if (qtdDispensar <= 0) continue;
 
-      // Update lote
-      await supabase.from("lotes").update({ quantidade_atual: lote.quantidade_atual - qtdDispensar }).eq("id", lote.id);
+      // Server-side stock validation
+      const { data: freshLote, error: loteErr } = await supabase
+        .from("lotes")
+        .select("quantidade_atual")
+        .eq("id", lote.id)
+        .single();
+
+      if (loteErr || !freshLote) { skippedCount++; continue; }
+
+      const qtdDispensar = Math.min(qtdRestante, freshLote.quantidade_atual);
+      if (qtdDispensar <= 0) { skippedCount++; continue; }
+
+      // Update lote with fresh value
+      await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual - qtdDispensar }).eq("id", lote.id);
 
       // Create movimentacao
       await supabase.from("movimentacoes").insert({
@@ -166,7 +180,12 @@ const Prescricoes = () => {
 
     await log({ acao: "Dispensação de Prescrição", tabela: "prescricoes", registro_id: selectedPrescricao.id });
 
-    toast.success(`${dispensedCount} item(ns) dispensado(s)!`);
+    if (skippedCount > 0) {
+      toast.warning(`${dispensedCount} dispensado(s), ${skippedCount} sem estoque disponível`);
+    } else {
+      toast.success(`${dispensedCount} item(ns) dispensado(s) com sucesso!`);
+    }
+    setDispensing(false);
     setDispensarDialogOpen(false);
     fetchData();
   };
