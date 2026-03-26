@@ -99,7 +99,6 @@ export function AppSidebar() {
           )}
           activeClassName=""
         >
-          <div className="irish-liquid" />
           <div className="irish-content gap-3 w-full">
             <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary-foreground")} />
             {!collapsed && (
