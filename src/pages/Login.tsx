@@ -61,8 +61,8 @@ const Login = () => {
     <div className="min-h-screen flex bg-background">
       {/* Left panel — immersive hero */}
       <div className="hidden lg:flex lg:w-[55%] xl:w-[58%] relative overflow-hidden flex-col justify-between">
-        {/* Gradient layers — violeta/teal */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(258,65%,16%)] via-[hsl(260,55%,20%)] to-[hsl(200,60%,18%)]" />
+        {/* Gradient layers — green */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(162,40%,10%)] via-[hsl(155,35%,14%)] to-[hsl(190,40%,14%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
         {/* Animated mesh */}
@@ -79,11 +79,11 @@ const Login = () => {
           backgroundPosition: "0 0, 0 0, 40px 70px, 40px 70px, 0 0, 40px 70px",
         }} />
 
-        {/* Glowing orbs — violeta/teal */}
+        {/* Glowing orbs — green */}
         <motion.div
           className="absolute w-[500px] h-[500px] rounded-full"
           style={{
-            background: "radial-gradient(circle, hsla(258,70%,60%,0.15) 0%, transparent 70%)",
+            background: "radial-gradient(circle, hsla(152,55%,45%,0.15) 0%, transparent 70%)",
             top: "-10%", right: "-10%",
           }}
           animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
@@ -92,7 +92,7 @@ const Login = () => {
         <motion.div
           className="absolute w-[400px] h-[400px] rounded-full"
           style={{
-            background: "radial-gradient(circle, hsla(172,60%,48%,0.12) 0%, transparent 70%)",
+            background: "radial-gradient(circle, hsla(190,55%,42%,0.12) 0%, transparent 70%)",
             bottom: "-5%", left: "-5%",
           }}
           animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
@@ -101,7 +101,7 @@ const Login = () => {
         <motion.div
           className="absolute w-[300px] h-[300px] rounded-full"
           style={{
-            background: "radial-gradient(circle, hsla(258,65%,55%,0.1) 0%, transparent 70%)",
+            background: "radial-gradient(circle, hsla(152,50%,40%,0.1) 0%, transparent 70%)",
             top: "40%", left: "30%",
           }}
           animate={{ scale: [1, 1.1, 1], x: [0, 30, 0], y: [0, -20, 0] }}
@@ -161,7 +161,7 @@ const Login = () => {
               >
                 Controle Total
                 <br />
-                <span className="bg-gradient-to-r from-purple-300 via-violet-300 to-teal-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-teal-300 bg-clip-text text-transparent">
                   da Sua Farmácia
                 </span>
               </motion.h2>
