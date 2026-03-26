@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
-import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardCore, useConsumoData } from "@/hooks/useDashboardData";
 import {
   BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell,
   CartesianGrid, Area, AreaChart,
@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { Medicamento, Lote } from "@/types/database";
 
 const COLORS = ["hsl(220, 65%, 38%)", "hsl(210, 80%, 55%)", "hsl(160, 60%, 42%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(250, 55%, 55%)", "hsl(220, 10%, 46%)"];
 
@@ -32,21 +31,6 @@ const PERIOD_OPTIONS = [
   { value: "last_month", label: "Mês anterior" },
 ];
 
-function getPeriodDates(period: string) {
-  const now = new Date();
-  let from: Date;
-  let to = now;
-  if (period === "this_month") {
-    from = new Date(now.getFullYear(), now.getMonth(), 1);
-  } else if (period === "last_month") {
-    from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    to = new Date(now.getFullYear(), now.getMonth(), 0);
-  } else {
-    from = new Date(Date.now() - Number(period) * 24 * 60 * 60 * 1000);
-  }
-  return { from, to };
-}
-
 const quickActions = [
   { label: "Entrada", desc: "Receber medicamentos", icon: ArrowDownCircle, path: "/entrada", color: "bg-success/10 text-success" },
   { label: "Dispensação", desc: "Registrar saída", icon: ArrowUpCircle, path: "/dispensacao", color: "bg-info/10 text-info" },
@@ -57,91 +41,23 @@ const quickActions = [
 const Dashboard = () => {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
-  const [consumoData, setConsumoData] = useState<{ day: string; qty: number }[]>([]);
-  const [pendingTransfers, setPendingTransfers] = useState(0);
-  const [totalMovements, setTotalMovements] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(new Date());
-  const [catData, setCatData] = useState<{ name: string; value: number }[]>([]);
   const [period, setPeriod] = useState("30");
-  const [cmm, setCmm] = useState(0);
-  const [prescricoesAtivas, setPrescricoesAtivas] = useState(0);
+
+  const { data: core, isLoading } = useDashboardCore();
+  const { data: consumoData = [] } = useConsumoData(period);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch consumo based on period
-  const fetchConsumo = async (p: string) => {
-    const { from, to } = getPeriodDates(p);
-    const { data: movData } = await supabase.from("movimentacoes").select("created_at, quantidade, tipo")
-      .in("tipo", ["saida", "dispensacao"])
-      .gte("created_at", from.toISOString())
-      .lte("created_at", to.toISOString())
-      .order("created_at");
-
-    const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const dayMap: Record<string, number> = {};
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(to.getTime() - i * 24 * 60 * 60 * 1000);
-      dayMap[d.toISOString().slice(0, 10)] = 0;
-    }
-    (movData || []).forEach((m: any) => {
-      const day = m.created_at.slice(0, 10);
-      if (dayMap[day] !== undefined) dayMap[day] += m.quantidade;
-    });
-
-    const interval = days > 60 ? 6 : days > 14 ? 2 : 1;
-    setConsumoData(Object.entries(dayMap).map(([day, qty]) => ({
-      day: new Date(day).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), qty,
-    })));
-  };
-
-  useEffect(() => {
-    const fetchAll = async () => {
-      const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: transData }, { count }, { count: prescCount }] =
-        await Promise.all([
-          supabase.from("medicamentos").select("*").eq("ativo", true),
-          supabase.from("lotes").select("*").eq("ativo", true),
-          supabase.from("categorias_medicamento").select("*"),
-          supabase.from("transferencias").select("id", { count: "exact" }).eq("status", "pendente"),
-          supabase.from("movimentacoes").select("id", { count: "exact", head: true }),
-          supabase.from("prescricoes").select("id", { count: "exact", head: true }).eq("status", "ativa"),
-        ]);
-
-      setPendingTransfers(transData?.length || 0);
-      setTotalMovements(count || 0);
-      setPrescricoesAtivas(prescCount || 0);
-
-      const medsWithLotes = (medsData || []).map((m: any) => ({
-        ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
-      }));
-      setMeds(medsWithLotes);
-
-      setCatData((catsData || []).map((c: any) => ({
-        name: c.nome,
-        value: medsWithLotes.filter((m: any) => m.categoria_id === c.id).reduce((s: number, m: any) => s + m.lotes.reduce((sl: number, l: any) => sl + l.quantidade_atual, 0), 0),
-      })).filter((c: any) => c.value > 0));
-
-      // CMM: average of last 3 months
-      const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-      const { data: cmmData } = await supabase.from("movimentacoes").select("quantidade")
-        .in("tipo", ["saida", "dispensacao"])
-        .gte("created_at", threeMonthsAgo.toISOString());
-      const totalDisp = (cmmData || []).reduce((s: number, m: any) => s + m.quantidade, 0);
-      setCmm(Math.round(totalDisp / 3));
-
-      await fetchConsumo("30");
-      setLoading(false);
-    };
-    fetchAll();
-  }, []);
-
-  useEffect(() => {
-    if (!loading) fetchConsumo(period);
-  }, [period]);
+  const meds = core?.meds || [];
+  const catData = core?.catData || [];
+  const pendingTransfers = core?.pendingTransfers || 0;
+  const totalMovements = core?.totalMovements || 0;
+  const prescricoesAtivas = core?.prescricoesAtivas || 0;
+  const cmm = core?.cmm || 0;
 
   const stats = {
     total: meds.length,
@@ -166,7 +82,7 @@ const Dashboard = () => {
     return "Boa noite";
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <AppLayout title="Dashboard" subtitle="Carregando...">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
