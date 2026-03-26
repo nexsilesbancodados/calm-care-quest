@@ -1,146 +1,162 @@
 
 
-# PharmaControl — Plano de Reconstrução Completa
+# Plano de Implementação — PsiRumoCerto: Completar Sistema
 
-## Estado Atual
-O projeto possui 12 tabelas Supabase (medications, patients, movements, suppliers, etc.) com RLS permissiva (anon), autenticação mock via localStorage, e páginas funcionais mas sem autenticação real nem RBAC. O schema atual não corresponde ao solicitado (faltam tabelas de lotes, clínicas parceiras, e o modelo de dados é diferente).
-
----
-
-## Plano de Implementação
-
-### Fase 1 — Novo Schema de Banco de Dados
-
-**Migration 1: Limpar tabelas existentes e criar novo schema**
-
-Tabelas a criar (todas com RLS + soft delete via campo `ativo`):
-
-| Tabela | Colunas principais |
-|--------|-------------------|
-| `profiles` | id, user_id (FK auth.users), nome, papel (enum: admin/farmaceutico/auxiliar_farmacia/enfermeiro/visualizador), ativo, avatar_url, created_at |
-| `user_roles` | id, user_id, role (enum app_role) — para RBAC com security definer |
-| `medicamentos` | id, nome, generico, principio_ativo, concentracao, forma_farmaceutica, codigo_barras, categoria, controlado, fornecedor_id, estoque_minimo, estoque_maximo, localizacao, preco_unitario, ativo |
-| `lotes` | id, medicamento_id, numero_lote, validade, quantidade_atual, preco_unitario, ativo |
-| `movimentacoes` | id, tipo (enum), medicamento_id, lote_id, quantidade, usuario_id, paciente, prontuario, setor, nota_fiscal, observacao, created_at |
-| `transferencias` | id, medicamento_id, lote_id, quantidade, clinica_origem_id, clinica_destino_id, status (enum), solicitante_id, aprovador_id, urgencia, observacao, created_at, updated_at |
-| `fornecedores` | id, nome, cnpj, contato, email, telefone, endereco, ativo |
-| `clinicas_parceiras` | id, nome, cnes, endereco, contato, telefone, ativo |
-| `audit_log` | id, usuario_id, acao, tabela, registro_id, dados_anteriores (jsonb), dados_novos (jsonb), created_at |
-| `configuracoes_hospital` | id, nome, cnes, logo_url, alerta_estoque_pct, alerta_vencimento_dias |
-| `categorias_medicamento` | id, nome, cor, ativo |
-
-**Enums**: `app_role`, `tipo_movimentacao` (entrada/saida/transferencia/ajuste), `status_transferencia` (pendente/aprovado/enviado/recebido/cancelado)
-
-**Security definer function**: `has_role(uuid, app_role)` para uso em RLS sem recursão
-
-**RLS por papel**:
-- `admin`: ALL em todas as tabelas
-- `farmaceutico`: ALL em medicamentos/lotes/movimentacoes/transferencias, SELECT em profiles/audit_log
-- `auxiliar_farmacia`: INSERT em movimentacoes (tipo=entrada), SELECT em medicamentos/lotes
-- `enfermeiro`: SELECT em medicamentos/lotes, INSERT em movimentacoes (tipo=saida/dispensação)
-- `visualizador`: SELECT only em medicamentos/lotes/movimentacoes
-
-**Trigger**: auto-create profile on signup, updated_at triggers
-
-**Índices**: codigo_barras, medicamento_id em lotes, tipo+created_at em movimentacoes
-
-**Migration 2**: Criar storage bucket `notas_fiscais` (público: false) com RLS
+## Visão Geral
+9 seções de melhorias abrangendo correções críticas, nova página de Prescrições, melhorias em Dispensação, Dashboard, Relatórios, Leitor de Barcode, UX geral, e Sidebar. Nenhuma alteração no design system, auth, componentes UI ou theme.
 
 ---
 
-### Fase 2 — Autenticação Real com Supabase Auth
+## Fase 1: Migration SQL (uma única migration)
 
-**Arquivos a criar/reescrever:**
+Criar tabelas `prescricoes` e `itens_prescricao`, adicionar coluna `prescricao_id` em `movimentacoes`, adicionar valor `'ajuste'` ao enum `tipo_movimentacao` (se não existir), e criar RLS policies para as novas tabelas.
 
-1. **`src/contexts/AuthContext.tsx`** — Substituir mock por Supabase Auth real
-   - `onAuthStateChange` listener + `getSession`
-   - Login com email/senha via `supabase.auth.signInWithPassword`
-   - Signup via `supabase.auth.signUp` (admin cria usuários)
-   - Logout via `supabase.auth.signOut`
-   - Carregar profile + role do banco
-   - Função `can(permission)` baseada no papel real do banco
-   - Função `hasRole(role)` para checks rápidos
+```text
+prescricoes
+├── id, numero_receita, paciente, prontuario, medico, crm, setor
+├── data_prescricao, validade_dias, status, observacao
+├── usuario_id, created_at, updated_at
 
-2. **`src/pages/Login.tsx`** — Reescrever com Supabase Auth
-   - Email + senha real
-   - "Esqueci minha senha" com `resetPasswordForEmail`
-   - Visual hospitalar (azul escuro #1e3a5f)
+itens_prescricao
+├── id, prescricao_id (FK), medicamento_id (FK)
+├── quantidade_prescrita, quantidade_dispensada, posologia
 
-3. **`src/pages/ResetPassword.tsx`** — Nova página para reset de senha
-   - Detectar `type=recovery` no URL hash
-   - Formulário para nova senha
-   - Rota pública
+movimentacoes
+└── + prescricao_id (FK nullable)
+```
 
-4. **`src/components/ProtectedRoute.tsx`** — Usar session real do Supabase
+RLS: authenticated read all; admin/farmaceutico/enfermeiro manage prescricoes e itens.
+
+**Nota**: Usar validation trigger em vez de CHECK constraint para o campo `status` (conforme diretrizes).
 
 ---
 
-### Fase 3 — Reescrita dos Módulos (Páginas)
+## Fase 2: Correções Críticas (Seções 1a, 1b, 1c)
 
-Todas as páginas serão reescritas para usar o novo schema. Cada página usa React Query para fetch/mutate, loading skeletons, paginação, e respeita o papel do usuário.
+### 1a. Dispensação — validação server-side
+**Arquivo**: `src/pages/Dispensacao.tsx`
+- No `handleSubmit`, antes de fazer UPDATE no lote, fazer `SELECT quantidade_atual FROM lotes WHERE id = form.lote_id` fresco.
+- Se `quantidade_atual < form.quantidade`, mostrar toast com estoque real e abortar.
 
-1. **Dashboard** — KPIs via queries agregadas (COUNT de lotes por status, SUM de quantidades), gráficos Recharts (consumo 30 dias, top 10, pizza por categoria), alertas reais
+### 1b. Transferências — campo de lote
+**Arquivo**: `src/pages/Transferencias.tsx`
+- Carregar lotes junto com medicamentos no `fetchData`.
+- No dialog de nova transferência, após selecionar medicamento, mostrar Select de lotes disponíveis (com número, validade, quantidade).
+- Salvar `lote_id` na inserção. Mostrar coluna "Lote" na tabela de listagem.
 
-2. **Estoque de Medicamentos** — CRUD completo de medicamentos + lotes, filtros avançados, leitor de código de barras (html5-qrcode), badges de status, histórico de movimentações por item
-
-3. **Entrada de Medicamentos** — Formulário de recebimento com NF, upload de arquivo para storage, busca por nome ou scan de barcode, criação de lotes
-
-4. **Saída/Dispensação** — Dispensação para paciente (nome, prontuário), saída por setor, baixa automática no lote, histórico filtrável
-
-5. **Transferências** — Solicitação com fluxo de aprovação (pendente→aprovado→enviado→recebido), badge de pendentes no sidebar, filtro por status
-
-6. **Leitor de Código de Barras** — Página dedicada com câmera via html5-qrcode, modal de ações rápidas ao escanear
-
-7. **Impressão de Etiquetas** — Templates 3 tamanhos, react-barcode para renderizar EAN, CSS @media print, preview e impressão em lote
-
-8. **Relatórios** — 6 tipos de relatório com filtros, export CSV e PDF (via window.print + HTML formatado)
-
-9. **Gerenciamento de Usuários** (admin) — Listagem, criar/editar/desativar, atribuir papéis, log de auditoria por usuário
-
-10. **Configurações** (admin) — CRUD fornecedores, clínicas parceiras, categorias, alertas, info do hospital
+### 1c. Ajuste de estoque
+**Arquivo**: `src/pages/Estoque.tsx`
+- Adicionar botão "Ajustar" por linha de medicamento na tabela.
+- Dialog com: Select de lote, campo quantidade nova, Select de motivo (Inventário/Perda/Vencimento/Erro/Outro), observação obrigatória.
+- Salvar movimentação tipo `"ajuste"`, atualizar `quantidade_atual` do lote, registrar audit_log com dados anteriores/novos.
 
 ---
 
-### Fase 4 — Design e UX
+## Fase 3: Página Prescrições (Seção 2)
 
-- **Paleta**: azul escuro (#1e3a5f) primário, branco, verde (#22c55e) sucesso, amarelo warning, vermelho destructive
-- **Sidebar**: ícones + labels, badge de alertas/transferências pendentes, collapse em mobile (hamburguer)
-- **Dark mode**: via ThemeProvider existente
-- **Loading skeletons**: em todas as listagens
-- **Framer Motion**: transições de página
-- **Responsivo**: mobile-first, tabelas com scroll horizontal
+**Novo arquivo**: `src/pages/Prescricoes.tsx`
 
----
+Componentes da página:
+- **Lista** com busca (paciente/número/médico), filtro por status, badges coloridos por estado.
+- **Dialog "Nova Prescrição"**: campos numero_receita, paciente, prontuário, médico, CRM, setor, data, validade_dias, observação.
+- **Dialog "Adicionar Itens"**: buscar medicamento, definir quantidade e posologia.
+- **Dialog "Dispensar Prescrição"**: modal que lista itens pendentes, aplica FEFO automático (lote mais antigo com estoque), registra movimentações com `prescricao_id`, atualiza `quantidade_dispensada` e status da prescrição.
+- Coluna de progresso: "2/3 itens dispensados".
 
-### Fase 5 — Segurança e Auditoria
-
-- Todas as mutações registram em `audit_log` (dados anteriores + novos via trigger ou app-level)
-- Soft delete em tudo (campo `ativo = false`, nunca DELETE)
-- RLS em todas as tabelas sem exceção
-- Nenhuma rota acessível sem session ativa
+**Tipos**: Adicionar `Prescricao` e `ItemPrescricao` em `src/types/database.ts`.
 
 ---
 
-## Ordem de Execução
+## Fase 4: Melhorias na Dispensação (Seção 3)
 
-1. Migration SQL (drop old tables, create new schema, RLS, triggers, índices)
-2. Auth context + Login + ProtectedRoute + ResetPassword
-3. Sidebar + AppLayout (com papel do usuário)
-4. Dashboard
-5. Medicamentos + Lotes (CRUD)
-6. Entrada de Medicamentos
-7. Saída/Dispensação
-8. Transferências (com fluxo de aprovação)
-9. Leitor de Código de Barras
-10. Etiquetas
-11. Relatórios
-12. Gerenciamento de Usuários
-13. Configurações
-14. Ajustes de design, dark mode, responsividade
+**Arquivo**: `src/pages/Dispensacao.tsx`
 
-## Dependências NPM a adicionar
-- `html5-qrcode` (leitor de câmera)
-- `react-barcode` (geração de código de barras)
+- **FEFO automático**: Ao selecionar medicamento, ordenar lotes por validade ascendente, pré-selecionar o primeiro. Badge de aviso se trocar para lote mais novo.
+- **Campo Prescrição**: Select opcional com busca por número/paciente. Se selecionada, preencher paciente/prontuário/setor automaticamente. Salvar `prescricao_id` na movimentação.
+- **Histórico aprimorado**: Adicionar colunas "Prescrição" e "Paciente". Filtro por data e busca por paciente/prontuário. Carregar dados de prescrição via join.
 
-As dependências existentes (recharts, framer-motion, react-query, shadcn/ui, react-router-dom) já atendem o restante.
+---
+
+## Fase 5: Melhorias no Dashboard (Seção 4)
+
+**Arquivo**: `src/pages/Dashboard.tsx`
+
+- **Filtro de período** no gráfico de consumo: Select com opções (7d, 30d, 90d, Este mês, Mês anterior). Atualizar query dinamicamente.
+- **StatCard CMM**: Calcular média de dispensações nos últimos 3 meses. Ícone TrendingUp.
+- **StatCard Prescrições Ativas**: Query count de prescricoes com status='ativa'. Clicável → /prescricoes.
+
+---
+
+## Fase 6: Melhorias nos Relatórios (Seção 5)
+
+**Arquivo**: `src/pages/Relatorios.tsx`
+
+- **Tab "Psicotrópicos"**: Listar medicamentos com `controlado=true` + lotes. Colunas: medicamento, concentração, forma, lote, qtd inicial (via movimentações entrada), entradas/saídas no período, saldo, validade. Filtro mês/ano. CSV/Print adaptados. Nota ANVISA.
+- **Tab "CMM por Medicamento"**: Lista com nome, CMM (média 3 meses), estoque atual, cobertura em dias, status colorido (verde >30d, amarelo 15-30d, vermelho <15d).
+- **printReport melhorado**: Buscar `configuracoes_hospital.nome` para cabeçalho. Adicionar rodapé com nome do usuário e timestamp.
+
+---
+
+## Fase 7: Leitor de Barcode (Seção 6)
+
+**Arquivo**: `src/pages/LeitorBarcode.tsx`
+- Nos botões de ação pós-resultado, passar `?medicamento_id={id}` como query param para Dispensar, Entrada, Ver Estoque, Imprimir Etiqueta.
+- Adicionar botão "Ver Estoque" → `/estoque?search={codigo_barras}`.
+
+**Arquivos receptores**: `Dispensacao.tsx`, `Entrada.tsx`, `Etiquetas.tsx`, `Estoque.tsx`
+- Ler `useSearchParams()` para `medicamento_id`. Pré-selecionar o medicamento correspondente no carregamento.
+
+---
+
+## Fase 8: Melhorias UX (Seção 7)
+
+### Confirmação destrutiva
+- **Medicamentos.tsx**: No `handleDeactivate`, fazer query de lotes ativos antes. Mostrar AlertDialog com "X lotes ativos, Y unidades em estoque. Continuar?".
+- **Fornecedores.tsx**: No `toggleActive`, contar medicamentos vinculados. Mostrar AlertDialog similar.
+
+### Paginação server-side
+- **Medicamentos.tsx**: PAGE_SIZE=50. Usar `.range(from, to)` do Supabase. Controles de página com total de registros. Count via `{ count: "exact", head: true }`.
+- **Fornecedores.tsx**: PAGE_SIZE=30, mesmo padrão.
+
+### FEFO visual no Estoque
+- **Estoque.tsx**: Na expansão dos lotes, marcar com badge "FEFO" o lote com menor validade futura (não vencido) de cada medicamento.
+
+---
+
+## Fase 9: Sidebar + Routing (Seção 8)
+
+**Arquivo**: `src/components/AppSidebar.tsx`
+- Adicionar item `{ title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: "prescricoes" }` na lista `allItems`.
+- Adicionar contagem de prescrições ativas ao `badgeCounts` (query `prescricoes` com `status='ativa'`).
+
+**Arquivo**: `src/App.tsx`
+- Importar `Prescricoes` e adicionar rota `/prescricoes` com `<P>`.
+
+**Arquivo**: `src/types/database.ts`
+- Adicionar interfaces `Prescricao` e `ItemPrescricao`.
+- Adicionar `prescricao_id` à interface `Movimentacao`.
+
+---
+
+## Resumo de Arquivos Afetados
+
+| Arquivo | Tipo |
+|---|---|
+| Migration SQL | Novo |
+| `src/pages/Prescricoes.tsx` | Novo |
+| `src/types/database.ts` | Editar |
+| `src/pages/Dispensacao.tsx` | Editar |
+| `src/pages/Transferencias.tsx` | Editar |
+| `src/pages/Estoque.tsx` | Editar |
+| `src/pages/Dashboard.tsx` | Editar |
+| `src/pages/Relatorios.tsx` | Editar |
+| `src/pages/LeitorBarcode.tsx` | Editar |
+| `src/pages/Medicamentos.tsx` | Editar |
+| `src/pages/Fornecedores.tsx` | Editar |
+| `src/pages/Entrada.tsx` | Editar |
+| `src/pages/Etiquetas.tsx` | Editar |
+| `src/components/AppSidebar.tsx` | Editar |
+| `src/App.tsx` | Editar |
+
+Nenhuma alteração em: design system, AuthContext, ProtectedRoute, shadcn/ui, ThemeProvider, CommandPalette, AppLayout.
 
