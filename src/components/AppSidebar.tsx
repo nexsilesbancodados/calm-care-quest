@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Pill, AlertTriangle, ClipboardList, Package,
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Activity, Shield, FileText,
-  User, ClipboardCheck,
+  User, ClipboardCheck, ChevronRight, Sparkles,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -15,27 +15,47 @@ import {
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible, CollapsibleContent, CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
-const allItems = [
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: any;
+  roles: string[] | null;
+  badgeKey: "alerts" | "transfers" | "prescricoes" | null;
+};
+
+const mainItems: MenuItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: null, badgeKey: null },
   { title: "Medicamentos", url: "/medicamentos", icon: Pill, roles: null, badgeKey: null },
+  { title: "Estoque", url: "/estoque", icon: Package, roles: null, badgeKey: null },
+];
+
+const operationItems: MenuItem[] = [
   { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"], badgeKey: null },
   { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
   { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null, badgeKey: null },
-  { title: "Estoque", url: "/estoque", icon: Package, roles: null, badgeKey: null },
-  { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"], badgeKey: "transfers" as const },
+  { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"], badgeKey: "transfers" },
+  { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: "prescricoes" },
+];
+
+const toolItems: MenuItem[] = [
   { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null, badgeKey: null },
   { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"], badgeKey: null },
-  { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: null, badgeKey: "alerts" as const },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null, badgeKey: null },
-  { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
-  { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: "prescricoes" as const },
-  { title: "Pacientes", url: "/pacientes", icon: User, roles: null, badgeKey: null },
   { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"], badgeKey: null },
 ];
 
-const systemItems = [
+const reportItems: MenuItem[] = [
+  { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: null, badgeKey: "alerts" },
+  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null, badgeKey: null },
+  { title: "Pacientes", url: "/pacientes", icon: User, roles: null, badgeKey: null },
+  { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
+];
+
+const systemItems: MenuItem[] = [
   { title: "Usuários", url: "/usuarios", icon: Users, roles: ["admin"], badgeKey: null },
   { title: "Painel Admin", url: "/admin", icon: Shield, roles: ["admin"], badgeKey: null },
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"], badgeKey: null },
@@ -80,7 +100,7 @@ export function AppSidebar() {
   }, []);
 
   const role = profile?.role;
-  const filterByRole = (items: typeof allItems) =>
+  const filterByRole = (items: MenuItem[]) =>
     items.filter((item) => !item.roles || (role && item.roles.includes(role)));
 
   const getBadgeCount = (key: string | null) => {
@@ -90,87 +110,150 @@ export function AppSidebar() {
     return 0;
   };
 
-  const renderMenuItem = (item: typeof allItems[0], active: boolean) => (
-    <SidebarMenuItem key={item.title}>
-      <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-        <NavLink
-          to={item.url}
-          end={item.url === "/"}
-          className={cn(
-            "irish-btn flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-foreground/80 group relative",
-            active && "irish-active"
-          )}
-          activeClassName=""
-        >
-          <div className="irish-content gap-3 w-full">
-            <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-colors", active ? "text-sidebar-primary-foreground" : "text-sidebar-foreground/50 group-hover:text-sidebar-primary-foreground")} />
+  const renderMenuItem = (item: MenuItem, index: number) => {
+    const active = isActive(item.url);
+    const count = getBadgeCount(item.badgeKey);
+
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
+          <NavLink
+            to={item.url}
+            end={item.url === "/"}
+            className={cn(
+              "group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sidebar-foreground/70 transition-all duration-200",
+              "hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60",
+              active && "bg-sidebar-primary/15 text-sidebar-primary-foreground border border-sidebar-primary/25 shadow-[0_0_12px_hsl(var(--sidebar-primary)/0.15)]"
+            )}
+            activeClassName=""
+            style={{ animationDelay: `${index * 30}ms` }}
+          >
+            <div className="relative">
+              <item.icon className={cn(
+                "h-[17px] w-[17px] shrink-0 transition-all duration-200",
+                active
+                  ? "text-sidebar-ring drop-shadow-[0_0_4px_hsl(var(--sidebar-primary)/0.5)]"
+                  : "text-sidebar-foreground/45 group-hover:text-sidebar-accent-foreground"
+              )} />
+              {collapsed && count > 0 && (
+                <div className="absolute -top-1 -right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar-background animate-pulse" />
+              )}
+            </div>
             {!collapsed && (
-              <span className={cn("text-[13px] flex-1", active ? "font-semibold" : "group-hover:text-sidebar-primary-foreground")}>{item.title}</span>
+              <>
+                <span className={cn(
+                  "text-[13px] flex-1 transition-colors duration-200",
+                  active ? "font-semibold text-sidebar-accent-foreground" : "font-medium"
+                )}>
+                  {item.title}
+                </span>
+                {count > 0 && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "h-5 min-w-[22px] px-1.5 text-[10px] font-bold tabular-nums border-0 shadow-sm",
+                      item.badgeKey === "alerts"
+                        ? "bg-destructive/20 text-destructive"
+                        : "bg-sidebar-primary/20 text-sidebar-ring"
+                    )}
+                  >
+                    {count}
+                  </Badge>
+                )}
+              </>
             )}
-            {!collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
-              <Badge variant="outline" className="h-5 min-w-[20px] px-1.5 text-[10px] font-bold bg-destructive/15 text-destructive border-destructive/20 tabular-nums relative z-[2]">
-                {getBadgeCount(item.badgeKey)}
-              </Badge>
-            )}
-            {collapsed && item.badgeKey && getBadgeCount(item.badgeKey) > 0 && (
-              <div className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-destructive animate-pulse z-[2]" />
-            )}
-          </div>
-        </NavLink>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
+          </NavLink>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
+
+  const renderGroup = (label: string, items: MenuItem[], defaultOpen = true) => {
+    const filtered = filterByRole(items);
+    if (filtered.length === 0) return null;
+
+    const hasActiveItem = filtered.some((i) => isActive(i.url));
+
+    if (collapsed) {
+      return (
+        <SidebarGroup key={label}>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {filtered.map((item, i) => renderMenuItem(item, i))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      );
+    }
+
+    return (
+      <Collapsible key={label} defaultOpen={defaultOpen || hasActiveItem} className="group/collapsible">
+        <SidebarGroup>
+          <SidebarGroupLabel asChild>
+            <CollapsibleTrigger className="flex items-center w-full text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/30 px-3 mb-0.5 font-semibold hover:text-sidebar-foreground/50 transition-colors cursor-pointer">
+              <span className="flex-1 text-left">{label}</span>
+              <ChevronRight className="h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            </CollapsibleTrigger>
+          </SidebarGroupLabel>
+          <CollapsibleContent className="transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">
+                {filtered.map((item, i) => renderMenuItem(item, i))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
+    );
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="p-4 pb-6">
+      <SidebarHeader className="p-4 pb-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-hero shadow-lg shadow-primary/20">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl gradient-hero shadow-lg shadow-primary/25">
             <Activity className="h-5 w-5 text-primary-foreground" />
+            <div className="absolute inset-0 rounded-xl bg-white/10 animate-pulse" style={{ animationDuration: '3s' }} />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight">PsiRumoCerto</span>
-              <span className="text-[10px] text-sidebar-foreground/50 font-medium">Farmácia Hospitalar</span>
+              <span className="text-sm font-bold text-sidebar-accent-foreground tracking-tight flex items-center gap-1.5">
+                PsiRumoCerto
+                <Sparkles className="h-3 w-3 text-sidebar-ring" />
+              </span>
+              <span className="text-[10px] text-sidebar-foreground/40 font-medium">Farmácia Hospitalar</span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-[9px] uppercase tracking-[0.15em] text-sidebar-foreground/35 px-3 mb-1 font-semibold">
-            Operações
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {filterByRole(allItems).map((item) => renderMenuItem(item, isActive(item.url)))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {filterByRole(systemItems).length > 0 && (
-          <SidebarGroup className="mt-2">
-            <SidebarGroupLabel className="text-[9px] uppercase tracking-[0.15em] text-sidebar-foreground/35 px-3 mb-1 font-semibold">
-              Administração
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {filterByRole(systemItems).map((item) => renderMenuItem(item as any, isActive(item.url)))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+      <SidebarContent className="px-2 space-y-1">
+        {renderGroup("Principal", mainItems)}
+        {renderGroup("Operações", operationItems)}
+        {renderGroup("Ferramentas", toolItems)}
+        {renderGroup("Cadastros & Relatórios", reportItems)}
+        {renderGroup("Administração", systemItems, false)}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
         {!collapsed && (
-          <div className="rounded-xl bg-sidebar-accent/40 border border-sidebar-border/50 p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-              <span className="text-[10px] font-medium text-sidebar-foreground/70">Sistema Online</span>
+          <div className="rounded-xl bg-gradient-to-br from-sidebar-accent/50 to-sidebar-accent/20 border border-sidebar-border/40 p-3 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="relative">
+                <div className="h-2 w-2 rounded-full bg-success" />
+                <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping opacity-40" />
+              </div>
+              <span className="text-[10px] font-semibold text-sidebar-foreground/70 uppercase tracking-wider">Online</span>
             </div>
-            <p className="text-[10px] text-sidebar-foreground/40">PsiRumoCerto v2.1</p>
+            <p className="text-[10px] text-sidebar-foreground/35 font-medium">PsiRumoCerto v2.1</p>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center">
+            <div className="relative">
+              <div className="h-2 w-2 rounded-full bg-success" />
+              <div className="absolute inset-0 h-2 w-2 rounded-full bg-success animate-ping opacity-40" />
+            </div>
           </div>
         )}
       </SidebarFooter>
