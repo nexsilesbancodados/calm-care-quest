@@ -265,6 +265,7 @@
   .data-table-row {
     transition: background-color 0.15s ease;
   }
+}
 
 @media print {
   body * { visibility: hidden; }
