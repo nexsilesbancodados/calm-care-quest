@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Search, Plus, Clock, Truck, CheckCircle2, XCircle, Zap, RefreshCw,
-  ArrowRight, Package, X, Calendar, ArrowLeftRight, Info, ChevronLeft, ChevronRight
+  ArrowRight, Package, X, Calendar, ArrowLeftRight, Info, ChevronLeft, ChevronRight, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -45,6 +45,19 @@ const Transferencias = () => {
   const [form, setForm] = useState({ medicamento_id: "", lote_id: "", quantidade: 0, clinica_destino_id: "", urgencia: false, observacao: "" });
   const [medSearch, setMedSearch] = useState("");
 
+  // 3b: Recebimento dialog
+  const [recebimentoOpen, setRecebimentoOpen] = useState(false);
+  const [recebimentoTarget, setRecebimentoTarget] = useState<any>(null);
+  const [recebimentoQtd, setRecebimentoQtd] = useState(0);
+  const [recebimentoObs, setRecebimentoObs] = useState("");
+
+  // 3c: Timer tick
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     const [{ data: tData }, { data: mData }, { data: cData }, { data: lotesData }] = await Promise.all([
@@ -54,7 +67,10 @@ const Transferencias = () => {
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
     ]);
     setTransfers(tData || []);
-    setMeds((mData || []).map((m: any) => ({ ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id) })));
+    setMeds((mData || []).map((m: any) => ({
+      ...m,
+      lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id).sort((a: any, b: any) => new Date(a.validade).getTime() - new Date(b.validade).getTime()),
+    })));
     setClinicas(cData as ClinicaParceira[] || []);
     setLoading(false);
   };
@@ -70,6 +86,13 @@ const Transferencias = () => {
     const s = medSearch.toLowerCase();
     return available.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s));
   }, [meds, medSearch]);
+
+  // 3a: Auto-select FEFO lote when med changes
+  const handleMedChange = (medId: string) => {
+    const med = meds.find(m => m.id === medId);
+    const fefoLote = med?.lotes?.[0];
+    setForm({ ...form, medicamento_id: medId, lote_id: fefoLote?.id || "" });
+  };
 
   const handleCreate = async () => {
     if (!form.medicamento_id || !form.clinica_destino_id || !form.quantidade || !form.lote_id) {
@@ -100,6 +123,40 @@ const Transferencias = () => {
     toast.success(`Status: ${statusCfg[status].label}`);
   };
 
+  // 3b: Recebimento handler
+  const handleRecebimento = async () => {
+    if (!recebimentoTarget) return;
+    const t = recebimentoTarget;
+    const isDivergent = recebimentoQtd !== t.quantidade;
+
+    await updateStatus(t.id, "recebido");
+
+    // Register entrada
+    await supabase.from("movimentacoes").insert({
+      tipo: "entrada" as any,
+      medicamento_id: t.medicamento_id,
+      lote_id: t.lote_id,
+      quantidade: recebimentoQtd,
+      usuario_id: user?.id,
+      observacao: `Recebimento de transferência${isDivergent ? " (com divergência)" : ""}: ${recebimentoObs || "—"}`,
+    });
+
+    if (isDivergent) {
+      await log({
+        acao: "Divergência na transferência",
+        tabela: "transferencias",
+        registro_id: t.id,
+        dados_novos: { solicitado: t.quantidade, recebido: recebimentoQtd, diferenca: recebimentoQtd - t.quantidade },
+      });
+      toast.warning(`Recebido com divergência: solicitado ${t.quantidade}, recebido ${recebimentoQtd}`);
+    } else {
+      toast.success("Recebimento confirmado");
+    }
+    setRecebimentoOpen(false);
+    setRecebimentoTarget(null);
+    fetchData();
+  };
+
   const filtered = transfers.filter(t => {
     const matchSearch = !search || t.medicamentos?.nome?.toLowerCase().includes(search.toLowerCase()) || t.clinica_destino?.nome?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || t.status === statusFilter;
@@ -114,6 +171,14 @@ const Transferencias = () => {
 
   const urgentCount = transfers.filter(t => t.urgencia && t.status === "pendente").length;
   const hasFilters = search || statusFilter !== "all";
+
+  // 3c: Format urgency wait time
+  const formatWait = (createdAt: string) => {
+    const hours = Math.floor((Date.now() - new Date(createdAt).getTime()) / 3600000);
+    if (hours < 1) return "< 1h";
+    if (hours < 24) return `${hours}h`;
+    return `${Math.floor(hours / 24)}d ${hours % 24}h`;
+  };
 
   if (loading) return (
     <AppLayout title="Transferências">
@@ -221,6 +286,10 @@ const Transferencias = () => {
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">{t.medicamentos?.concentracao}</span>
+                      {/* 3c: Timer for urgent pending */}
+                      {t.urgencia && t.status === "pendente" && (
+                        <p className="text-[10px] text-destructive font-semibold mt-0.5">há {formatWait(t.created_at)} aguardando</p>
+                      )}
                     </TableCell>
                     <TableCell className="text-xs font-mono text-muted-foreground">{t.lotes?.numero_lote || "—"}</TableCell>
                     <TableCell className="text-center font-semibold">{t.quantidade}</TableCell>
@@ -245,7 +314,17 @@ const Transferencias = () => {
                           </>
                         )}
                         {t.status === "aprovado" && <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => updateStatus(t.id, "enviado")}><Truck className="h-3 w-3" /> Enviar</Button>}
-                        {t.status === "enviado" && <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => updateStatus(t.id, "recebido")}><CheckCircle2 className="h-3 w-3" /> Recebido</Button>}
+                        {/* 3b: Recebimento com divergência */}
+                        {t.status === "enviado" && (
+                          <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => {
+                            setRecebimentoTarget(t);
+                            setRecebimentoQtd(t.quantidade);
+                            setRecebimentoObs("");
+                            setRecebimentoOpen(true);
+                          }}>
+                            <CheckCircle2 className="h-3 w-3" /> Confirmar Recebimento
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -255,7 +334,7 @@ const Transferencias = () => {
           </Table>
         </motion.div>
 
-        {/* Dialog */}
+        {/* Dialog Nova Transferência */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogContent className="sm:max-w-[520px]">
             <DialogHeader>
@@ -265,7 +344,7 @@ const Transferencias = () => {
             <div className="space-y-4 mt-2">
               <div className="space-y-1.5">
                 <Label className="text-xs">Medicamento *</Label>
-                <Select value={form.medicamento_id} onValueChange={v => setForm({ ...form, medicamento_id: v, lote_id: "" })}>
+                <Select value={form.medicamento_id} onValueChange={handleMedChange}>
                   <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar" /></SelectTrigger>
                   <SelectContent>
                     <div className="px-2 pb-2"><Input placeholder="Buscar..." value={medSearch} onChange={e => setMedSearch(e.target.value)} className="h-8 text-xs" /></div>
@@ -274,15 +353,16 @@ const Transferencias = () => {
                 </Select>
               </div>
 
+              {/* 3a: Lote select with FEFO */}
               {selectedMed && selectedMed.lotes.length > 0 && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Lote *</Label>
+                  <Label className="text-xs">Lote * <span className="text-muted-foreground">(FEFO automático)</span></Label>
                   <Select value={form.lote_id} onValueChange={v => setForm({ ...form, lote_id: v })}>
                     <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
                     <SelectContent>
-                      {selectedMed.lotes.map(l => (
+                      {selectedMed.lotes.map((l, i) => (
                         <SelectItem key={l.id} value={l.id}>
-                          Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
+                          {i === 0 ? "⚡ " : ""}Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -326,6 +406,43 @@ const Transferencias = () => {
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button onClick={handleCreate} className="gradient-primary text-primary-foreground gap-2">
                   <Plus className="h-4 w-4" /> Criar Transferência
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 3b: Recebimento Dialog */}
+        <Dialog open={recebimentoOpen} onOpenChange={setRecebimentoOpen}>
+          <DialogContent className="sm:max-w-[460px]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2"><Package className="h-4 w-4 text-primary" /> Confirmar Recebimento — {recebimentoTarget?.medicamentos?.nome}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="rounded-lg bg-muted/40 border p-3 text-sm space-y-1">
+                <div className="flex justify-between"><span className="text-muted-foreground">Medicamento</span><span className="font-medium">{recebimentoTarget?.medicamentos?.nome}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Lote</span><span className="font-mono">{recebimentoTarget?.lotes?.numero_lote || "—"}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">Solicitado</span><span className="font-bold">{recebimentoTarget?.quantidade} un.</span></div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Quantidade recebida *</Label>
+                <Input type="number" min={0} value={recebimentoQtd} onChange={e => setRecebimentoQtd(Number(e.target.value))} />
+              </div>
+              {recebimentoTarget && recebimentoQtd !== recebimentoTarget.quantidade && (
+                <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>Divergência: solicitado {recebimentoTarget.quantidade}, recebido {recebimentoQtd}. Isso gerará uma ocorrência.</span>
+                </div>
+              )}
+              <div className="space-y-1.5">
+                <Label className="text-xs">Observação</Label>
+                <Textarea value={recebimentoObs} onChange={e => setRecebimentoObs(e.target.value)} rows={2} placeholder="Detalhes do recebimento..." maxLength={500} />
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button variant="outline" onClick={() => setRecebimentoOpen(false)}>Cancelar</Button>
+                <Button onClick={handleRecebimento} className="gradient-primary text-primary-foreground gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {recebimentoTarget && recebimentoQtd !== recebimentoTarget.quantidade ? "Confirmar com divergência" : "Confirmar"}
                 </Button>
               </div>
             </div>
