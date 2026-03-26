@@ -5,6 +5,7 @@ import {
   User, ClipboardCheck, ChevronRight, Sparkles, LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { prefetchPage } from "@/lib/lazyPages";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ROLE_LABELS } from "@/types/database";
@@ -135,6 +136,8 @@ export function AppSidebar() {
             <NavLink
               to={item.url}
               end={item.url === "/"}
+              onMouseEnter={() => prefetchPage(item.url)}
+              onFocus={() => prefetchPage(item.url)}
               className={cn(
                 "group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sidebar-foreground/70 transition-colors duration-75",
                 "hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/60",
