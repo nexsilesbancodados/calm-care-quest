@@ -389,5 +389,4 @@ const Prescricoes = () => {
   );
 };
 
-import React from "react";
 export default Prescricoes;

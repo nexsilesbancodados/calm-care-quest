@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
@@ -29,6 +30,7 @@ interface EntradaItem {
 const Entrada = () => {
   const { log } = useAudit();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<Medicamento[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [fornecedorId, setFornecedorId] = useState("");
@@ -39,7 +41,6 @@ const Entrada = () => {
   const [items, setItems] = useState<EntradaItem[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // Current item being added
   const [curMedId, setCurMedId] = useState("");
   const [curLote, setCurLote] = useState("");
   const [curValidade, setCurValidade] = useState("");
@@ -53,6 +54,12 @@ const Entrada = () => {
     ]).then(([{ data: m }, { data: f }]) => {
       setMeds((m as Medicamento[]) || []);
       setFornecedores((f as Fornecedor[]) || []);
+
+      // Pre-select from query param
+      const medId = searchParams.get("medicamento_id");
+      if (medId && (m || []).find((med: any) => med.id === medId)) {
+        setCurMedId(medId);
+      }
     });
   }, []);
 
@@ -92,7 +99,6 @@ const Entrada = () => {
 
     let nfUrl: string | null = null;
 
-    // Upload NF file
     if (nfFile) {
       setUploading(true);
       const ext = nfFile.name.split(".").pop();
@@ -106,7 +112,6 @@ const Entrada = () => {
       setUploading(false);
     }
 
-    // Create lots + movements
     for (const item of items) {
       const { data: lote, error } = await supabase
         .from("lotes")
@@ -158,7 +163,6 @@ const Entrada = () => {
   return (
     <AppLayout title="Entrada de Medicamentos" subtitle="Registrar recebimento">
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Form */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="p-5 shadow-card space-y-4">
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -169,16 +173,8 @@ const Entrada = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs">Fornecedor</Label>
                 <Select value={fornecedorId} onValueChange={setFornecedorId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fornecedores.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>{fornecedores.map((f) => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
@@ -188,18 +184,8 @@ const Entrada = () => {
               <div className="space-y-1.5">
                 <Label className="text-xs">Anexar NF (PDF/imagem)</Label>
                 <div className="flex items-center gap-2">
-                  <Input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => setNfFile(e.target.files?.[0] || null)}
-                    className="text-xs"
-                  />
-                  {nfFile && (
-                    <Badge variant="outline" className="text-[10px] shrink-0">
-                      <Upload className="h-3 w-3 mr-1" />
-                      {nfFile.name.slice(0, 20)}
-                    </Badge>
-                  )}
+                  <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setNfFile(e.target.files?.[0] || null)} className="text-xs" />
+                  {nfFile && <Badge variant="outline" className="text-[10px] shrink-0"><Upload className="h-3 w-3 mr-1" />{nfFile.name.slice(0, 20)}</Badge>}
                 </div>
               </div>
             </div>
@@ -214,41 +200,17 @@ const Entrada = () => {
               <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
                 <Label className="text-xs">Medicamento</Label>
                 <Select value={curMedId} onValueChange={setCurMedId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {meds.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.nome} {m.concentracao}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
+                  <SelectContent>{meds.map((m) => <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Lote</Label>
-                <Input value={curLote} onChange={(e) => setCurLote(e.target.value)} className="font-mono" placeholder="ABC123" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Validade</Label>
-                <Input type="date" value={curValidade} onChange={(e) => setCurValidade(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Qtd</Label>
-                <Input type="number" min={1} value={curQtd || ""} onChange={(e) => setCurQtd(Number(e.target.value))} />
-              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Lote</Label><Input value={curLote} onChange={(e) => setCurLote(e.target.value)} className="font-mono" placeholder="ABC123" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Validade</Label><Input type="date" value={curValidade} onChange={(e) => setCurValidade(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Qtd</Label><Input type="number" min={1} value={curQtd || ""} onChange={(e) => setCurQtd(Number(e.target.value))} /></div>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Preço Unit. (R$)</Label>
-                <Input type="number" step="0.01" value={curPreco || ""} onChange={(e) => setCurPreco(Number(e.target.value))} />
-              </div>
-              <div className="flex items-end">
-                <Button onClick={addItem} variant="outline" className="gap-2 w-full">
-                  <Plus className="h-4 w-4" /> Adicionar
-                </Button>
-              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Preço Unit. (R$)</Label><Input type="number" step="0.01" value={curPreco || ""} onChange={(e) => setCurPreco(Number(e.target.value))} /></div>
+              <div className="flex items-end"><Button onClick={addItem} variant="outline" className="gap-2 w-full"><Plus className="h-4 w-4" /> Adicionar</Button></div>
             </div>
           </Card>
 
@@ -274,11 +236,7 @@ const Entrada = () => {
                         <TableCell className="text-sm">{new Date(item.validade).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell className="text-center font-semibold">{item.quantidade}</TableCell>
                         <TableCell className="text-right text-sm">R$ {item.preco_unitario.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="sm" onClick={() => removeItem(idx)}>
-                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                          </Button>
-                        </TableCell>
+                        <TableCell><Button variant="ghost" size="sm" onClick={() => removeItem(idx)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button></TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -288,49 +246,20 @@ const Entrada = () => {
           )}
         </div>
 
-        {/* Resumo */}
         <div className="space-y-4">
           <Card className="p-5 shadow-card space-y-4">
             <h3 className="text-sm font-semibold">Resumo da Entrada</h3>
             <Separator />
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Itens</span>
-                <span className="font-semibold">{items.length}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Total unidades</span>
-                <span className="font-semibold">{totalUnits}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Valor total</span>
-                <span className="font-semibold">R$ {totalValue.toFixed(2)}</span>
-              </div>
-              {fornecedorId && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Fornecedor</span>
-                  <span className="font-medium text-xs">{fornecedores.find((f) => f.id === fornecedorId)?.nome}</span>
-                </div>
-              )}
+              <div className="flex justify-between"><span className="text-muted-foreground">Itens</span><span className="font-semibold">{items.length}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Total unidades</span><span className="font-semibold">{totalUnits}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Valor total</span><span className="font-semibold">R$ {totalValue.toFixed(2)}</span></div>
+              {fornecedorId && <div className="flex justify-between"><span className="text-muted-foreground">Fornecedor</span><span className="font-medium text-xs">{fornecedores.find((f) => f.id === fornecedorId)?.nome}</span></div>}
             </div>
             <Separator />
-            <div className="space-y-1.5">
-              <Label className="text-xs">Observação geral</Label>
-              <Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} placeholder="Opcional..." />
-            </div>
-            <Button
-              onClick={handleSubmit}
-              disabled={saving || items.length === 0}
-              className="w-full gradient-primary text-primary-foreground gap-2"
-            >
-              {saving ? (
-                <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-              ) : (
-                <>
-                  <PackagePlus className="h-4 w-4" />
-                  Confirmar Entrada
-                </>
-              )}
+            <div className="space-y-1.5"><Label className="text-xs">Observação geral</Label><Textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={2} placeholder="Opcional..." /></div>
+            <Button onClick={handleSubmit} disabled={saving || items.length === 0} className="w-full gradient-primary text-primary-foreground gap-2">
+              {saving ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : <><PackagePlus className="h-4 w-4" />Confirmar Entrada</>}
             </Button>
           </Card>
         </div>
