@@ -24,6 +24,7 @@ import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
 const Prescricoes = () => {
   const { log } = useAudit();
   const { user } = useAuth();
+  const { dispensarPrescricao } = useAutomations();
   const [prescricoes, setPrescricoes] = useState<(Prescricao & { itens?: (ItemPrescricao & { medicamento?: Medicamento })[] })[]>([]);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [loading, setLoading] = useState(true);
