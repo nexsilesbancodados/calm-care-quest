@@ -167,6 +167,51 @@ export type Database = {
         }
         Relationships: []
       }
+      itens_prescricao: {
+        Row: {
+          created_at: string | null
+          id: string
+          medicamento_id: string
+          posologia: string | null
+          prescricao_id: string
+          quantidade_dispensada: number
+          quantidade_prescrita: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          medicamento_id: string
+          posologia?: string | null
+          prescricao_id: string
+          quantidade_dispensada?: number
+          quantidade_prescrita?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          medicamento_id?: string
+          posologia?: string | null
+          prescricao_id?: string
+          quantidade_dispensada?: number
+          quantidade_prescrita?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itens_prescricao_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "itens_prescricao_prescricao_id_fkey"
+            columns: ["prescricao_id"]
+            isOneToOne: false
+            referencedRelation: "prescricoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           ativo: boolean
@@ -292,6 +337,7 @@ export type Database = {
           nota_fiscal: string | null
           observacao: string
           paciente: string | null
+          prescricao_id: string | null
           prontuario: string | null
           quantidade: number
           setor: string | null
@@ -306,6 +352,7 @@ export type Database = {
           nota_fiscal?: string | null
           observacao?: string
           paciente?: string | null
+          prescricao_id?: string | null
           prontuario?: string | null
           quantidade?: number
           setor?: string | null
@@ -320,6 +367,7 @@ export type Database = {
           nota_fiscal?: string | null
           observacao?: string
           paciente?: string | null
+          prescricao_id?: string | null
           prontuario?: string | null
           quantidade?: number
           setor?: string | null
@@ -341,7 +389,65 @@ export type Database = {
             referencedRelation: "medicamentos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "movimentacoes_prescricao_id_fkey"
+            columns: ["prescricao_id"]
+            isOneToOne: false
+            referencedRelation: "prescricoes"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      prescricoes: {
+        Row: {
+          created_at: string | null
+          crm: string | null
+          data_prescricao: string
+          id: string
+          medico: string
+          numero_receita: string
+          observacao: string | null
+          paciente: string
+          prontuario: string | null
+          setor: string | null
+          status: string | null
+          updated_at: string | null
+          usuario_id: string | null
+          validade_dias: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          crm?: string | null
+          data_prescricao?: string
+          id?: string
+          medico: string
+          numero_receita: string
+          observacao?: string | null
+          paciente: string
+          prontuario?: string | null
+          setor?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usuario_id?: string | null
+          validade_dias?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          crm?: string | null
+          data_prescricao?: string
+          id?: string
+          medico?: string
+          numero_receita?: string
+          observacao?: string | null
+          paciente?: string
+          prontuario?: string | null
+          setor?: string | null
+          status?: string | null
+          updated_at?: string | null
+          usuario_id?: string | null
+          validade_dias?: number | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
