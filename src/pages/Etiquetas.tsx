@@ -60,7 +60,7 @@ const Etiquetas = () => {
       }
     };
     fetch();
-  }, []);
+  }, [profile?.filial_id]);
 
   const filteredMeds = meds.filter(m => !search || m.nome.toLowerCase().includes(search.toLowerCase()) || m.codigo_barras?.includes(search));
   const selectedMeds = meds.filter(m => selectedIds.has(m.id));
