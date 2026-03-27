@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { FilialSwitcher } from "@/components/FilialSwitcher";
 import { useAutomations } from "@/hooks/useAutomations";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useEffect } from "react";
@@ -83,6 +84,9 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
               <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all rounded-xl h-8 w-8" />
               
               <div className="h-5 w-px bg-border/60 hidden sm:block" />
+
+              {/* Filial Switcher (admin only) */}
+              <FilialSwitcher />
               
               <div className="min-w-0">
                 {breadcrumb && (
