@@ -682,6 +682,7 @@ export type Database = {
         Args: { _prescricao_id: string; _usuario_id: string }
         Returns: Json
       }
+      get_sidebar_counts: { Args: never; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
