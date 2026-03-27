@@ -55,7 +55,7 @@ export function useOnlinePresence(currentPage?: string) {
     return () => {
       channel.unsubscribe();
     };
-  }, [user?.id, profile?.nome, profile?.role]);
+  }, [user?.id, profile?.nome, profile?.role, currentPage]);
 
   // Update current page
   useEffect(() => {
