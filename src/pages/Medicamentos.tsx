@@ -283,7 +283,7 @@ const Medicamentos = () => {
               "group relative rounded-xl border bg-card p-3 shadow-card cursor-pointer hover:shadow-card-hover transition-all text-center overflow-hidden",
               statusFilter === kpi.filter && kpi.filter !== "all" && "ring-2 ring-primary"
             )}
-            onClick={() => kpi.filter !== "all" ? setStatusFilter(statusFilter === kpi.filter ? "all" : kpi.filter) : null}
+            onClick={() => kpi.filter !== "all" ? handleStatusFilter(statusFilter === kpi.filter ? "all" : kpi.filter) : null}
           >
             {/* Top accent line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -311,7 +311,7 @@ const Medicamentos = () => {
             className="pl-10 bg-card border-border/60 rounded-xl h-10"
           />
         </div>
-        <Select value={catFilter} onValueChange={setCatFilter}>
+        <Select value={catFilter} onValueChange={handleCatFilter}>
           <SelectTrigger className="w-[160px] bg-card rounded-xl h-10">
             <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue placeholder="Categoria" />
@@ -328,7 +328,7 @@ const Medicamentos = () => {
             ))}
           </SelectContent>
         </Select>
-        <Select value={formaFilter} onValueChange={setFormaFilter}>
+        <Select value={formaFilter} onValueChange={handleFormaFilter}>
           <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas formas</SelectItem>
