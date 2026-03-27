@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN filial_id uuid REFERENCES public.filiais(id) ON DELETE SET NULL DEFAULT NULL;

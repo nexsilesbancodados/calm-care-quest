@@ -602,6 +602,7 @@ export type Database = {
           ativo: boolean
           avatar_url: string | null
           created_at: string
+          filial_id: string | null
           id: string
           nome: string
           user_id: string
@@ -610,6 +611,7 @@ export type Database = {
           ativo?: boolean
           avatar_url?: string | null
           created_at?: string
+          filial_id?: string | null
           id?: string
           nome?: string
           user_id: string
@@ -618,11 +620,20 @@ export type Database = {
           ativo?: boolean
           avatar_url?: string | null
           created_at?: string
+          filial_id?: string | null
           id?: string
           nome?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transferencias: {
         Row: {
