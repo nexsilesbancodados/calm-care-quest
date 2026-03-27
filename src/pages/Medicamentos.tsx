@@ -126,7 +126,7 @@ const Medicamentos = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, debouncedSearch]);
+  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, debouncedSearch, profile?.filial_id]);
 
   const now = new Date();
 

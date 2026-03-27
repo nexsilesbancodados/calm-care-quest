@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 function getPeriodDates(period: string) {
   const now = new Date();
@@ -133,8 +134,10 @@ async function fetchConsumoData(period: string) {
 }
 
 export function useDashboardStats() {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", profile?.filial_id],
     queryFn: fetchDashboardStats,
     staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: true,
@@ -142,24 +145,30 @@ export function useDashboardStats() {
 }
 
 export function useTopStocked() {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: ["dashboard-top-stocked"],
+    queryKey: ["dashboard-top-stocked", profile?.filial_id],
     queryFn: fetchTopStocked,
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useCategoryData() {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: ["dashboard-category-data"],
+    queryKey: ["dashboard-category-data", profile?.filial_id],
     queryFn: fetchCategoryData,
     staleTime: 5 * 60 * 1000,
   });
 }
 
 export function useConsumoData(period: string) {
+  const { profile } = useAuth();
+
   return useQuery({
-    queryKey: ["dashboard-consumo", period],
+    queryKey: ["dashboard-consumo", period, profile?.filial_id],
     queryFn: () => fetchConsumoData(period),
     staleTime: 2 * 60 * 1000,
   });

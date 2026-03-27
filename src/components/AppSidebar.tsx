@@ -83,9 +83,9 @@ export function AppSidebar() {
     };
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 120000); // 2 min instead of 1 min
+    const interval = setInterval(fetchCounts, 120000);
     return () => clearInterval(interval);
-  }, []);
+  }, [profile?.filial_id]);
 
   const role = profile?.role;
   const filterByRole = (items: MenuItem[]) =>
