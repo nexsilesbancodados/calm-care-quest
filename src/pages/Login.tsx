@@ -322,9 +322,9 @@ const Login = () => {
                     ← Voltar ao login
                   </button>
                 </form>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+              <div>
                 <div className="mb-8">
                   <motion.h2
                     className="text-2xl font-bold text-foreground"
