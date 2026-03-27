@@ -804,7 +804,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_with_roles: {
+        Row: {
+          ativo: boolean | null
+          avatar_url: string | null
+          created_at: string | null
+          filial_id: string | null
+          id: string | null
+          nome: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_estoque_baixo: { Args: never; Returns: number }
@@ -832,6 +852,7 @@ export type Database = {
         Returns: boolean
       }
       promote_to_admin: { Args: { _email: string }; Returns: undefined }
+      set_active_filial: { Args: { _filial_id: string }; Returns: undefined }
     }
     Enums: {
       app_role:
