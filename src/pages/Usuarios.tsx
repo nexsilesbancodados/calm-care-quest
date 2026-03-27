@@ -229,6 +229,21 @@ const Usuarios = () => {
                     </Select>
                   </TableCell>
                   <TableCell>
+                    <Select value={p.filial_id || "sem_filial"} onValueChange={async (v) => {
+                      const filialId = v === "sem_filial" ? null : v;
+                      await supabase.from("profiles").update({ filial_id: filialId }).eq("user_id", p.user_id);
+                      const filial = filiais.find(f => f.id === filialId);
+                      setProfiles(prev => prev.map(pr => pr.user_id === p.user_id ? { ...pr, filial_id: filialId, filial } : pr));
+                      toast.success("Filial atualizada!");
+                    }}>
+                      <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Sem filial" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sem_filial">Sem filial</SelectItem>
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex flex-wrap gap-1 max-w-[250px]">
                       {perms.includes("*") ? (
                         <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/20">Acesso Total</Badge>
