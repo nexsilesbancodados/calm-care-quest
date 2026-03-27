@@ -79,6 +79,11 @@ const Login = () => {
       .single();
 
     if (roleData?.role === "admin") {
+      // Update admin's filial_id to selected unit
+      await supabase
+        .from("profiles")
+        .update({ filial_id: selectedFilial })
+        .eq("user_id", user.id);
       setLoading(false);
       toast.success("Login realizado com sucesso!");
       navigate("/");
