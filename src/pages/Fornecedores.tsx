@@ -43,7 +43,7 @@ const Fornecedores = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page]);
+  useEffect(() => { fetchData(); }, [page, profile?.filial_id]);
 
   const filtered = suppliers.filter(s => !search || s.nome.toLowerCase().includes(search.toLowerCase()) || s.cnpj.includes(search));
   const activeCount = suppliers.filter(s => s.ativo).length;

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { BarcodeCanvas } from "@/components/BarcodeCanvas";
 import { QRCodeCanvas } from "@/components/QRCodeCanvas";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ function generateBarcodeSvgString(value: string): string {
 }
 
 const Etiquetas = () => {
+  const { profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [search, setSearch] = useState("");
@@ -60,7 +62,7 @@ const Etiquetas = () => {
       }
     };
     fetch();
-  }, []);
+  }, [profile?.filial_id]);
 
   const filteredMeds = meds.filter(m => !search || m.nome.toLowerCase().includes(search.toLowerCase()) || m.codigo_barras?.includes(search));
   const selectedMeds = meds.filter(m => selectedIds.has(m.id));

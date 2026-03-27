@@ -98,7 +98,7 @@ const Entrada = () => {
       }
       setLoading(false);
     });
-  }, []);
+  }, [profile?.filial_id]);
 
   // Lotes do medicamento selecionado
   const medLotes = useMemo(() =>

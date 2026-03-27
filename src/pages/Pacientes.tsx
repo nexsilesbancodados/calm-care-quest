@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ interface PatientMovement {
 }
 
 const Pacientes = () => {
+  const { profile } = useAuth();
   const [search, setSearch] = useState("");
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ const Pacientes = () => {
       setLoading(false);
     };
     fetch();
-  }, []);
+  }, [profile?.filial_id]);
 
   const openTimeline = async (patient: PatientSummary) => {
     setSelectedPatient(patient);

@@ -75,7 +75,7 @@ const Inventario = () => {
       setLoading(false);
     };
     fetch();
-  }, []);
+  }, [profile?.filial_id]);
 
   const updateCount = (loteId: string, value: string) => {
     const num = value === "" ? null : parseInt(value);

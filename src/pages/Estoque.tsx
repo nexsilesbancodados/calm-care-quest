@@ -125,7 +125,7 @@ const Estoque = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [profile?.filial_id]);
 
   const toggleExpand = (id: string) => setExpandedIds(prev => {
     const n = new Set(prev);

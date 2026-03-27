@@ -61,7 +61,7 @@ const Alertas = () => {
     ]);
     setMeds((medsData || []).map((m: any) => ({ ...m, lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id) })));
     setLoading(false);
-  }, []);
+  }, [profile?.filial_id]);
 
   // 2c: Realtime instead of interval
   useEffect(() => {
