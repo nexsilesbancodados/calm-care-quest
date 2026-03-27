@@ -52,6 +52,7 @@ const Configuracoes = () => {
       setConfig(cfgData as ConfigHospital || null);
       setClinicas(cData as ClinicaParceira[] || []);
       setCategorias(catData as Categoria[] || []);
+      setFiliais(filiaisData as Filial[] || []);
       setAuditEntries(auditData as AuditEntry[] || []);
       setLoading(false);
     };
