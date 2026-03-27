@@ -175,7 +175,7 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
                             {displayInitials}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full bg-emerald-500 border-[1.5px] border-popover" />
+                        <div className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full bg-success border-[1.5px] border-popover" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-bold truncate">{displayName}</p>
