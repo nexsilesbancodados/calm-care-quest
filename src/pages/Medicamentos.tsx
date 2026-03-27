@@ -99,8 +99,8 @@ const Medicamentos = () => {
     }
 
     // Apply search filter at DB level
-    if (search.trim()) {
-      const term = `%${search.trim()}%`;
+    if (debouncedSearch.trim()) {
+      const term = `%${debouncedSearch.trim()}%`;
       countQuery = countQuery.or(`nome.ilike.${term},generico.ilike.${term},principio_ativo.ilike.${term},codigo_barras.ilike.${term}`);
       medsQuery = medsQuery.or(`nome.ilike.${term},generico.ilike.${term},principio_ativo.ilike.${term},codigo_barras.ilike.${term}`);
     }
@@ -124,7 +124,7 @@ const Medicamentos = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, search, statusFilter]);
+  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, debouncedSearch]);
 
   const now = new Date();
 
