@@ -228,27 +228,26 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       {/* Header with logo */}
-      <SidebarHeader className="p-4 pb-6">
+      <SidebarHeader className="p-4 pb-5">
         <div className="flex items-center gap-3">
           <motion.div
             className="relative shrink-0"
-            whileHover={{ scale: 1.08, rotate: 3 }}
-            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 400, damping: 20 }}
           >
             <img
               src={logoImg}
               alt="PsiRumoCerto"
-              className="h-10 w-10 rounded-xl object-cover ring-2 ring-sidebar-primary/25 shadow-lg shadow-sidebar-primary/10"
+              className="h-11 w-11 rounded-2xl object-cover shadow-md shadow-primary/15 ring-1 ring-primary/10"
             />
-            <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-sidebar-background" />
           </motion.div>
           {!collapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-extrabold text-sidebar-accent-foreground tracking-tight flex items-center gap-1.5 font-display">
+              <span className="text-[15px] font-extrabold text-foreground tracking-tight flex items-center gap-1.5 font-display">
                 PsiRumoCerto
-                <Sparkles className="h-3 w-3 text-sidebar-primary" />
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
               </span>
-              <span className="text-[10px] text-sidebar-foreground/30 font-medium tracking-wide">Farmácia Hospitalar</span>
+              <span className="text-[11px] text-muted-foreground font-medium tracking-wide">Farmácia Hospitalar</span>
             </div>
           )}
         </div>
