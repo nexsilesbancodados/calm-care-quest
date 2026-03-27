@@ -155,6 +155,54 @@ export type Database = {
         }
         Relationships: []
       }
+      filiais: {
+        Row: {
+          ativo: boolean
+          cidade: string
+          cnes: string
+          cnpj: string
+          created_at: string
+          email: string
+          endereco: string
+          estado: string
+          id: string
+          nome: string
+          responsavel: string
+          telefone: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cidade?: string
+          cnes?: string
+          cnpj?: string
+          created_at?: string
+          email?: string
+          endereco?: string
+          estado?: string
+          id?: string
+          nome: string
+          responsavel?: string
+          telefone?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cidade?: string
+          cnes?: string
+          cnpj?: string
+          created_at?: string
+          email?: string
+          endereco?: string
+          estado?: string
+          id?: string
+          nome?: string
+          responsavel?: string
+          telefone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fornecedores: {
         Row: {
           ativo: boolean

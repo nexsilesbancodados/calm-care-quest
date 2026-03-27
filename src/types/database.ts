@@ -97,6 +97,22 @@ export interface ClinicaParceira {
   created_at: string;
 }
 
+export interface Filial {
+  id: string;
+  nome: string;
+  cnpj: string;
+  cnes: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  telefone: string;
+  email: string;
+  responsavel: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Transferencia {
   id: string;
   medicamento_id: string | null;

@@ -13,11 +13,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Save, Check, Plus, ScrollText, Palette, Pencil } from "lucide-react";
+import { Building2, Save, Check, Plus, ScrollText, Palette, Pencil, GitBranch, MapPin, Phone, Mail, User, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type { ConfigHospital, ClinicaParceira, Categoria, AuditEntry } from "@/types/database";
+import type { ConfigHospital, ClinicaParceira, Categoria, AuditEntry, Filial } from "@/types/database";
 
 const DEFAULT_COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#ec4899", "#14b8a6", "#f97316", "#6b7280"];
 
@@ -27,6 +27,7 @@ const Configuracoes = () => {
   const [config, setConfig] = useState<ConfigHospital | null>(null);
   const [clinicas, setClinicas] = useState<ClinicaParceira[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [filiais, setFiliais] = useState<Filial[]>([]);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -35,18 +36,23 @@ const Configuracoes = () => {
   const [catDialog, setCatDialog] = useState(false);
   const [editCat, setEditCat] = useState<Categoria | null>(null);
   const [catForm, setCatForm] = useState({ nome: "", cor: "#8b5cf6" });
+  const [filialDialog, setFilialDialog] = useState(false);
+  const [editFilial, setEditFilial] = useState<Filial | null>(null);
+  const [filialForm, setFilialForm] = useState({ nome: "", cnpj: "", cnes: "", endereco: "", cidade: "", estado: "", telefone: "", email: "", responsavel: "" });
 
   useEffect(() => {
     const fetch = async () => {
-      const [{ data: cfgData }, { data: cData }, { data: catData }, { data: auditData }] = await Promise.all([
+    const [{ data: cfgData }, { data: cData }, { data: catData }, { data: auditData }, { data: filiaisData }] = await Promise.all([
         supabase.from("configuracoes_hospital").select("*").single(),
         supabase.from("clinicas_parceiras").select("*").order("nome"),
         supabase.from("categorias_medicamento").select("*").order("nome"),
         supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("filiais").select("*").order("nome"),
       ]);
       setConfig(cfgData as ConfigHospital || null);
       setClinicas(cData as ClinicaParceira[] || []);
       setCategorias(catData as Categoria[] || []);
+      setFiliais(filiaisData as Filial[] || []);
       setAuditEntries(auditData as AuditEntry[] || []);
       setLoading(false);
     };
@@ -96,6 +102,33 @@ const Configuracoes = () => {
     toast.success(cat.ativo ? "Categoria desativada" : "Categoria reativada");
   };
 
+  const openNewFilial = () => { setEditFilial(null); setFilialForm({ nome: "", cnpj: "", cnes: "", endereco: "", cidade: "", estado: "", telefone: "", email: "", responsavel: "" }); setFilialDialog(true); };
+  const openEditFilial = (f: Filial) => { setEditFilial(f); setFilialForm({ nome: f.nome, cnpj: f.cnpj, cnes: f.cnes, endereco: f.endereco, cidade: f.cidade, estado: f.estado, telefone: f.telefone, email: f.email, responsavel: f.responsavel }); setFilialDialog(true); };
+
+  const handleSaveFilial = async () => {
+    if (!filialForm.nome) { toast.error("Nome é obrigatório"); return; }
+    if (editFilial) {
+      const { error } = await supabase.from("filiais").update({ ...filialForm, updated_at: new Date().toISOString() }).eq("id", editFilial.id);
+      if (error) { toast.error("Erro ao atualizar"); return; }
+      setFiliais(prev => prev.map(f => f.id === editFilial.id ? { ...f, ...filialForm, updated_at: new Date().toISOString() } as Filial : f));
+      await log({ acao: "Atualização Filial", tabela: "filiais", registro_id: editFilial.id });
+      toast.success("Filial atualizada!");
+    } else {
+      const { data, error } = await supabase.from("filiais").insert(filialForm).select().single();
+      if (error) { toast.error("Erro ao cadastrar"); return; }
+      setFiliais(prev => [...prev, data as Filial]);
+      await log({ acao: "Cadastro Filial", tabela: "filiais", registro_id: data.id });
+      toast.success("Filial cadastrada!");
+    }
+    setFilialDialog(false);
+  };
+
+  const toggleFilialActive = async (filial: Filial) => {
+    await supabase.from("filiais").update({ ativo: !filial.ativo, updated_at: new Date().toISOString() }).eq("id", filial.id);
+    setFiliais(prev => prev.map(f => f.id === filial.id ? { ...f, ativo: !f.ativo } : f));
+    toast.success(filial.ativo ? "Filial desativada" : "Filial reativada");
+  };
+
   if (!isAdmin) return <AppLayout title="Configurações"><p className="text-muted-foreground text-center py-12">Acesso restrito a administradores</p></AppLayout>;
   if (loading) return <AppLayout title="Configurações"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
@@ -103,8 +136,9 @@ const Configuracoes = () => {
     <AppLayout title="Configurações" subtitle="Ajustes gerais do sistema">
       <div className="max-w-3xl">
         <Tabs defaultValue="geral">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="geral">Geral</TabsTrigger>
+            <TabsTrigger value="filiais"><GitBranch className="h-3.5 w-3.5 mr-1" />Filiais</TabsTrigger>
             <TabsTrigger value="clinicas">Clínicas Parceiras</TabsTrigger>
             <TabsTrigger value="categorias"><Palette className="h-3.5 w-3.5 mr-1" />Categorias</TabsTrigger>
             <TabsTrigger value="auditoria"><ScrollText className="h-3.5 w-3.5 mr-1" />Auditoria</TabsTrigger>
@@ -126,6 +160,48 @@ const Configuracoes = () => {
                   </Button>
                 </div>
               </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="filiais" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Filiais do Hospital Rumo Certo</p>
+              <Button onClick={openNewFilial} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" />Nova Filial</Button>
+            </div>
+            {filiais.length === 0 ? (
+              <Card className="p-8 text-center shadow-card">
+                <GitBranch className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhuma filial cadastrada</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Cadastre as filiais do Hospital Rumo Certo</p>
+              </Card>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {filiais.map(f => (
+                  <motion.div key={f.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                    <Card className={cn("p-4 shadow-card cursor-pointer transition-all hover:shadow-card-hover", !f.ativo && "opacity-50")} onClick={() => openEditFilial(f)}>
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="text-sm font-semibold">{f.nome}</p>
+                        <Badge variant="outline" className={cn("text-[9px]", f.ativo ? "bg-success/10 text-success" : "bg-muted")}>{f.ativo ? "Ativa" : "Inativa"}</Badge>
+                      </div>
+                      {f.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {f.cnpj}</p>}
+                      {f.cnes && <p className="text-xs text-muted-foreground">CNES: {f.cnes}</p>}
+                      <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />{f.cidade}{f.estado ? ` - ${f.estado}` : ""}
+                      </div>
+                      {f.responsavel && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <User className="h-3 w-3" />{f.responsavel}
+                        </div>
+                      )}
+                      {f.telefone && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <Phone className="h-3 w-3" />{f.telefone}
+                        </div>
+                      )}
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
             )}
           </TabsContent>
 
@@ -236,6 +312,43 @@ const Configuracoes = () => {
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setCatDialog(false)}>Cancelar</Button>
                 <Button onClick={handleSaveCat} className="gradient-primary text-primary-foreground">Salvar</Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Filial Dialog */}
+      <Dialog open={filialDialog} onOpenChange={setFilialDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader><DialogTitle>{editFilial ? "Editar" : "Nova"} Filial</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1.5"><Label className="text-xs">Nome da Filial *</Label><Input value={filialForm.nome} onChange={e => setFilialForm({ ...filialForm, nome: e.target.value })} placeholder="Ex: Filial Norte" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">CNPJ</Label><Input value={filialForm.cnpj} onChange={e => setFilialForm({ ...filialForm, cnpj: e.target.value })} placeholder="00.000.000/0000-00" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">CNES</Label><Input value={filialForm.cnes} onChange={e => setFilialForm({ ...filialForm, cnes: e.target.value })} /></div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Endereço</Label><Input value={filialForm.endereco} onChange={e => setFilialForm({ ...filialForm, endereco: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">Cidade</Label><Input value={filialForm.cidade} onChange={e => setFilialForm({ ...filialForm, cidade: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Estado</Label><Input value={filialForm.estado} onChange={e => setFilialForm({ ...filialForm, estado: e.target.value })} placeholder="Ex: SP" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">Telefone</Label><Input value={filialForm.telefone} onChange={e => setFilialForm({ ...filialForm, telefone: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">E-mail</Label><Input type="email" value={filialForm.email} onChange={e => setFilialForm({ ...filialForm, email: e.target.value })} /></div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Responsável</Label><Input value={filialForm.responsavel} onChange={e => setFilialForm({ ...filialForm, responsavel: e.target.value })} /></div>
+            <div className="flex justify-between pt-2">
+              <div>
+                {editFilial && (
+                  <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => { toggleFilialActive(editFilial); setFilialDialog(false); }}>
+                    {editFilial.ativo ? "Desativar" : "Reativar"}
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setFilialDialog(false)}>Cancelar</Button>
+                <Button onClick={handleSaveFilial} className="gradient-primary text-primary-foreground">{editFilial ? "Salvar" : "Cadastrar"}</Button>
               </div>
             </div>
           </div>
