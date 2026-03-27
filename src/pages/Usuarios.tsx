@@ -226,6 +226,10 @@ const Usuarios = () => {
                   <TableCell>
                     <Select value={p.filial_id || "sem_filial"} onValueChange={async (v) => {
                       const filialId = v === "sem_filial" ? null : v;
+                      if (!isAdmin || !profile?.filial_id || filialId !== profile.filial_id) {
+                        toast.error("Você só pode vincular funcionários à unidade ativa.");
+                        return;
+                      }
                       await supabase.from("profiles").update({ filial_id: filialId }).eq("user_id", p.user_id);
                       const filial = filiais.find(f => f.id === filialId);
                       setProfiles(prev => prev.map(pr => pr.user_id === p.user_id ? { ...pr, filial_id: filialId, filial } : pr));
@@ -233,7 +237,6 @@ const Usuarios = () => {
                     }}>
                       <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Sem filial" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sem_filial">Sem filial</SelectItem>
                         {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                       </SelectContent>
                     </Select>
@@ -337,7 +340,6 @@ const Usuarios = () => {
               <Select value={inviteFilialId || "sem_filial"} onValueChange={(v) => setInviteFilialId(v === "sem_filial" ? "" : v)}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sem_filial">Sem filial (matriz)</SelectItem>
                   {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
