@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse, Building2, CheckCircle2, Star } from "lucide-react";
 import logoImg from "@/assets/logo.jpg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -294,9 +294,9 @@ const Login = () => {
             </div>
           </div>
 
-          <AnimatePresence mode="wait">
+          <div>
             {forgotOpen ? (
-              <motion.div key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+              <div>
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>Esqueceu a senha?</h2>
                   <p className="text-sm text-muted-foreground mt-2">Informe seu e-mail e enviaremos um link de redefinição.</p>
@@ -322,9 +322,9 @@ const Login = () => {
                     ← Voltar ao login
                   </button>
                 </form>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+              <div>
                 <div className="mb-8">
                   <motion.h2
                     className="text-2xl font-bold text-foreground"
@@ -411,20 +411,18 @@ const Login = () => {
                     <Label className="text-xs font-semibold text-foreground">Unidade</Label>
                     <div className="relative group">
                       <Building2 className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 z-10 transition-colors duration-200 ${focusedField === "filial" ? "text-primary" : "text-muted-foreground"}`} />
-                      <Select value={selectedFilial} onValueChange={setSelectedFilial}>
-                        <SelectTrigger
-                          className="pl-10 h-12 text-sm bg-card border-border/60 focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
-                          onFocus={() => setFocusedField("filial")}
-                          onBlur={() => setFocusedField(null)}
-                        >
-                          <SelectValue placeholder="Selecione sua unidade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filiais.map((f) => (
-                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={selectedFilial}
+                        onChange={(e) => setSelectedFilial(e.target.value)}
+                        onFocus={() => setFocusedField("filial")}
+                        onBlur={() => setFocusedField(null)}
+                        className="w-full pl-10 h-12 text-sm bg-card border border-border/60 focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-xl appearance-none text-foreground"
+                      >
+                        <option value="" disabled>Selecione sua unidade</option>
+                        {filiais.map((f) => (
+                          <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                      </select>
                     </div>
                   </motion.div>
 
@@ -468,9 +466,9 @@ const Login = () => {
                     ))}
                   </motion.div>
                 </form>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          </div>
         </motion.div>
       </div>
     </div>
