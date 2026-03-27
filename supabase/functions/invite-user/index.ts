@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, nome, role } = await req.json();
+    const { email, nome, role, filial_id } = await req.json();
 
     if (!email || !nome || !role) {
       return new Response(JSON.stringify({ error: "E-mail, nome e papel são obrigatórios" }), {
@@ -69,7 +69,35 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Invite user via Supabase Admin API (sends magic link email)
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("filial_id")
+      .eq("user_id", caller.id)
+      .single();
+
+    const targetFilialId = filial_id || callerProfile?.filial_id || null;
+
+    if (!targetFilialId) {
+      return new Response(JSON.stringify({ error: "Selecione uma unidade válida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!callerProfile?.filial_id) {
+      return new Response(JSON.stringify({ error: "Seu usuário não possui unidade ativa" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (targetFilialId !== callerProfile.filial_id) {
+      return new Response(JSON.stringify({ error: "Você só pode cadastrar funcionários da unidade ativa" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: { nome },
       redirectTo: `${req.headers.get("origin") || supabaseUrl}/login`,
@@ -84,25 +112,26 @@ Deno.serve(async (req) => {
 
     const newUserId = inviteData.user.id;
 
-    // The handle_new_user trigger creates profile + default role.
-    // Now update the role to the one the admin selected.
-    if (role !== "visualizador") {
-      // Wait briefly for trigger to fire
-      await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 500));
 
+    await adminClient
+      .from("profiles")
+      .update({ filial_id: targetFilialId })
+      .eq("user_id", newUserId);
+
+    if (role !== "visualizador") {
       await adminClient
         .from("user_roles")
         .update({ role })
         .eq("user_id", newUserId);
     }
 
-    // Log in audit
     await adminClient.from("audit_log").insert({
       usuario_id: caller.id,
       acao: "convidar_usuario",
       tabela: "profiles",
       registro_id: newUserId,
-      dados_novos: { email, nome, role },
+      dados_novos: { email, nome, role, filial_id: targetFilialId },
     });
 
     return new Response(

@@ -59,7 +59,7 @@ function getRoleFromPermissions(perms: string[]): AppRole {
 const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS);
 
 const Usuarios = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, profile } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [filiais, setFiliais] = useState<Filial[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,23 +75,22 @@ const Usuarios = () => {
 
   useEffect(() => {
     const fetch = async () => {
+      setLoading(true);
+      const currentFilialId = profile?.filial_id || null;
       const [{ data: profs }, { data: filiaisData }] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at"),
-        supabase.from("filiais").select("*").eq("ativo", true).order("nome"),
+        supabase.from("profiles_with_roles").select("*").order("created_at"),
+        isAdmin
+          ? supabase.from("filiais").select("*").eq("ativo", true).order("nome")
+          : supabase.from("filiais").select("*").eq("ativo", true).eq("id", currentFilialId).order("nome"),
       ]);
-      if (profs) {
-        const withRoles = await Promise.all(profs.map(async (p: any) => {
-          const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", p.user_id).single();
-          const filial = filiaisData?.find((f: any) => f.id === p.filial_id);
-          return { ...p, role: roleData?.role || "visualizador", filial };
-        }));
-        setProfiles(withRoles);
-      }
-      setFiliais(filiaisData as Filial[] || []);
+
+      setProfiles((profs as any[]) || []);
+      setFiliais((filiaisData as Filial[]) || []);
+      setInviteFilialId(currentFilialId || "");
       setLoading(false);
     };
     fetch();
-  }, []);
+  }, [isAdmin, profile?.filial_id]);
 
   const handleRoleChange = (role: AppRole) => {
     setSelectedRole(role);
@@ -118,7 +117,12 @@ const Usuarios = () => {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("invite-user", {
-        body: { email: inviteEmail, nome: inviteNome, role },
+        body: {
+          email: inviteEmail,
+          nome: inviteNome,
+          role,
+          filial_id: inviteFilialId || profile?.filial_id || null,
+        },
       });
 
       if (error) {
@@ -133,11 +137,6 @@ const Usuarios = () => {
 
       toast.success(`Convite enviado para ${inviteEmail}!`);
 
-      // Update filial_id on profile if set
-      if (inviteFilialId && data?.user_id) {
-        await supabase.from("profiles").update({ filial_id: inviteFilialId }).eq("user_id", data.user_id);
-      }
-
       setDialogOpen(false);
       setInviteEmail("");
       setInviteNome("");
@@ -146,13 +145,9 @@ const Usuarios = () => {
       setSelectedPermissions(getPermissionsForRole("visualizador"));
 
       // Refresh profiles
-      const { data: profs } = await supabase.from("profiles").select("*").order("created_at");
+      const { data: profs } = await supabase.from("profiles_with_roles").select("*").order("created_at");
       if (profs) {
-        const withRoles = await Promise.all(profs.map(async (p: any) => {
-          const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", p.user_id).single();
-          return { ...p, role: roleData?.role || "visualizador" };
-        }));
-        setProfiles(withRoles);
+        setProfiles((profs as any[]) || []);
       }
     } catch (err: any) {
       toast.error(err.message || "Erro ao enviar convite");
