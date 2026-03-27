@@ -17,7 +17,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { ROLE_LABELS, ROLE_PERMISSIONS, type AppRole } from "@/types/database";
+import { ROLE_LABELS, ROLE_PERMISSIONS, type AppRole, type Filial } from "@/types/database";
 
 const PERMISSION_LABELS: Record<string, string> = {
   manage_stock: "Gerenciar Estoque",
