@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse, Building2 } from "lucide-react";
+import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse, Building2, CheckCircle2, Star } from "lucide-react";
 import logoImg from "@/assets/logo.jpg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -457,6 +457,25 @@ const Login = () => {
                         </>
                       )}
                     </Button>
+                  </motion.div>
+
+                  {/* Trust badges */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1 }}
+                    className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-2"
+                  >
+                    {[
+                      { icon: Shield, text: "Regulamentado pelo CFM" },
+                      { icon: Lock, text: "Criptografia end-to-end" },
+                      { icon: Star, text: "Nota 4.9 no Google" },
+                    ].map((badge) => (
+                      <div key={badge.text} className="flex items-center gap-1.5">
+                        <badge.icon className="h-3.5 w-3.5 text-success shrink-0" />
+                        <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">{badge.text}</span>
+                      </div>
+                    ))}
                   </motion.div>
                 </form>
               </motion.div>
