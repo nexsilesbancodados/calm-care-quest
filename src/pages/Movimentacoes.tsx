@@ -15,7 +15,6 @@ import {
   Calendar, Download, ClipboardList, RefreshCw, Wrench, ArrowLeftRight, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
 const typeConfig: Record<string, { label: string; icon: any; className: string; qtyClass: string }> = {
   entrada: { label: "Entrada", icon: ArrowDownCircle, className: "bg-success/10 text-success border-success/20", qtyClass: "text-success" },
@@ -106,7 +105,7 @@ const Movimentacoes = () => {
             { label: "Ajustes", value: typeCounts.ajuste || 0, icon: Wrench, color: "text-warning", bg: "bg-warning/10", filter: "ajuste" },
             { label: "Transferências", value: typeCounts.transferencia || 0, icon: ArrowLeftRight, color: "text-primary", bg: "bg-primary/10", filter: "transferencia" },
           ].map((kpi, i) => (
-            <motion.div key={kpi.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+            <div key={kpi.label}
               className={cn("rounded-xl border bg-card p-3.5 shadow-sm cursor-pointer transition-all hover:shadow-md",
                 kpi.filter && typeFilter === kpi.filter && "ring-2 ring-primary")}
               onClick={() => kpi.filter && setTypeFilter(typeFilter === kpi.filter ? "all" : kpi.filter)}>
@@ -119,7 +118,7 @@ const Movimentacoes = () => {
                   <p className="text-lg font-bold leading-tight">{kpi.value}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -165,7 +164,7 @@ const Movimentacoes = () => {
           <div className="space-y-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}</div>
         ) : (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -224,7 +223,7 @@ const Movimentacoes = () => {
                   })}
                 </TableBody>
               </Table>
-            </motion.div>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (

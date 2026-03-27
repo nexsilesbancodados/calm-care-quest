@@ -1,6 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
-import { motion } from "framer-motion";
 import { Activity, ArrowLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -13,7 +12,7 @@ const NotFound = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-sm">
+      <div className="text-center max-w-sm">
         <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl gradient-hero shadow-lg shadow-primary/20 mb-6">
           <Activity className="h-8 w-8 text-primary-foreground" />
         </div>
@@ -30,7 +29,7 @@ const NotFound = () => {
             <Link to="/"><Home className="h-4 w-4" /> Ir ao Dashboard</Link>
           </Button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

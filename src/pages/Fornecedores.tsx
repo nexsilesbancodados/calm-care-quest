@@ -14,7 +14,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Plus, Phone, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import type { Fornecedor } from "@/types/database";
 
 const PAGE_SIZE = 30;
@@ -106,8 +105,7 @@ const Fornecedores = () => {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((s, i) => (
-          <motion.div key={s.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+          <div key={s.id}
           >
             <Card className={cn("p-0 shadow-card hover:shadow-card-hover transition-all cursor-pointer overflow-hidden", !s.ativo && "opacity-50")} onClick={() => openEdit(s)}>
               {/* Top accent */}
@@ -129,7 +127,7 @@ const Fornecedores = () => {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 

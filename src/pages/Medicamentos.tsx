@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import type { Medicamento, Lote, Categoria, Fornecedor } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
@@ -275,12 +274,8 @@ const Medicamentos = () => {
           { label: "Controlados", value: stats.controlled, icon: ShieldCheck, color: "bg-info/10 text-info", filter: "all" },
           { label: "Valor Total", value: `R$ ${(stats.totalValue / 1000).toFixed(1)}k`, icon: Package, color: "bg-primary/10 text-primary", filter: "all" },
         ].map((kpi, i) => (
-          <motion.div
+          <div
             key={kpi.label}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03 }}
-            whileHover={{ y: -2, transition: { duration: 0.2 } }}
             className={cn(
               "group relative rounded-xl border bg-card p-3 shadow-card cursor-pointer hover:shadow-card-hover transition-all text-center overflow-hidden",
               statusFilter === kpi.filter && kpi.filter !== "all" && "ring-2 ring-primary"
@@ -298,7 +293,7 @@ const Medicamentos = () => {
               <p className="text-xl font-bold leading-tight font-display">{kpi.value}</p>
               <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{kpi.label}</p>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 

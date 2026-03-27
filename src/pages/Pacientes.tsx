@@ -11,7 +11,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Search, User, FileText, Calendar, Pill, Clock, Activity, Download, ClipboardList } from "lucide-react";
 
@@ -161,7 +160,7 @@ const Pacientes = () => {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((p, i) => (
-            <motion.div key={p.paciente} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+            <div key={p.paciente}>
               <Card
                 className="p-4 shadow-card hover:shadow-card-hover transition-all cursor-pointer group"
                 onClick={() => openTimeline(p)}
@@ -197,7 +196,7 @@ const Pacientes = () => {
                   </div>
                 </div>
               </Card>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
@@ -233,11 +232,8 @@ const Pacientes = () => {
                 {timeline.map((t, i) => {
                   const isDispensacao = t.tipo === "dispensacao";
                   return (
-                    <motion.div
+                    <div
                       key={t.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.02 }}
                       className="relative pb-4"
                     >
                       {/* Dot */}
@@ -269,7 +265,7 @@ const Pacientes = () => {
                         </div>
                         {t.observacao && <p className="text-[11px] text-muted-foreground mt-1 italic">{t.observacao}</p>}
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
               </div>

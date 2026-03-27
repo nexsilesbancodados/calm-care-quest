@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse, Building2, CheckCircle2, Star } from "lucide-react";
 import logoImg from "@/assets/logo.jpg";
 import { Input } from "@/components/ui/input";
@@ -158,58 +157,43 @@ const Login = () => {
         }} />
 
         {/* Glowing orbs — green */}
-        <motion.div
+        <div
           className="absolute w-[500px] h-[500px] rounded-full"
           style={{
             background: "radial-gradient(circle, hsla(152,55%,45%,0.15) 0%, transparent 70%)",
             top: "-10%", right: "-10%",
           }}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
-        <motion.div
+        <div
           className="absolute w-[400px] h-[400px] rounded-full"
           style={{
             background: "radial-gradient(circle, hsla(190,55%,42%,0.12) 0%, transparent 70%)",
             bottom: "-5%", left: "-5%",
           }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
         />
-        <motion.div
+        <div
           className="absolute w-[300px] h-[300px] rounded-full"
           style={{
             background: "radial-gradient(circle, hsla(152,50%,40%,0.1) 0%, transparent 70%)",
             top: "40%", left: "30%",
           }}
-          animate={{ scale: [1, 1.1, 1], x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 4 }}
         />
 
         {/* Floating icons */}
         {floatingIcons.map((fi, i) => (
-          <motion.div
+          <div
             key={i}
             className="absolute text-white/[0.07]"
             style={{ left: fi.x, top: fi.y }}
-            animate={{
-              y: [0, -15, 0],
-              rotate: [0, 10, -10, 0],
-              opacity: [0.04, 0.08, 0.04],
-            }}
-            transition={{ duration: 6 + i, repeat: Infinity, ease: "easeInOut", delay: fi.delay }}
           >
             <fi.icon style={{ width: fi.size, height: fi.size }} />
-          </motion.div>
+          </div>
         ))}
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between h-full p-10 xl:p-14">
           {/* Logo */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+          <div
           >
             <div className="flex items-center gap-4">
               <img src={logoImg} alt="PsiRumoCerto" className="h-14 w-14 rounded-full object-cover ring-2 ring-white/20 shadow-lg shadow-black/20" />
@@ -218,25 +202,18 @@ const Login = () => {
                 <p className="text-xs text-white/50 font-medium tracking-wide uppercase">Gestão Farmacêutica Hospitalar</p>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           {/* Main copy */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7 }}
+          <div
             className="space-y-10"
           >
 
             {/* Feature cards */}
             <div className="grid grid-cols-2 gap-3">
               {features.map((feat, i) => (
-                <motion.div
+                <div
                   key={feat.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 + i * 0.12 }}
-                  whileHover={{ scale: 1.03, y: -2 }}
                   className="group relative p-4 rounded-2xl bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] hover:bg-white/[0.08] hover:border-white/[0.14] transition-all duration-300 cursor-default"
                 >
                   <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -247,16 +224,13 @@ const Login = () => {
                     <p className="text-[13px] font-semibold text-white/85 group-hover:text-white transition-colors">{feat.title}</p>
                     <p className="text-[11px] text-white/35 mt-0.5 leading-relaxed group-hover:text-white/45 transition-colors">{feat.desc}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Footer */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.4 }}
+          <div
             className="flex items-center justify-between"
           >
             <p className="text-[11px] text-white/25">© 2026 PsiRumoCerto — v2.1</p>
@@ -264,7 +238,7 @@ const Login = () => {
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-400/60 animate-pulse" />
               <span className="text-[11px] text-white/30">Sistema Operacional</span>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
@@ -279,10 +253,7 @@ const Login = () => {
           backgroundSize: "24px 24px",
         }} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+        <div
           className="w-full max-w-[400px] relative"
         >
           {/* Mobile header */}
@@ -326,31 +297,22 @@ const Login = () => {
             ) : (
               <div>
                 <div className="mb-8">
-                  <motion.h2
+                  <h2
                     className="text-2xl font-bold text-foreground"
                     style={{ fontFamily: "var(--font-display)" }}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
                   >
                     Bem-vindo de volta
-                  </motion.h2>
-                  <motion.p
+                  </h2>
+                  <p
                     className="text-sm text-muted-foreground mt-2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
                   >
                     Acesse o painel de gestão farmacêutica
-                  </motion.p>
+                  </p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-5">
-                  <motion.div
+                  <div
                     className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.55 }}
                   >
                     <Label className="text-xs font-semibold text-foreground">E-mail</Label>
                     <div className="relative group">
@@ -366,13 +328,10 @@ const Login = () => {
                         autoComplete="email"
                       />
                     </div>
-                  </motion.div>
+                  </div>
 
-                  <motion.div
+                  <div
                     className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.65 }}
                   >
                     <div className="flex items-center justify-between">
                       <Label className="text-xs font-semibold text-foreground">Senha</Label>
@@ -400,13 +359,10 @@ const Login = () => {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
-                  </motion.div>
+                  </div>
 
-                  <motion.div
+                  <div
                     className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.72 }}
                   >
                     <Label className="text-xs font-semibold text-foreground">Unidade</Label>
                     <div className="relative group">
@@ -424,12 +380,9 @@ const Login = () => {
                         ))}
                       </select>
                     </div>
-                  </motion.div>
+                  </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 }}
+                  <div
                   >
                     <Button
                       type="submit"
@@ -445,13 +398,10 @@ const Login = () => {
                         </>
                       )}
                     </Button>
-                  </motion.div>
+                  </div>
 
                   {/* Trust badges */}
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
+                  <div
                     className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pt-2"
                   >
                     {[
@@ -464,12 +414,12 @@ const Login = () => {
                         <span className="text-[11px] text-muted-foreground font-medium whitespace-nowrap">{badge.text}</span>
                       </div>
                     ))}
-                  </motion.div>
+                  </div>
                 </form>
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

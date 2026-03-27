@@ -9,7 +9,6 @@ import { ScanLine, Camera, CameraOff, Keyboard, Package, ArrowDownCircle, ArrowU
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 import type { Lote } from "@/types/database";
@@ -105,7 +104,7 @@ const LeitorBarcode = () => {
         </Card>
 
         {result && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <div>
             <Card className="p-6 shadow-card space-y-4">
               <div className="flex items-start justify-between">
                 <div>
@@ -165,7 +164,7 @@ const LeitorBarcode = () => {
                 </Button>
               </div>
             </Card>
-          </motion.div>
+          </div>
         )}
       </div>
     </AppLayout>

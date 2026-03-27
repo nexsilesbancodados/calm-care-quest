@@ -13,7 +13,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
 import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity } from "lucide-react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
@@ -275,10 +274,10 @@ const Relatorios = () => {
               { label: "Unidades", value: totalUnits.toLocaleString("pt-BR"), icon: Package },
               { label: "Valor Total", value: `R$ ${totalValue.toFixed(2)}`, icon: TrendingUp },
             ].map((m, i) => (
-              <motion.div key={m.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="rounded-xl border bg-card p-4 shadow-card">
+              <div key={m.label} className="rounded-xl border bg-card p-4 shadow-card">
                 <div className="flex items-center gap-2 mb-1"><m.icon className="h-3.5 w-3.5 text-primary" /><p className="text-[11px] text-muted-foreground uppercase">{m.label}</p></div>
                 <p className="text-xl font-bold">{m.value}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
 
@@ -286,7 +285,7 @@ const Relatorios = () => {
             <Card className="p-5 shadow-card">
               <h3 className="text-sm font-semibold mb-4">Maiores Estoques</h3>
               <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={topStock} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <BarChart data={topStock} margin={{ left: 10, right: 20 }}>
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
                   <Tooltip /><Bar dataKey="qty" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
@@ -429,7 +428,7 @@ const Relatorios = () => {
               <p className="text-sm text-muted-foreground text-center py-12">Nenhuma saída no período</p>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={consumoSetorData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <BarChart data={consumoSetorData} margin={{ left: 10, right: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
@@ -566,18 +565,18 @@ const Relatorios = () => {
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-2">
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card p-4 shadow-card">
+            <div className="rounded-xl border bg-card p-4 shadow-card">
               <p className="text-[11px] text-muted-foreground uppercase mb-1">Medicamentos</p>
               <p className="text-xl font-bold">{cmmData.length}</p>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="rounded-xl border bg-card p-4 shadow-card">
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-card">
               <p className="text-[11px] text-muted-foreground uppercase mb-1">Cobertura &lt;15d</p>
               <p className="text-xl font-bold text-destructive">{cmmData.filter(d => d.cobertura < 15).length}</p>
-            </motion.div>
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border bg-card p-4 shadow-card">
+            </div>
+            <div className="rounded-xl border bg-card p-4 shadow-card">
               <p className="text-[11px] text-muted-foreground uppercase mb-1">Cobertura 15-30d</p>
               <p className="text-xl font-bold text-warning">{cmmData.filter(d => d.cobertura >= 15 && d.cobertura <= 30).length}</p>
-            </motion.div>
+            </div>
           </div>
 
           <Card className="shadow-card overflow-hidden">

@@ -11,7 +11,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type AppRole, type AuditEntry } from "@/types/database";
 import {
@@ -159,7 +158,7 @@ const AdminPanel = () => {
           { label: "Estoque Baixo", value: stats?.lowStockCount || 0, icon: AlertTriangle, color: "text-warning" },
           { label: "Vence em 60d", value: stats?.expiringCount || 0, icon: Clock, color: "text-destructive" },
         ].map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+          <div key={s.label}>
             <Card className="p-4 shadow-card hover:shadow-card-hover transition-shadow">
               <div className="flex items-center gap-2 mb-2">
                 <s.icon className={cn("h-4 w-4", s.color)} />
@@ -167,7 +166,7 @@ const AdminPanel = () => {
               </div>
               <p className="text-2xl font-bold tabular-nums">{s.value}</p>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 

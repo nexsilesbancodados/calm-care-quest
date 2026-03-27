@@ -16,7 +16,6 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Printer, Search, CheckSquare, Square, ScanBarcode, QrCode, Settings2, Eye } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import JsBarcode from "jsbarcode";
 import type { Medicamento, Lote } from "@/types/database";
 
@@ -116,7 +115,7 @@ const Etiquetas = () => {
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
             {filteredMeds.map((med, i) => (
-              <motion.div key={med.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+              <div key={med.id}
                 onClick={() => toggleSelect(med.id)}
                 className={cn("rounded-xl border p-3 cursor-pointer transition-all hover:shadow-card-hover", selectedIds.has(med.id) ? "border-primary bg-primary/5" : "bg-card")}>
                 <div className="flex items-start gap-3">
@@ -127,7 +126,7 @@ const Etiquetas = () => {
                     <p className="text-[11px] text-muted-foreground font-mono mt-1">Código: {med.codigo_barras || "—"}</p>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>

@@ -22,7 +22,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import {
   ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
   Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown
@@ -236,7 +235,7 @@ const Dispensacao = () => {
             { label: "Pacientes", value: uniquePatients, sub: "atendidos", icon: User, color: "text-success", bg: "bg-success/10" },
             { label: "Prescrições Ativas", value: prescricoes.length, sub: "pendentes", icon: FileText, color: "text-warning", bg: "bg-warning/10" },
           ].map((kpi, i) => (
-            <motion.div key={kpi.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+            <div key={kpi.label}
               className="rounded-xl border bg-card p-3.5 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", kpi.bg)}>
@@ -248,7 +247,7 @@ const Dispensacao = () => {
                   <p className="text-[10px] text-muted-foreground">{kpi.sub}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
