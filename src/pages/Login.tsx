@@ -470,7 +470,7 @@ const Login = () => {
                 </form>
               </motion.div>
             )}
-          </AnimatePresence>
+          </div>
         </motion.div>
       </div>
     </div>
