@@ -205,6 +205,7 @@ const Configuracoes = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="clinicas" className="space-y-4">
             <div className="flex justify-end"><Button onClick={() => setClinicaDialog(true)} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" />Nova Clínica</Button></div>
             <div className="grid sm:grid-cols-2 gap-4">
               {clinicas.map(c => (
