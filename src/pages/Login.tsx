@@ -218,30 +218,6 @@ const Login = () => {
             transition={{ delay: 0.4, duration: 0.7 }}
             className="space-y-10"
           >
-            <div>
-              <motion.h2
-                className="text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] tracking-tight"
-                style={{ fontFamily: "var(--font-display)" }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                Controle Total
-                <br />
-                <span className="bg-gradient-to-r from-emerald-300 via-green-300 to-teal-300 bg-clip-text text-transparent">
-                  da Sua Farmácia
-                </span>
-              </motion.h2>
-              <motion.p
-                className="text-base text-white/50 leading-relaxed mt-5 max-w-md"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
-              >
-                Plataforma completa para gestão de medicamentos em hospitais psiquiátricos.
-                Segurança, rastreabilidade e eficiência em um só lugar.
-              </motion.p>
-            </div>
 
             {/* Feature cards */}
             <div className="grid grid-cols-2 gap-3">
