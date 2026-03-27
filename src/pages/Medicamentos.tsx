@@ -41,9 +41,24 @@ const Medicamentos = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [formaFilter, setFormaFilter] = useState("all");
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page on filter change
+  const handleCatFilter = (v: string) => { setCatFilter(v); setPage(0); };
+  const handleFormaFilter = (v: string) => { setFormaFilter(v); setPage(0); };
+  const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(0); };
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMed, setEditMed] = useState<Medicamento | null>(null);
   const [detailMed, setDetailMed] = useState<(Medicamento & { lotes: Lote[]; categoria?: Categoria }) | null>(null);
@@ -67,11 +82,34 @@ const Medicamentos = () => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    const { count } = await supabase.from("medicamentos").select("id", { count: "exact", head: true }).eq("ativo", true);
+    // Build query with server-side filters
+    let countQuery = supabase.from("medicamentos").select("id", { count: "exact", head: true }).eq("ativo", true);
+    let medsQuery = supabase.from("medicamentos").select("*").eq("ativo", true).order("nome");
+
+    // Apply category filter at DB level
+    if (catFilter !== "all") {
+      countQuery = countQuery.eq("categoria_id", catFilter);
+      medsQuery = medsQuery.eq("categoria_id", catFilter);
+    }
+
+    // Apply forma filter at DB level
+    if (formaFilter !== "all") {
+      countQuery = countQuery.eq("forma_farmaceutica", formaFilter);
+      medsQuery = medsQuery.eq("forma_farmaceutica", formaFilter);
+    }
+
+    // Apply search filter at DB level
+    if (debouncedSearch.trim()) {
+      const term = `%${debouncedSearch.trim()}%`;
+      countQuery = countQuery.or(`nome.ilike.${term},generico.ilike.${term},principio_ativo.ilike.${term},codigo_barras.ilike.${term}`);
+      medsQuery = medsQuery.or(`nome.ilike.${term},generico.ilike.${term},principio_ativo.ilike.${term},codigo_barras.ilike.${term}`);
+    }
+
+    const { count } = await countQuery;
     setTotalCount(count || 0);
 
     const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: fornData }] = await Promise.all([
-      supabase.from("medicamentos").select("*").eq("ativo", true).order("nome").range(from, to),
+      medsQuery.range(from, to),
       supabase.from("lotes").select("*").eq("ativo", true),
       supabase.from("categorias_medicamento").select("*").eq("ativo", true),
       supabase.from("fornecedores").select("*").eq("ativo", true).order("nome"),
@@ -86,7 +124,7 @@ const Medicamentos = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page]);
+  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, debouncedSearch]);
 
   const now = new Date();
 
@@ -104,16 +142,11 @@ const Medicamentos = () => {
   }, [meds]);
 
   const filtered = useMemo(() => {
+    // Category, forma, and search are now applied server-side
+    // Only status filter needs client-side (depends on lotes data)
     let result = meds.filter(m => {
-      const matchSearch = !search ||
-        m.nome.toLowerCase().includes(search.toLowerCase()) ||
-        m.generico.toLowerCase().includes(search.toLowerCase()) ||
-        m.principio_ativo.toLowerCase().includes(search.toLowerCase()) ||
-        m.codigo_barras?.includes(search);
-      const matchCat = catFilter === "all" || m.categoria_id === catFilter;
       const matchStatus = statusFilter === "all" || getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === statusFilter;
-      const matchForma = formaFilter === "all" || m.forma_farmaceutica === formaFilter;
-      return matchSearch && matchCat && matchStatus && matchForma;
+      return matchStatus;
     });
 
     // Sort
@@ -132,7 +165,7 @@ const Medicamentos = () => {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return result;
-  }, [meds, search, catFilter, statusFilter, formaFilter, sortKey, sortDir]);
+  }, [meds, statusFilter, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -250,7 +283,7 @@ const Medicamentos = () => {
               "group relative rounded-xl border bg-card p-3 shadow-card cursor-pointer hover:shadow-card-hover transition-all text-center overflow-hidden",
               statusFilter === kpi.filter && kpi.filter !== "all" && "ring-2 ring-primary"
             )}
-            onClick={() => kpi.filter !== "all" ? setStatusFilter(statusFilter === kpi.filter ? "all" : kpi.filter) : null}
+            onClick={() => kpi.filter !== "all" ? handleStatusFilter(statusFilter === kpi.filter ? "all" : kpi.filter) : null}
           >
             {/* Top accent line */}
             <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -278,7 +311,7 @@ const Medicamentos = () => {
             className="pl-10 bg-card border-border/60 rounded-xl h-10"
           />
         </div>
-        <Select value={catFilter} onValueChange={setCatFilter}>
+        <Select value={catFilter} onValueChange={handleCatFilter}>
           <SelectTrigger className="w-[160px] bg-card rounded-xl h-10">
             <Filter className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
             <SelectValue placeholder="Categoria" />
@@ -295,7 +328,7 @@ const Medicamentos = () => {
             ))}
           </SelectContent>
         </Select>
-        <Select value={formaFilter} onValueChange={setFormaFilter}>
+        <Select value={formaFilter} onValueChange={handleFormaFilter}>
           <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas formas</SelectItem>
@@ -312,7 +345,7 @@ const Medicamentos = () => {
         <p className="text-xs text-muted-foreground">
           {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
           {(statusFilter !== "all" || catFilter !== "all" || formaFilter !== "all" || search) && (
-            <button className="ml-2 text-primary hover:underline" onClick={() => { setStatusFilter("all"); setCatFilter("all"); setFormaFilter("all"); setSearch(""); }}>
+            <button className="ml-2 text-primary hover:underline" onClick={() => { setStatusFilter("all"); setCatFilter("all"); setFormaFilter("all"); setSearch(""); setPage(0); }}>
               Limpar filtros
             </button>
           )}
