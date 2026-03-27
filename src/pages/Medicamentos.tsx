@@ -630,109 +630,224 @@ const Medicamentos = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {editMed ? <Edit2 className="h-4 w-4 text-primary" /> : <Plus className="h-4 w-4 text-primary" />}
-              {editMed ? "Editar Medicamento" : "Novo Medicamento"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-5 mt-2">
-            {/* Identification */}
-            <div>
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Identificação</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5 col-span-2">
-                  <Label className="text-xs">Nome Comercial *</Label>
-                  <Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Ex: Risperidona" />
+        <DialogContent className="sm:max-w-[720px] max-h-[90vh] overflow-hidden p-0 gap-0 rounded-2xl border-border/50">
+          {/* Header with gradient accent */}
+          <div className="relative px-6 pt-6 pb-4">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-primary/3 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-glow to-primary rounded-t-2xl" />
+            <DialogHeader className="relative">
+              <DialogTitle className="flex items-center gap-3 text-lg">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                  {editMed ? <Edit2 className="h-5 w-5 text-primary" /> : <Pill className="h-5 w-5 text-primary" />}
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Nome Genérico</Label>
-                  <Input value={form.generico} onChange={e => setForm({ ...form, generico: e.target.value })} />
+                <div>
+                  <span className="font-display font-bold">{editMed ? "Editar Medicamento" : "Novo Medicamento"}</span>
+                  <p className="text-xs text-muted-foreground font-normal mt-0.5">
+                    {editMed ? "Atualize as informações do medicamento" : "Preencha os dados para cadastrar um novo medicamento"}
+                  </p>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Princípio Ativo</Label>
-                  <Input value={form.principio_ativo} onChange={e => setForm({ ...form, principio_ativo: e.target.value })} />
+              </DialogTitle>
+            </DialogHeader>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="overflow-y-auto px-6 pb-6 max-h-[calc(90vh-180px)] space-y-6">
+            {/* Section: Identificação */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary text-[10px] font-bold font-display">1</div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Identificação</h4>
+                <div className="flex-1 h-px bg-border/50" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Nome Comercial <span className="text-destructive">*</span></Label>
+                  <Input
+                    value={form.nome}
+                    onChange={e => setForm({ ...form, nome: e.target.value })}
+                    placeholder="Ex: Risperidona 2mg"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Concentração</Label>
-                  <Input value={form.concentracao} onChange={e => setForm({ ...form, concentracao: e.target.value })} placeholder="Ex: 50mg" />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Nome Genérico</Label>
+                  <Input
+                    value={form.generico}
+                    onChange={e => setForm({ ...form, generico: e.target.value })}
+                    placeholder="Ex: Risperidona"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Forma Farmacêutica</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Princípio Ativo</Label>
+                  <Input
+                    value={form.principio_ativo}
+                    onChange={e => setForm({ ...form, principio_ativo: e.target.value })}
+                    placeholder="Ex: Risperidona"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Concentração</Label>
+                  <Input
+                    value={form.concentracao}
+                    onChange={e => setForm({ ...form, concentracao: e.target.value })}
+                    placeholder="Ex: 2mg/mL"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Forma Farmacêutica</Label>
                   <Select value={form.forma_farmaceutica} onValueChange={v => setForm({ ...form, forma_farmaceutica: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                    <SelectContent className="rounded-xl">{FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs flex items-center gap-1"><Barcode className="h-3 w-3" /> Código de Barras</Label>
-                  <Input value={form.codigo_barras} onChange={e => setForm({ ...form, codigo_barras: e.target.value })} className="font-mono" />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
+                    <Barcode className="h-3 w-3 text-muted-foreground" /> Código de Barras
+                  </Label>
+                  <Input
+                    value={form.codigo_barras}
+                    onChange={e => setForm({ ...form, codigo_barras: e.target.value })}
+                    placeholder="EAN-13"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono tracking-wider placeholder:text-muted-foreground/40 placeholder:font-sans placeholder:tracking-normal"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* Classification */}
-            <div>
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Classificação</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Categoria</Label>
+            {/* Section: Classificação */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary text-[10px] font-bold font-display">2</div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Classificação</h4>
+                <div className="flex-1 h-px bg-border/50" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Categoria</Label>
                   <Select value={form.categoria_id} onValueChange={v => setForm({ ...form, categoria_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                    <SelectContent>{categorias.map(c => (
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue placeholder="Selecionar categoria" /></SelectTrigger>
+                    <SelectContent className="rounded-xl">{categorias.map(c => (
                       <SelectItem key={c.id} value={c.id}>
-                        <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full" style={{ backgroundColor: c.cor }} />{c.nome}</div>
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-2.5 w-2.5 rounded-full ring-2 ring-offset-1 ring-offset-background" style={{ backgroundColor: c.cor, boxShadow: `0 0 6px ${c.cor}40` }} />
+                          {c.nome}
+                        </div>
                       </SelectItem>
                     ))}</SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Fornecedor</Label>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Fornecedor</Label>
                   <Select value={form.fornecedor_id} onValueChange={v => setForm({ ...form, fornecedor_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                    <SelectContent>{fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue placeholder="Selecionar fornecedor" /></SelectTrigger>
+                    <SelectContent className="rounded-xl">{fornecedores.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div className="col-span-2 flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
-                  <Switch checked={form.controlado} onCheckedChange={v => setForm({ ...form, controlado: v })} id="ctrl" />
-                  <div>
-                    <label htmlFor="ctrl" className="text-xs font-semibold cursor-pointer flex items-center gap-1.5">
-                      <ShieldCheck className="h-3.5 w-3.5 text-primary" /> Substância Controlada
-                    </label>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Requer registro em livro de psicotrópicos</p>
+                <div className="sm:col-span-2">
+                  <div className={cn(
+                    "flex items-center gap-4 rounded-xl border-2 p-4 transition-all duration-300 cursor-pointer",
+                    form.controlado
+                      ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)]"
+                      : "border-border/30 bg-muted/20 hover:border-border/50 hover:bg-muted/30"
+                  )} onClick={() => setForm({ ...form, controlado: !form.controlado })}>
+                    <Switch checked={form.controlado} onCheckedChange={v => setForm({ ...form, controlado: v })} id="ctrl" />
+                    <div className="flex-1">
+                      <label htmlFor="ctrl" className="text-sm font-semibold cursor-pointer flex items-center gap-2">
+                        <ShieldCheck className={cn("h-4 w-4 transition-colors", form.controlado ? "text-primary" : "text-muted-foreground")} />
+                        Substância Controlada
+                      </label>
+                      <p className="text-[11px] text-muted-foreground mt-1">Requer registro em livro de psicotrópicos (Portaria 344/98)</p>
+                    </div>
+                    {form.controlado && (
+                      <Badge className="bg-primary/15 text-primary border-primary/25 text-[10px] animate-fade-in">
+                        Ativo
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Stock */}
-            <div>
-              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Estoque & Localização</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Estoque Mínimo</Label>
-                  <Input type="number" value={form.estoque_minimo} onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })} />
+            {/* Section: Estoque & Localização */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary text-[10px] font-bold font-display">3</div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Estoque & Localização</h4>
+                <div className="flex-1 h-px bg-border/50" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Estoque Mínimo</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={form.estoque_minimo}
+                      onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">UN</span>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Estoque Máximo</Label>
-                  <Input type="number" value={form.estoque_maximo} onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })} />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Estoque Máximo</Label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      value={form.estoque_maximo}
+                      onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">UN</span>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs flex items-center gap-1"><MapPin className="h-3 w-3" /> Localização</Label>
-                  <Input value={form.localizacao} onChange={e => setForm({ ...form, localizacao: e.target.value })} placeholder="A-01" className="font-mono" />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
+                    <MapPin className="h-3 w-3 text-muted-foreground" /> Localização
+                  </Label>
+                  <Input
+                    value={form.localizacao}
+                    onChange={e => setForm({ ...form, localizacao: e.target.value })}
+                    placeholder="A-01-03"
+                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono tracking-wider placeholder:text-muted-foreground/40"
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">Preço Unit. (R$)</Label>
-                  <Input type="number" step="0.01" value={form.preco_unitario} onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })} />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Preço Unitário</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-semibold">R$</span>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.preco_unitario}
+                      onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })}
+                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pl-10"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving} className="gradient-primary text-primary-foreground gap-2">
-                {saving ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> : editMed ? <><Edit2 className="h-3.5 w-3.5" /> Salvar</> : <><Plus className="h-3.5 w-3.5" /> Cadastrar</>}
+          {/* Footer */}
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-border/50 bg-muted/20">
+            <p className="text-[10px] text-muted-foreground">
+              <span className="text-destructive">*</span> Campos obrigatórios
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)} className="rounded-xl h-10 px-5">
+                Cancelar
+              </Button>
+              <Button onClick={handleSave} disabled={saving || !form.nome} className="gradient-primary text-primary-foreground gap-2 rounded-xl h-10 px-6 shadow-md hover:shadow-lg transition-all">
+                {saving ? (
+                  <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                ) : editMed ? (
+                  <><Edit2 className="h-4 w-4" /> Salvar Alterações</>
+                ) : (
+                  <><Plus className="h-4 w-4" /> Cadastrar Medicamento</>
+                )}
               </Button>
             </div>
           </div>
