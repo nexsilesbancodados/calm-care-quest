@@ -132,9 +132,16 @@ const Usuarios = () => {
       }
 
       toast.success(`Convite enviado para ${inviteEmail}!`);
+
+      // Update filial_id on profile if set
+      if (inviteFilialId && data?.user_id) {
+        await supabase.from("profiles").update({ filial_id: inviteFilialId }).eq("user_id", data.user_id);
+      }
+
       setDialogOpen(false);
       setInviteEmail("");
       setInviteNome("");
+      setInviteFilialId("");
       setSelectedRole("visualizador");
       setSelectedPermissions(getPermissionsForRole("visualizador"));
 
