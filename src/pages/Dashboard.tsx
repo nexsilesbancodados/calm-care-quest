@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useDashboardCore, useConsumoData } from "@/hooks/useDashboardData";
+import { useDashboardStats, useConsumoData, useTopStocked, useCategoryData } from "@/hooks/useDashboardData";
 import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell,
@@ -39,24 +39,10 @@ const Dashboard = () => {
   const [now, setNow] = useState(new Date());
   const [period, setPeriod] = useState("30");
 
-  const { data: core, isLoading } = useDashboardCore();
+  const { data: stats, isLoading } = useDashboardStats();
   const { data: consumoData = [] } = useConsumoData(period);
-
-  const { data: consumo30d = {} } = useQuery({
-    queryKey: ["dashboard-consumo-30d-coverage"],
-    queryFn: async () => {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const { data } = await supabase.from("movimentacoes").select("medicamento_id, quantidade")
-        .in("tipo", ["saida", "dispensacao"])
-        .gte("created_at", thirtyDaysAgo);
-      const cMap: Record<string, number> = {};
-      (data || []).forEach((m: any) => {
-        if (m.medicamento_id) cMap[m.medicamento_id] = (cMap[m.medicamento_id] || 0) + m.quantidade;
-      });
-      return cMap;
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+  const { data: topStocked = [] } = useTopStocked();
+  const { data: catData = [] } = useCategoryData();
 
   const { data: dispensacoesHoje = 0 } = useQuery({
     queryKey: ["dashboard-dispensacoes-hoje"],
@@ -76,40 +62,13 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const meds = core?.meds || [];
-  const catData = core?.catData || [];
-  const pendingTransfers = core?.pendingTransfers || 0;
-  const totalMovements = core?.totalMovements || 0;
-  const prescricoesAtivas = core?.prescricoesAtivas || 0;
-  const cmm = core?.cmm || 0;
-
-  const stats = {
-    total: meds.length,
-    controlled: meds.filter(m => m.controlado).length,
-    lowStock: meds.filter(m => { const t = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0); return t > 0 && t <= m.estoque_minimo; }).length,
-    critical: meds.filter(m => { const t = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0); return t > 0 && t <= m.estoque_minimo * 0.25; }).length,
-    outOfStock: meds.filter(m => m.lotes.reduce((s, l) => s + l.quantidade_atual, 0) === 0).length,
-    expiringSoon: meds.filter(m => m.lotes.some(l => { const diff = (new Date(l.validade).getTime() - now.getTime()) / (1000 * 60 * 60 * 24); return diff <= 60 && diff > 0; })).length,
-    pendingTransfers,
+  const s = stats || {
+    total: 0, controlled: 0, lowStock: 0, critical: 0, outOfStock: 0,
+    expiringSoon: 0, totalUnits: 0, totalValue: 0, pendingTransfers: 0,
+    totalMovements: 0, prescricoesAtivas: 0, cmm: 0,
   };
 
-  const totalUnits = meds.reduce((s, m) => s + m.lotes.reduce((sl, l) => sl + l.quantidade_atual, 0), 0);
-  const topStocked = [...meds].map(m => ({ name: m.nome.length > 18 ? m.nome.slice(0, 18) + "…" : m.nome, qty: m.lotes.reduce((s, l) => s + l.quantidade_atual, 0) })).sort((a, b) => b.qty - a.qty).slice(0, 6);
-
-  const expiredMeds = meds.filter(m => m.lotes.some(l => new Date(l.validade) < now));
-  const lowStockMeds = meds.filter(m => { const t = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0); return t > 0 && t <= m.estoque_minimo; });
-
-  const criticalCoverageMeds = useMemo(() => {
-    return meds.filter(m => {
-      const total = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0);
-      if (total === 0) return false;
-      const consumo = consumo30d[m.id] || 0;
-      if (consumo === 0) return false;
-      const cmmDiario = consumo / 30;
-      const dias = total / cmmDiario;
-      return dias <= 7;
-    });
-  }, [meds, consumo30d]);
+  const totalAlerts = s.outOfStock + s.critical + s.expiringSoon + (s.pendingTransfers > 0 ? 1 : 0);
 
   const greeting = () => {
     const h = now.getHours();
@@ -118,14 +77,12 @@ const Dashboard = () => {
     return "Boa noite";
   };
 
-  const totalAlerts = expiredMeds.length + lowStockMeds.length + (pendingTransfers > 0 ? 1 : 0);
-
   const quickActions = useMemo(() => [
-    { label: "Entrada", desc: "Receber medicamentos", icon: ArrowDownCircle, path: "/entrada", color: "text-success", bg: "bg-success/6", badge: stats.outOfStock > 0 ? `${stats.outOfStock} em falta` : null },
+    { label: "Entrada", desc: "Receber medicamentos", icon: ArrowDownCircle, path: "/entrada", color: "text-success", bg: "bg-success/6", badge: s.outOfStock > 0 ? `${s.outOfStock} em falta` : null },
     { label: "Dispensar", desc: "Saída de estoque", icon: ArrowUpCircle, path: "/dispensacao", color: "text-info", bg: "bg-info/6", badge: dispensacoesHoje > 0 ? `${dispensacoesHoje} hoje` : null },
     { label: "Etiquetas", desc: "Imprimir etiquetas", icon: Barcode, path: "/etiquetas", color: "text-primary", bg: "bg-primary/6", badge: null },
-    { label: "Transferir", desc: "Entre clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "text-warning", bg: "bg-warning/6", badge: pendingTransfers > 0 ? `${pendingTransfers} pendentes` : null },
-  ], [stats.outOfStock, dispensacoesHoje, pendingTransfers]);
+    { label: "Transferir", desc: "Entre clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "text-warning", bg: "bg-warning/6", badge: s.pendingTransfers > 0 ? `${s.pendingTransfers} pendentes` : null },
+  ], [s.outOfStock, dispensacoesHoje, s.pendingTransfers]);
 
   if (isLoading)
     return (
@@ -145,16 +102,13 @@ const Dashboard = () => {
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral da farmácia hospitalar">
       {/* ── HERO BANNER ── */}
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, type: "spring", stiffness: 180, damping: 22 }} className="mb-5 sm:mb-7">
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 25 }} className="mb-5 sm:mb-7">
         <div className="relative overflow-hidden rounded-2xl gradient-hero text-white p-5 sm:p-7 lg:p-8 border border-white/[0.06]">
-          {/* Ambient effects */}
           <div className="absolute inset-0" style={{
             backgroundImage: `radial-gradient(ellipse at 10% 60%, hsla(152,55%,45%,0.15) 0%, transparent 50%),
               radial-gradient(ellipse at 90% 20%, hsla(178,48%,42%,0.1) 0%, transparent 50%)`,
           }} />
           <div className="absolute top-0 right-0 w-56 sm:w-80 h-56 sm:h-80 bg-white/[0.02] rounded-full -translate-y-1/2 translate-x-1/4" />
-          
-          {/* Dot grid */}
           <div className="absolute inset-0 opacity-[0.03]" style={{
             backgroundImage: "radial-gradient(circle at 1px 1px, white 0.5px, transparent 0.5px)",
             backgroundSize: "20px 20px",
@@ -171,11 +125,11 @@ const Dashboard = () => {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-white/40 font-medium">
                 <span className="flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5" />
-                  {totalUnits.toLocaleString("pt-BR")} unidades
+                  {s.totalUnits.toLocaleString("pt-BR")} unidades
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Activity className="h-3.5 w-3.5" />
-                  {totalMovements} movimentações
+                  {s.totalMovements} movimentações
                 </span>
                 {totalAlerts > 0 && (
                   <span className="flex items-center gap-1.5 text-warning/80">
@@ -196,14 +150,11 @@ const Dashboard = () => {
       </motion.div>
 
       {/* ── QUICK ACTIONS ── */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5 sm:mb-7">
+      <div className="mb-5 sm:mb-7">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-          {quickActions.map((a, i) => (
-            <motion.button
+          {quickActions.map((a) => (
+            <button
               key={a.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 + i * 0.05 }}
               onClick={() => navigate(a.path)}
               className="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3.5 sm:p-4 hover:border-primary/25 transition-all duration-300 active:scale-[0.97] text-left overflow-hidden"
               style={{ boxShadow: "var(--shadow-card)" }}
@@ -222,59 +173,30 @@ const Dashboard = () => {
                 </span>
               )}
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/20 shrink-0 group-hover:text-primary/50 group-hover:translate-x-0.5 transition-all hidden sm:block" />
-            </motion.button>
+            </button>
           ))}
         </div>
-      </motion.div>
-
-      {/* ── CRITICAL COVERAGE ── */}
-      {criticalCoverageMeds.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-5 sm:mb-7">
-          <div className="rounded-2xl border border-destructive/15 bg-destructive/[0.03] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/8">
-                <AlertTriangle className="h-5 w-5 text-destructive" strokeWidth={1.8} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-foreground">
-                  {criticalCoverageMeds.length} medicamento{criticalCoverageMeds.length > 1 ? "s" : ""} com menos de 7 dias de cobertura
-                </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-0.5 truncate">
-                  {criticalCoverageMeds.slice(0, 3).map(m => m.nome).join(", ")}{criticalCoverageMeds.length > 3 ? ` e mais ${criticalCoverageMeds.length - 3}` : ""}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0 text-xs gap-1.5 border-destructive/15 text-destructive hover:bg-destructive/8 w-full sm:w-auto rounded-xl"
-              onClick={() => navigate("/estoque")}
-            >
-              Ver no Estoque <ArrowRight className="h-3 w-3" />
-            </Button>
-          </div>
-        </motion.div>
-      )}
+      </div>
 
       {/* ── KPI STATS ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-5 sm:mb-7">
-        <StatCard title="Medicamentos" value={stats.total} icon={Pill} variant="info" delay={0.15} onClick={() => navigate("/medicamentos")} />
-        <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.17} />
-        <StatCard title="Estoque Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.19} onClick={() => navigate("/alertas")} />
-        <StatCard title="Crítico" value={stats.critical} icon={AlertTriangle} variant="critical" delay={0.21} onClick={() => navigate("/alertas")} />
-        <StatCard title="Esgotado" value={stats.outOfStock} icon={XCircle} variant="critical" delay={0.23} />
+        <StatCard title="Medicamentos" value={s.total} icon={Pill} variant="info" delay={0} onClick={() => navigate("/medicamentos")} />
+        <StatCard title="Controlados" value={s.controlled} icon={ShieldCheck} variant="default" delay={0.02} />
+        <StatCard title="Estoque Baixo" value={s.lowStock} icon={Package} variant="warning" delay={0.04} onClick={() => navigate("/alertas")} />
+        <StatCard title="Crítico" value={s.critical} icon={AlertTriangle} variant="critical" delay={0.06} onClick={() => navigate("/alertas")} />
+        <StatCard title="Esgotado" value={s.outOfStock} icon={XCircle} variant="critical" delay={0.08} />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5 sm:mb-7">
-        <StatCard title="Vence 60d" value={stats.expiringSoon} icon={Clock} variant="warning" delay={0.25} />
-        <StatCard title="Transferências" value={stats.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.27} onClick={() => navigate("/transferencias")} />
-        <StatCard title="CMM" value={cmm} icon={TrendingUp} variant="default" delay={0.29} />
-        <StatCard title="Prescrições" value={prescricoesAtivas} icon={FileText} variant="info" delay={0.31} onClick={() => navigate("/prescricoes")} />
+        <StatCard title="Vence 60d" value={s.expiringSoon} icon={Clock} variant="warning" delay={0.1} />
+        <StatCard title="Transferências" value={s.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.12} onClick={() => navigate("/transferencias")} />
+        <StatCard title="CMM" value={s.cmm} icon={TrendingUp} variant="default" delay={0.14} />
+        <StatCard title="Prescrições" value={s.prescricoesAtivas} icon={FileText} variant="info" delay={0.16} onClick={() => navigate("/prescricoes")} />
       </div>
 
       {/* ── CHARTS ── */}
       <div className="grid lg:grid-cols-5 gap-3 sm:gap-4 mb-5 sm:mb-7">
         {/* Consumo */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-3">
+        <div className="lg:col-span-3">
           <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div className="flex items-center gap-3">
@@ -294,7 +216,7 @@ const Dashboard = () => {
                   </SelectContent>
                 </Select>
                 <Badge variant="outline" className="text-[10px] font-bold bg-primary/4 border-primary/10 tabular-nums">
-                  {consumoData.reduce((s, d) => s + d.qty, 0).toLocaleString("pt-BR")} un
+                  {consumoData.reduce((sum, d) => sum + d.qty, 0).toLocaleString("pt-BR")} un
                 </Badge>
               </div>
             </div>
@@ -331,10 +253,10 @@ const Dashboard = () => {
               </ResponsiveContainer>
             )}
           </Card>
-        </motion.div>
+        </div>
 
         {/* Categories */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="lg:col-span-2">
+        <div className="lg:col-span-2">
           <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex items-center gap-3 mb-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/6 ring-1 ring-accent/10">
@@ -372,12 +294,12 @@ const Dashboard = () => {
               </div>
             )}
           </Card>
-        </motion.div>
+        </div>
       </div>
 
       {/* ── TOP STOCK + ALERTS ── */}
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+        <div>
           <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
@@ -415,9 +337,9 @@ const Dashboard = () => {
               </ResponsiveContainer>
             )}
           </Card>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+        <div>
           <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
@@ -443,25 +365,43 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {expiredMeds.slice(0, 3).map(m => (
-                  <div key={m.id} className="flex items-center gap-3 text-xs rounded-xl border border-destructive/8 bg-destructive/[0.02] p-3 transition-all hover:bg-destructive/[0.04] hover:border-destructive/15">
+                {s.outOfStock > 0 && (
+                  <div className="flex items-center gap-3 text-xs rounded-xl border border-destructive/8 bg-destructive/[0.02] p-3 cursor-pointer transition-all hover:bg-destructive/[0.04] hover:border-destructive/15" onClick={() => navigate("/alertas")}>
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-destructive/6">
                       <XCircle className="h-3.5 w-3.5 text-destructive" strokeWidth={1.8} />
                     </div>
-                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{m.nome}</span>
-                    <Badge variant="outline" className="text-[8px] bg-destructive/6 text-destructive border-destructive/10 uppercase tracking-wider font-bold">Vencido</Badge>
+                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{s.outOfStock} medicamento(s) esgotado(s)</span>
+                    <Badge variant="outline" className="text-[8px] bg-destructive/6 text-destructive border-destructive/10 uppercase tracking-wider font-bold">Crítico</Badge>
                   </div>
-                ))}
-                {lowStockMeds.slice(0, 3).map(m => (
-                  <div key={m.id} className="flex items-center gap-3 text-xs rounded-xl border border-warning/8 bg-warning/[0.02] p-3 transition-all hover:bg-warning/[0.04] hover:border-warning/15">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/6">
-                      <AlertTriangle className="h-3.5 w-3.5 text-warning" strokeWidth={1.8} />
+                )}
+                {s.critical > 0 && (
+                  <div className="flex items-center gap-3 text-xs rounded-xl border border-destructive/8 bg-destructive/[0.02] p-3 cursor-pointer transition-all hover:bg-destructive/[0.04] hover:border-destructive/15" onClick={() => navigate("/alertas")}>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-destructive/6">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive" strokeWidth={1.8} />
                     </div>
-                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{m.nome}</span>
+                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{s.critical} em estoque crítico</span>
+                    <Badge variant="outline" className="text-[8px] bg-destructive/6 text-destructive border-destructive/10 uppercase tracking-wider font-bold">Crítico</Badge>
+                  </div>
+                )}
+                {s.lowStock > 0 && (
+                  <div className="flex items-center gap-3 text-xs rounded-xl border border-warning/8 bg-warning/[0.02] p-3 cursor-pointer transition-all hover:bg-warning/[0.04] hover:border-warning/15" onClick={() => navigate("/alertas")}>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/6">
+                      <Package className="h-3.5 w-3.5 text-warning" strokeWidth={1.8} />
+                    </div>
+                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{s.lowStock} com estoque baixo</span>
                     <Badge variant="outline" className="text-[8px] bg-warning/6 text-warning border-warning/10 uppercase tracking-wider font-bold">Baixo</Badge>
                   </div>
-                ))}
-                {pendingTransfers > 0 && (
+                )}
+                {s.expiringSoon > 0 && (
+                  <div className="flex items-center gap-3 text-xs rounded-xl border border-warning/8 bg-warning/[0.02] p-3 cursor-pointer transition-all hover:bg-warning/[0.04] hover:border-warning/15" onClick={() => navigate("/alertas")}>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/6">
+                      <Clock className="h-3.5 w-3.5 text-warning" strokeWidth={1.8} />
+                    </div>
+                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{s.expiringSoon} próximo(s) do vencimento</span>
+                    <Badge variant="outline" className="text-[8px] bg-warning/6 text-warning border-warning/10 uppercase tracking-wider font-bold">60 dias</Badge>
+                  </div>
+                )}
+                {s.pendingTransfers > 0 && (
                   <div
                     className="flex items-center gap-3 text-xs rounded-xl border border-info/8 bg-info/[0.02] p-3 cursor-pointer transition-all hover:bg-info/[0.04] hover:border-info/15"
                     onClick={() => navigate("/transferencias")}
@@ -469,14 +409,14 @@ const Dashboard = () => {
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-info/6">
                       <ArrowLeftRight className="h-3.5 w-3.5 text-info" strokeWidth={1.8} />
                     </div>
-                    <span className="font-bold text-foreground flex-1 text-[11px]">{pendingTransfers} transferência(s)</span>
+                    <span className="font-bold text-foreground flex-1 text-[11px]">{s.pendingTransfers} transferência(s) pendente(s)</span>
                     <ArrowRight className="h-3.5 w-3.5 text-info/50 shrink-0" />
                   </div>
                 )}
               </div>
             )}
           </Card>
-        </motion.div>
+        </div>
       </div>
     </AppLayout>
   );
