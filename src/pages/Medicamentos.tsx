@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
@@ -41,9 +41,24 @@ const Medicamentos = () => {
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [formaFilter, setFormaFilter] = useState("all");
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page on filter change
+  const handleCatFilter = (v: string) => { setCatFilter(v); setPage(0); };
+  const handleFormaFilter = (v: string) => { setFormaFilter(v); setPage(0); };
+  const handleStatusFilter = (v: string) => { setStatusFilter(v); setPage(0); };
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMed, setEditMed] = useState<Medicamento | null>(null);
   const [detailMed, setDetailMed] = useState<(Medicamento & { lotes: Lote[]; categoria?: Categoria }) | null>(null);
