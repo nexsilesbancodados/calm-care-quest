@@ -75,14 +75,19 @@ const Usuarios = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data: profs } = await supabase.from("profiles").select("*").order("created_at");
+      const [{ data: profs }, { data: filiaisData }] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at"),
+        supabase.from("filiais").select("*").eq("ativo", true).order("nome"),
+      ]);
       if (profs) {
         const withRoles = await Promise.all(profs.map(async (p: any) => {
           const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", p.user_id).single();
-          return { ...p, role: roleData?.role || "visualizador" };
+          const filial = filiaisData?.find((f: any) => f.id === p.filial_id);
+          return { ...p, role: roleData?.role || "visualizador", filial };
         }));
         setProfiles(withRoles);
       }
+      setFiliais(filiaisData as Filial[] || []);
       setLoading(false);
     };
     fetch();
