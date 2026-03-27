@@ -18,10 +18,29 @@ export class ErrorBoundary extends React.Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // Ignore known React DOM manipulation errors caused by browser extensions
+    // or external scripts injecting/removing DOM nodes
+    const msg = error?.message || "";
+    if (
+      msg.includes("removeChild") ||
+      msg.includes("insertBefore") ||
+      msg.includes("The node to be removed is not a child")
+    ) {
+      return { hasError: false, error: null };
+    }
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    const msg = error?.message || "";
+    if (
+      msg.includes("removeChild") ||
+      msg.includes("insertBefore") ||
+      msg.includes("The node to be removed is not a child")
+    ) {
+      // Silently ignore - this is a known React issue with external DOM manipulation
+      return;
+    }
     console.error("ErrorBoundary caught:", error, errorInfo);
   }
 
