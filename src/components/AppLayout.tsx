@@ -155,7 +155,7 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
                           {displayInitials}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="absolute -bottom-px -right-px h-2 w-2 rounded-full bg-emerald-500 border-[1.5px] border-background" />
+                      <div className="absolute -bottom-px -right-px h-2 w-2 rounded-full bg-success border-[1.5px] border-background" />
                     </div>
                     <div className="hidden sm:flex flex-col text-left leading-none">
                       <span className="text-[12px] font-semibold text-foreground/90 leading-tight">{displayName}</span>
