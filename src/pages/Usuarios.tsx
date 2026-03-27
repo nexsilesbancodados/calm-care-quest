@@ -335,6 +335,19 @@ const Usuarios = () => {
             </div>
 
             <div className="space-y-1.5">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                Filial
+              </Label>
+              <Select value={inviteFilialId || "sem_filial"} onValueChange={(v) => setInviteFilialId(v === "sem_filial" ? "" : v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sem_filial">Sem filial (matriz)</SelectItem>
+                  {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
               <Label className="text-xs font-medium">Papel</Label>
               <Select value={selectedRole} onValueChange={(v) => handleRoleChange(v as AppRole)}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
