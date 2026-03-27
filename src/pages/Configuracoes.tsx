@@ -317,6 +317,43 @@ const Configuracoes = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Filial Dialog */}
+      <Dialog open={filialDialog} onOpenChange={setFilialDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader><DialogTitle>{editFilial ? "Editar" : "Nova"} Filial</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1.5"><Label className="text-xs">Nome da Filial *</Label><Input value={filialForm.nome} onChange={e => setFilialForm({ ...filialForm, nome: e.target.value })} placeholder="Ex: Filial Norte" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">CNPJ</Label><Input value={filialForm.cnpj} onChange={e => setFilialForm({ ...filialForm, cnpj: e.target.value })} placeholder="00.000.000/0000-00" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">CNES</Label><Input value={filialForm.cnes} onChange={e => setFilialForm({ ...filialForm, cnes: e.target.value })} /></div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Endereço</Label><Input value={filialForm.endereco} onChange={e => setFilialForm({ ...filialForm, endereco: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">Cidade</Label><Input value={filialForm.cidade} onChange={e => setFilialForm({ ...filialForm, cidade: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Estado</Label><Input value={filialForm.estado} onChange={e => setFilialForm({ ...filialForm, estado: e.target.value })} placeholder="Ex: SP" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">Telefone</Label><Input value={filialForm.telefone} onChange={e => setFilialForm({ ...filialForm, telefone: e.target.value })} /></div>
+              <div className="space-y-1.5"><Label className="text-xs">E-mail</Label><Input type="email" value={filialForm.email} onChange={e => setFilialForm({ ...filialForm, email: e.target.value })} /></div>
+            </div>
+            <div className="space-y-1.5"><Label className="text-xs">Responsável</Label><Input value={filialForm.responsavel} onChange={e => setFilialForm({ ...filialForm, responsavel: e.target.value })} /></div>
+            <div className="flex justify-between pt-2">
+              <div>
+                {editFilial && (
+                  <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => { toggleFilialActive(editFilial); setFilialDialog(false); }}>
+                    {editFilial.ativo ? "Desativar" : "Reativar"}
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setFilialDialog(false)}>Cancelar</Button>
+                <Button onClick={handleSaveFilial} className="gradient-primary text-primary-foreground">{editFilial ? "Salvar" : "Cadastrar"}</Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
