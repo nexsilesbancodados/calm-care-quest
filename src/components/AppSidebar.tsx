@@ -4,7 +4,7 @@ import {
   ScanLine, ArrowDownCircle, ArrowUpCircle, Shield, FileText,
   User, ClipboardCheck, ChevronRight, LogOut, Sparkles,
 } from "lucide-react";
-import logoImg from "@/assets/logo.jpg";
+import logoImg from "@/assets/logo-new.png";
 import { NavLink } from "@/components/NavLink";
 import { prefetchPage } from "@/lib/lazyPages";
 import { useLocation, useNavigate } from "react-router-dom";
