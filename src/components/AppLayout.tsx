@@ -84,6 +84,13 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all rounded-xl h-8 w-8" />
               
+              {/* Logo visível apenas em mobile (sidebar escondida) */}
+              <img
+                src={logoImg}
+                alt="PsiRumoCerto"
+                className="h-8 w-8 rounded-xl object-cover ring-1 ring-primary/10 shadow-sm sm:hidden shrink-0"
+              />
+              
               <div className="h-5 w-px bg-border/60 hidden sm:block" />
 
               {/* Filial Switcher (admin only) */}
