@@ -13,11 +13,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Save, Check, Plus, ScrollText, Palette, Pencil } from "lucide-react";
+import { Building2, Save, Check, Plus, ScrollText, Palette, Pencil, GitBranch, MapPin, Phone, Mail, User, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import type { ConfigHospital, ClinicaParceira, Categoria, AuditEntry } from "@/types/database";
+import type { ConfigHospital, ClinicaParceira, Categoria, AuditEntry, Filial } from "@/types/database";
 
 const DEFAULT_COLORS = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#ec4899", "#14b8a6", "#f97316", "#6b7280"];
 
