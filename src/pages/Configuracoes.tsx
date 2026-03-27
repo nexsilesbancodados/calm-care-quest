@@ -136,8 +136,9 @@ const Configuracoes = () => {
     <AppLayout title="Configurações" subtitle="Ajustes gerais do sistema">
       <div className="max-w-3xl">
         <Tabs defaultValue="geral">
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 flex-wrap">
             <TabsTrigger value="geral">Geral</TabsTrigger>
+            <TabsTrigger value="filiais"><GitBranch className="h-3.5 w-3.5 mr-1" />Filiais</TabsTrigger>
             <TabsTrigger value="clinicas">Clínicas Parceiras</TabsTrigger>
             <TabsTrigger value="categorias"><Palette className="h-3.5 w-3.5 mr-1" />Categorias</TabsTrigger>
             <TabsTrigger value="auditoria"><ScrollText className="h-3.5 w-3.5 mr-1" />Auditoria</TabsTrigger>
