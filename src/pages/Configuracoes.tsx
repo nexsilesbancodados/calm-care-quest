@@ -27,6 +27,7 @@ const Configuracoes = () => {
   const [config, setConfig] = useState<ConfigHospital | null>(null);
   const [clinicas, setClinicas] = useState<ClinicaParceira[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [filiais, setFiliais] = useState<Filial[]>([]);
   const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
@@ -35,6 +36,9 @@ const Configuracoes = () => {
   const [catDialog, setCatDialog] = useState(false);
   const [editCat, setEditCat] = useState<Categoria | null>(null);
   const [catForm, setCatForm] = useState({ nome: "", cor: "#8b5cf6" });
+  const [filialDialog, setFilialDialog] = useState(false);
+  const [editFilial, setEditFilial] = useState<Filial | null>(null);
+  const [filialForm, setFilialForm] = useState({ nome: "", cnpj: "", cnes: "", endereco: "", cidade: "", estado: "", telefone: "", email: "", responsavel: "" });
 
   useEffect(() => {
     const fetch = async () => {
