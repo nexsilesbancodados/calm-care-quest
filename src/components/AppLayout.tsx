@@ -10,14 +10,13 @@ import { ROLE_LABELS } from "@/types/database";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { FilialSwitcher } from "@/components/FilialSwitcher";
 import { useAutomations } from "@/hooks/useAutomations";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
-import { useEffect } from "react";
+import { memo, useMemo } from "react";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
@@ -48,7 +47,7 @@ interface AppLayoutProps {
   actions?: React.ReactNode;
 }
 
-export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps) {
+export const AppLayout = memo(function AppLayout({ children, title, subtitle, actions }: AppLayoutProps) {
   const { theme, toggleTheme } = useTheme();
   const { profile, logout } = useAuth();
   const navigate = useNavigate();
@@ -56,16 +55,16 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
   const { notificacoes: notifications, unreadCount, markAsRead, markAllRead, markAsResolved } = useAutomations();
   useOnlinePresence(location.pathname);
 
-  useEffect(() => {
-    if ("Notification" in window && Notification.permission === "default") {
-      Notification.requestPermission();
-    }
-  }, []);
-
   const breadcrumb = location.pathname !== "/" ? pageTitles[location.pathname] : null;
-  const displayName = profile?.nome || "Usuário";
-  const displayInitials = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
-  const displayRole = profile ? ROLE_LABELS[profile.role] : "—";
+
+  const { displayName, displayInitials, displayRole } = useMemo(() => {
+    const name = profile?.nome || "Usuário";
+    return {
+      displayName: name,
+      displayInitials: name.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
+      displayRole: profile ? ROLE_LABELS[profile.role] : "—",
+    };
+  }, [profile?.nome, profile?.role]);
 
   const handleLogout = async () => {
     await logout();
@@ -84,7 +83,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
             <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all rounded-xl h-8 w-8" />
               
-              {/* Logo visível apenas em mobile (sidebar escondida) */}
               <img
                 src={logoImg}
                 alt="PsiRumoCerto"
@@ -92,8 +90,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
               />
               
               <div className="h-5 w-px bg-border/60 hidden sm:block" />
-
-              {/* Filial Switcher (admin only) */}
               <FilialSwitcher />
               
               <div className="min-w-0">
@@ -117,7 +113,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
             <div className="flex items-center gap-1 sm:gap-1.5">
               {actions}
               
-              {/* Search */}
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
                 className="hidden sm:flex items-center gap-2 rounded-xl border border-border/40 bg-muted/20 hover:bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-all group"
@@ -129,7 +124,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                 </kbd>
               </button>
 
-              {/* Notifications */}
               <NotificationCenter
                 notifications={notifications}
                 unreadCount={unreadCount}
@@ -138,29 +132,17 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
                 markAsResolved={markAsResolved}
               />
 
-              {/* Theme */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
                 className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-xl hover:bg-muted/40 transition-all"
               >
-                <AnimatePresence mode="wait">
-                  {theme === "light" ? (
-                    <motion.div key="moon" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                      <Moon className="h-4 w-4" />
-                    </motion.div>
-                  ) : (
-                    <motion.div key="sun" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                      <Sun className="h-4 w-4" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
 
               <div className="h-5 w-px bg-border/40 mx-0.5 hidden sm:block" />
 
-              {/* User */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-muted/30 transition-all group outline-none">
@@ -224,7 +206,6 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
             </div>
           </header>
 
-          {/* Content */}
           <main className="flex-1 p-3 sm:p-5 lg:p-6 overflow-auto">
             <div className="page-enter">
               {children}
@@ -234,4 +215,4 @@ export function AppLayout({ children, title, subtitle, actions }: AppLayoutProps
       </div>
     </SidebarProvider>
   );
-}
+});
