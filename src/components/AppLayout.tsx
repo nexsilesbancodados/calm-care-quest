@@ -17,6 +17,7 @@ import { FilialSwitcher } from "@/components/FilialSwitcher";
 import { useAutomations } from "@/hooks/useAutomations";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { memo, useMemo } from "react";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 const pageTitles: Record<string, string> = {
   "/": "Dashboard",
