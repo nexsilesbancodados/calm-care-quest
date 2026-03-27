@@ -345,7 +345,7 @@ const Medicamentos = () => {
         <p className="text-xs text-muted-foreground">
           {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
           {(statusFilter !== "all" || catFilter !== "all" || formaFilter !== "all" || search) && (
-            <button className="ml-2 text-primary hover:underline" onClick={() => { setStatusFilter("all"); setCatFilter("all"); setFormaFilter("all"); setSearch(""); }}>
+            <button className="ml-2 text-primary hover:underline" onClick={() => { setStatusFilter("all"); setCatFilter("all"); setFormaFilter("all"); setSearch(""); setPage(0); }}>
               Limpar filtros
             </button>
           )}
