@@ -32,7 +32,7 @@ interface InventoryItem {
 
 const Inventario = () => {
   const { log } = useAudit();
-  const { user, isAdmin, can } = useAuth();
+  const { user, isAdmin, can, profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

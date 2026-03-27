@@ -33,7 +33,7 @@ const statusCfg: Record<string, { label: string; icon: any; className: string }>
 };
 
 const Transferencias = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { log } = useAudit();
   const [transfers, setTransfers] = useState<any[]>([]);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);

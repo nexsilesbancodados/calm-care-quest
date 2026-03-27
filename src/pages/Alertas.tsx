@@ -36,7 +36,7 @@ const priorityOrder: AlertType[] = ["vencido", "esgotado", "critico", "validade"
 
 const Alertas = () => {
   const navigate = useNavigate();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, profile } = useAuth();
   const { log } = useAudit();
   const {
     configs, loading: automLoading, running,
