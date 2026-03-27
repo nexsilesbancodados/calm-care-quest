@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ROLE_LABELS } from "@/types/database";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -24,7 +24,6 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
 type MenuItem = {
   title: string;
@@ -61,13 +60,12 @@ const systemItems: MenuItem[] = [
   { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"], badgeKey: null },
 ];
 
-export function AppSidebar() {
+export const AppSidebar = memo(function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, logout } = useAuth();
-  const isActive = (path: string) => location.pathname === path;
   const [badgeCounts, setBadgeCounts] = useState<{ alerts: number; transfers: number; prescricoes: number }>({ alerts: 0, transfers: 0, prescricoes: 0 });
 
   useEffect(() => {
@@ -88,25 +86,33 @@ export function AppSidebar() {
   }, [profile?.filial_id]);
 
   const role = profile?.role;
-  const filterByRole = (items: MenuItem[]) =>
-    items.filter((item) => !item.roles || (role && item.roles.includes(role)));
+  const filterByRole = useCallback((items: MenuItem[]) =>
+    items.filter((item) => !item.roles || (role && item.roles.includes(role))),
+  [role]);
 
-  const getBadgeCount = (key: string | null) => {
+  const getBadgeCount = useCallback((key: string | null) => {
     if (key === "alerts") return badgeCounts.alerts;
     if (key === "transfers") return badgeCounts.transfers;
     if (key === "prescricoes") return badgeCounts.prescricoes;
     return 0;
-  };
+  }, [badgeCounts]);
 
-  const displayName = profile?.nome || "Usuário";
-  const displayInitials = displayName.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
-  const displayRole = profile ? ROLE_LABELS[profile.role] : "—";
+  const { displayName, displayInitials, displayRole } = useMemo(() => {
+    const name = profile?.nome || "Usuário";
+    return {
+      displayName: name,
+      displayInitials: name.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase(),
+      displayRole: profile ? ROLE_LABELS[profile.role] : "—",
+    };
+  }, [profile?.nome, profile?.role]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await logout();
     toast.success("Sessão encerrada");
     navigate("/login");
-  };
+  }, [logout, navigate]);
+
+  const isActive = useCallback((path: string) => location.pathname === path, [location.pathname]);
 
   const renderMenuItem = (item: MenuItem) => {
     const active = isActive(item.url);
@@ -121,7 +127,7 @@ export function AppSidebar() {
             onMouseEnter={() => prefetchPage(item.url)}
             onFocus={() => prefetchPage(item.url)}
             className={cn(
-              "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200",
+              "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150",
               "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
               active && [
                 "bg-sidebar-primary/12 text-sidebar-accent-foreground",
@@ -130,31 +136,25 @@ export function AppSidebar() {
             )}
             activeClassName=""
           >
-            {/* Active indicator bar */}
             {active && (
-              <motion.div
-                layoutId="sidebar-active-bar"
-                className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-sidebar-primary"
-                style={{ boxShadow: "0 0 8px hsl(var(--sidebar-primary) / 0.5)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              />
+              <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_8px_hsl(var(--sidebar-primary)/0.5)]" />
             )}
 
             <div className="relative">
               <item.icon className={cn(
-                "h-[17px] w-[17px] shrink-0 transition-all duration-200",
+                "h-[17px] w-[17px] shrink-0 transition-colors duration-150",
                 active
                   ? "text-sidebar-primary drop-shadow-[0_0_6px_hsl(var(--sidebar-primary)/0.4)]"
                   : "text-sidebar-foreground/40 group-hover:text-sidebar-accent-foreground"
               )} strokeWidth={active ? 2 : 1.6} />
               {collapsed && count > 0 && (
-                <div className="absolute -top-1 -right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar-background animate-pulse" />
+                <div className="absolute -top-1 -right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar-background" />
               )}
             </div>
             {!collapsed && (
               <>
                 <span className={cn(
-                  "text-[13px] flex-1 transition-all duration-200",
+                  "text-[13px] flex-1",
                   active ? "font-bold" : "font-medium"
                 )}>
                   {item.title}
@@ -221,20 +221,13 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      {/* Header with logo */}
       <SidebarHeader className="p-4 pb-5">
         <div className="flex items-center gap-3">
-          <motion.div
-            className="relative shrink-0"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
-          >
-            <img
-              src={logoImg}
-              alt="PsiRumoCerto"
-              className="h-11 w-11 rounded-2xl object-cover shadow-md shadow-primary/15 ring-1 ring-primary/10"
-            />
-          </motion.div>
+          <img
+            src={logoImg}
+            alt="PsiRumoCerto"
+            className="h-11 w-11 rounded-2xl object-cover shadow-md shadow-primary/15 ring-1 ring-primary/10 shrink-0 hover:scale-105 transition-transform duration-200"
+          />
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="text-[15px] font-extrabold text-foreground tracking-tight flex items-center gap-1.5 font-display">
@@ -253,7 +246,6 @@ export function AppSidebar() {
         {renderGroup("Administração", systemItems, false)}
       </SidebarContent>
 
-      {/* Footer with user info */}
       <SidebarFooter className="p-3">
         {!collapsed ? (
           <div className="rounded-xl bg-sidebar-accent/40 border border-sidebar-border/50 p-3 backdrop-blur-sm">
@@ -294,4 +286,4 @@ export function AppSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
-}
+});
