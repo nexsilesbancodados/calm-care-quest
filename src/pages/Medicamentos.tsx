@@ -165,7 +165,7 @@ const Medicamentos = () => {
       return sortDir === "asc" ? cmp : -cmp;
     });
     return result;
-  }, [meds, search, catFilter, statusFilter, formaFilter, sortKey, sortDir]);
+  }, [meds, statusFilter, sortKey, sortDir]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
