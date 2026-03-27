@@ -96,7 +96,7 @@ const Dispensacao = () => {
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [profile?.filial_id]);
 
   const now = new Date();
 

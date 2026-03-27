@@ -100,7 +100,7 @@ const Relatorios = () => {
       setLoading(false);
     };
     fetchAll();
-  }, []);
+  }, [profile?.filial_id]);
 
   const filteredMeds = catFilter === "all" ? meds : meds.filter((m) => m.categoria_id === catFilter);
   const totalUnits = filteredMeds.reduce((s, m) => s + getEstoqueTotal(m.lotes), 0);

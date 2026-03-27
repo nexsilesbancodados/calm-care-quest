@@ -75,7 +75,7 @@ const Transferencias = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [profile?.filial_id]);
 
   const selectedMed = meds.find(m => m.id === form.medicamento_id);
   const selectedLote = selectedMed?.lotes.find(l => l.id === form.lote_id);

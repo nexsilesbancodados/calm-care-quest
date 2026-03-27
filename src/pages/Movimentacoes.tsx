@@ -55,7 +55,7 @@ const Movimentacoes = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [typeFilter, dateFrom, dateTo, page]);
+  useEffect(() => { fetchData(); }, [typeFilter, dateFrom, dateTo, page, profile?.filial_id]);
 
   const filtered = movements.filter(m => {
     if (!search) return true;
