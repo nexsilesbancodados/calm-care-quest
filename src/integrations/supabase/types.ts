@@ -211,6 +211,7 @@ export type Database = {
           created_at: string
           email: string
           endereco: string
+          filial_id: string | null
           id: string
           nome: string
           telefone: string
@@ -223,6 +224,7 @@ export type Database = {
           created_at?: string
           email?: string
           endereco?: string
+          filial_id?: string | null
           id?: string
           nome: string
           telefone?: string
@@ -235,12 +237,21 @@ export type Database = {
           created_at?: string
           email?: string
           endereco?: string
+          filial_id?: string | null
           id?: string
           nome?: string
           telefone?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fornecedores_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       itens_prescricao: {
         Row: {
@@ -291,6 +302,7 @@ export type Database = {
         Row: {
           ativo: boolean
           created_at: string
+          filial_id: string | null
           id: string
           medicamento_id: string
           numero_lote: string
@@ -301,6 +313,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           created_at?: string
+          filial_id?: string | null
           id?: string
           medicamento_id: string
           numero_lote?: string
@@ -311,6 +324,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           created_at?: string
+          filial_id?: string | null
           id?: string
           medicamento_id?: string
           numero_lote?: string
@@ -319,6 +333,13 @@ export type Database = {
           validade?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lotes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lotes_medicamento_id_fkey"
             columns: ["medicamento_id"]
@@ -338,6 +359,7 @@ export type Database = {
           created_at: string
           estoque_maximo: number
           estoque_minimo: number
+          filial_id: string | null
           forma_farmaceutica: string
           fornecedor_id: string | null
           generico: string
@@ -357,6 +379,7 @@ export type Database = {
           created_at?: string
           estoque_maximo?: number
           estoque_minimo?: number
+          filial_id?: string | null
           forma_farmaceutica?: string
           fornecedor_id?: string | null
           generico?: string
@@ -376,6 +399,7 @@ export type Database = {
           created_at?: string
           estoque_maximo?: number
           estoque_minimo?: number
+          filial_id?: string | null
           forma_farmaceutica?: string
           fornecedor_id?: string | null
           generico?: string
@@ -395,6 +419,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "medicamentos_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "medicamentos_fornecedor_id_fkey"
             columns: ["fornecedor_id"]
             isOneToOne: false
@@ -406,6 +437,7 @@ export type Database = {
       movimentacoes: {
         Row: {
           created_at: string
+          filial_id: string | null
           id: string
           lote_id: string | null
           medicamento_id: string | null
@@ -421,6 +453,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          filial_id?: string | null
           id?: string
           lote_id?: string | null
           medicamento_id?: string | null
@@ -436,6 +469,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          filial_id?: string | null
           id?: string
           lote_id?: string | null
           medicamento_id?: string | null
@@ -450,6 +484,13 @@ export type Database = {
           usuario_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "movimentacoes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movimentacoes_lote_id_fkey"
             columns: ["lote_id"]
@@ -476,6 +517,7 @@ export type Database = {
       notificacoes: {
         Row: {
           created_at: string
+          filial_id: string | null
           id: string
           lida: boolean
           link: string | null
@@ -492,6 +534,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          filial_id?: string | null
           id?: string
           lida?: boolean
           link?: string | null
@@ -508,6 +551,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          filial_id?: string | null
           id?: string
           lida?: boolean
           link?: string | null
@@ -523,6 +567,13 @@ export type Database = {
           usuario_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "notificacoes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "notificacoes_lote_id_fkey"
             columns: ["lote_id"]
@@ -551,6 +602,7 @@ export type Database = {
           created_at: string | null
           crm: string | null
           data_prescricao: string
+          filial_id: string | null
           id: string
           medico: string
           numero_receita: string
@@ -567,6 +619,7 @@ export type Database = {
           created_at?: string | null
           crm?: string | null
           data_prescricao?: string
+          filial_id?: string | null
           id?: string
           medico: string
           numero_receita: string
@@ -583,6 +636,7 @@ export type Database = {
           created_at?: string | null
           crm?: string | null
           data_prescricao?: string
+          filial_id?: string | null
           id?: string
           medico?: string
           numero_receita?: string
@@ -595,7 +649,15 @@ export type Database = {
           usuario_id?: string | null
           validade_dias?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prescricoes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -641,6 +703,7 @@ export type Database = {
           clinica_destino_id: string | null
           clinica_origem_id: string | null
           created_at: string
+          filial_id: string | null
           id: string
           lote_id: string | null
           medicamento_id: string | null
@@ -656,6 +719,7 @@ export type Database = {
           clinica_destino_id?: string | null
           clinica_origem_id?: string | null
           created_at?: string
+          filial_id?: string | null
           id?: string
           lote_id?: string | null
           medicamento_id?: string | null
@@ -671,6 +735,7 @@ export type Database = {
           clinica_destino_id?: string | null
           clinica_origem_id?: string | null
           created_at?: string
+          filial_id?: string | null
           id?: string
           lote_id?: string | null
           medicamento_id?: string | null
@@ -694,6 +759,13 @@ export type Database = {
             columns: ["clinica_origem_id"]
             isOneToOne: false
             referencedRelation: "clinicas_parceiras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
             referencedColumns: ["id"]
           },
           {
@@ -743,6 +815,7 @@ export type Database = {
       }
       get_dashboard_stats: { Args: never; Returns: Json }
       get_sidebar_counts: { Args: never; Returns: Json }
+      get_user_filial_id: { Args: { _user_id: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -752,6 +825,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_own_filial: {
+        Args: { _filial_id: string; _user_id: string }
         Returns: boolean
       }
       promote_to_admin: { Args: { _email: string }; Returns: undefined }
