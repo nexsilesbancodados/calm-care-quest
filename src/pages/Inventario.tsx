@@ -127,6 +127,7 @@ const Inventario = () => {
         quantidade: Math.abs(item.diferenca),
         usuario_id: user?.id,
         observacao: `[Inventário Físico] Sistema: ${item.quantidade_sistema} → Contagem: ${item.quantidade_contada} (Δ${item.diferenca > 0 ? "+" : ""}${item.diferenca})`,
+        filial_id: profile?.filial_id,
       });
 
       await log({

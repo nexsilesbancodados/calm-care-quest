@@ -111,6 +111,7 @@ const Alertas = () => {
       quantidade: baixaTarget.quantidade,
       usuario_id: user?.id,
       observacao: "Baixa por vencimento — automático via Alertas",
+      filial_id: profile?.filial_id,
     });
     await log({ acao: "Baixa por vencimento", tabela: "lotes", registro_id: baixaTarget.loteId });
     toast.success(`Lote ${baixaTarget.loteNum} baixado com sucesso`);

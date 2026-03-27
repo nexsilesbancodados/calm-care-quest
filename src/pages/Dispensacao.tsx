@@ -43,7 +43,7 @@ function savePacienteRecorrente(p: PacienteRecorrente) {
 
 const Dispensacao = () => {
   const { log } = useAudit();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [history, setHistory] = useState<any[]>([]);
@@ -163,6 +163,7 @@ const Dispensacao = () => {
       tipo: "dispensacao" as any, medicamento_id: form.medicamento_id, lote_id: form.lote_id,
       quantidade: form.quantidade, usuario_id: user?.id, paciente: form.paciente || null,
       prontuario: form.prontuario || null, setor: form.setor || null, observacao: form.observacao, prescricao_id: form.prescricao_id || null,
+      filial_id: profile?.filial_id,
     });
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
 
