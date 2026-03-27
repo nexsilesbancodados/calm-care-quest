@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ const typeConfig: Record<string, { label: string; icon: any; className: string; 
 const PAGE_SIZE = 50;
 
 const Movimentacoes = () => {
+  const { profile } = useAuth();
   const [movements, setMovements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
