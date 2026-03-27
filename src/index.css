@@ -478,14 +478,20 @@
 @media (max-width: 639px) {
   body {
     overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
-  .sm\:p-6 {
-    padding: 0.75rem;
+  /* Safe area for notched phones */
+  .pb-safe {
+    padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
   }
 
   [role="combobox"] {
-    font-size: 12px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  input, select, textarea {
+    font-size: 16px; /* Prevents iOS zoom */
   }
 
   [role="tablist"] {
@@ -498,16 +504,32 @@
   }
 
   button, [role="button"], a {
-    min-height: 36px;
+    min-height: 40px; /* Better touch targets */
   }
 
+  /* Compact table cells */
   table {
     font-size: 11px;
   }
+  table th, table td {
+    padding: 8px 6px;
+  }
 
   [role="dialog"] {
-    max-height: 90vh;
-    margin: 16px;
+    max-height: 92dvh;
+    margin: 8px;
+    border-radius: 16px;
+  }
+
+  /* Smaller cards on mobile */
+  .card-premium-header {
+    padding: 12px;
+  }
+
+  /* Horizontal scrollable tables */
+  .data-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -515,6 +537,13 @@
 @media (min-width: 640px) and (max-width: 1023px) {
   .grid-cols-2 {
     gap: 0.625rem;
+  }
+}
+
+/* ===== Safe area support ===== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
   }
 }
 

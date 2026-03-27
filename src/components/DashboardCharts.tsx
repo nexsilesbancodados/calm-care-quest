@@ -46,10 +46,10 @@ interface Props {
 export default memo(function DashboardCharts({ consumoData, topStocked, catData, period, setPeriod, totalAlerts, stats: s, navigate }: Props) {
   return (
     <>
-      <div className="grid lg:grid-cols-5 gap-3 sm:gap-4 mb-5 sm:mb-7">
+      <div className="grid lg:grid-cols-5 gap-2 sm:gap-4 mb-4 sm:mb-7">
         {/* Consumo */}
         <div className="lg:col-span-3">
-          <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
+            <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/6 ring-1 ring-primary/10">
@@ -78,7 +78,7 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
                 <p className="text-xs font-medium">Nenhuma saída no período</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={160}>
                 <AreaChart data={consumoData} margin={{ left: -12, right: 4, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorQty" x1="0" y1="0" x2="0" y2="1">
@@ -99,7 +99,7 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
 
         {/* Categories */}
         <div className="lg:col-span-2">
-          <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
+            <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex items-center gap-3 mb-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/6 ring-1 ring-accent/10">
                 <Pill className="h-4 w-4 text-accent" strokeWidth={1.8} />
@@ -140,8 +140,8 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
       </div>
 
       {/* ── TOP STOCK + ALERTS ── */}
-      <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
-        <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="grid lg:grid-cols-2 gap-2 sm:gap-4">
+        <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/6 ring-1 ring-success/10">
@@ -162,7 +162,7 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
               <p className="text-xs font-medium">Nenhum medicamento</p>
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={160}>
               <BarChart data={topStocked} layout="vertical" margin={{ left: 0, right: 4 }}>
                 <defs>
                   <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
@@ -179,7 +179,7 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
           )}
         </Card>
 
-        <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
+        <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/6 ring-1 ring-warning/10">

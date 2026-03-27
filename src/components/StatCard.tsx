@@ -57,7 +57,7 @@ export const StatCard = memo(function StatCard({ title, value, icon: Icon, varia
   return (
     <div
       className={cn(
-        "group relative rounded-2xl border border-border/50 bg-card p-3.5 sm:p-4 transition-all duration-200 cursor-default overflow-hidden hover:-translate-y-1",
+        "group relative rounded-xl sm:rounded-2xl border border-border/50 bg-card p-3 sm:p-4 transition-all duration-200 cursor-default overflow-hidden hover:-translate-y-1",
         onClick && "cursor-pointer active:scale-[0.97]",
         config.card,
         config.glow,
@@ -70,21 +70,21 @@ export const StatCard = memo(function StatCard({ title, value, icon: Icon, varia
         config.bar,
       )} />
 
-      <div className="relative flex items-center gap-3">
+      <div className="relative flex items-center gap-2.5 sm:gap-3">
         <div className={cn(
-          "flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl ring-1 transition-transform duration-200",
+          "flex h-9 w-9 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl ring-1 transition-transform duration-200",
           "group-hover:scale-110",
           config.icon,
           config.ring,
         )}>
-          <Icon className="h-[18px] w-[18px] sm:h-5 sm:w-5" strokeWidth={1.8} />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={1.8} />
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 font-semibold truncate mb-1">{title}</p>
-          <p className="text-xl sm:text-2xl font-extrabold text-foreground tabular-nums tracking-tight leading-none font-display">
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 font-semibold truncate mb-0.5 sm:mb-1">{title}</p>
+          <p className="text-lg sm:text-2xl font-extrabold text-foreground tabular-nums tracking-tight leading-none font-display">
             {displayValue}
-            {suffix && <span className="text-[10px] font-medium text-muted-foreground ml-1">{suffix}</span>}
+            {suffix && <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground ml-1">{suffix}</span>}
           </p>
         </div>
 

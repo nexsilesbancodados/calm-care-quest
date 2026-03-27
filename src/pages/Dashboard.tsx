@@ -96,34 +96,34 @@ const Dashboard = () => {
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral da farmácia hospitalar">
       {/* ── HERO BANNER ── */}
-      <div className="mb-5 sm:mb-7 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <div className="relative overflow-hidden rounded-2xl gradient-hero text-white p-5 sm:p-7 lg:p-8 border border-white/[0.06]">
+      <div className="mb-4 sm:mb-7 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl gradient-hero text-white p-4 sm:p-7 lg:p-8 border border-white/[0.06]">
           <div className="absolute inset-0" style={{
             backgroundImage: `radial-gradient(ellipse at 10% 60%, hsla(152,55%,45%,0.15) 0%, transparent 50%),
               radial-gradient(ellipse at 90% 20%, hsla(178,48%,42%,0.1) 0%, transparent 50%)`,
           }} />
-          <div className="absolute top-0 right-0 w-56 sm:w-80 h-56 sm:h-80 bg-white/[0.02] rounded-full -translate-y-1/2 translate-x-1/4" />
+          <div className="absolute top-0 right-0 w-40 sm:w-80 h-40 sm:h-80 bg-white/[0.02] rounded-full -translate-y-1/2 translate-x-1/4" />
 
-          <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div className="space-y-2 min-w-0">
-              <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.25em] font-mono">
+          <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2 min-w-0">
+              <p className="text-[9px] sm:text-[10px] font-bold text-white/30 uppercase tracking-[0.25em] font-mono">
                 {now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
               </p>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-display leading-none">
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-display leading-none">
                 {greeting}, <span className="text-white/85">{profile?.nome?.split(" ")[0] || "Usuário"}</span>
               </h1>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-white/40 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5" />
-                  {s.totalUnits.toLocaleString("pt-BR")} unidades
+              <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-[10px] sm:text-[11px] text-white/40 font-medium">
+                <span className="flex items-center gap-1">
+                  <Package className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  {s.totalUnits.toLocaleString("pt-BR")} un
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <Activity className="h-3.5 w-3.5" />
-                  {s.totalMovements} movimentações
+                <span className="flex items-center gap-1">
+                  <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  {s.totalMovements} mov
                 </span>
                 {totalAlerts > 0 && (
-                  <span className="flex items-center gap-1.5 text-warning/80">
-                    <AlertTriangle className="h-3.5 w-3.5" />
+                  <span className="flex items-center gap-1 text-warning/80">
+                    <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     {totalAlerts} alerta{totalAlerts > 1 ? "s" : ""}
                   </span>
                 )}
@@ -131,7 +131,7 @@ const Dashboard = () => {
             </div>
 
             <div className="text-left sm:text-right">
-              <p className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tighter font-display leading-none" style={{ textShadow: '0 0 40px hsla(152,55%,48%,0.25)' }}>
+              <p className="text-3xl sm:text-5xl font-extrabold tabular-nums tracking-tighter font-display leading-none" style={{ textShadow: '0 0 40px hsla(152,55%,48%,0.25)' }}>
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
@@ -140,24 +140,29 @@ const Dashboard = () => {
       </div>
 
       {/* ── QUICK ACTIONS ── */}
-      <div className="mb-5 sm:mb-7">
+      <div className="mb-4 sm:mb-7">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {quickActions.map((a) => (
             <button
               key={a.label}
               onClick={() => navigate(a.path)}
-              className="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3.5 sm:p-4 hover:border-primary/25 transition-all duration-200 active:scale-[0.97] text-left overflow-hidden"
+              className="group relative flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-border/40 bg-card p-3 sm:p-4 hover:border-primary/25 transition-all duration-200 active:scale-[0.97] text-left overflow-hidden"
               style={{ boxShadow: "var(--shadow-card)" }}
             >
-              <div className={cn("relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-110", a.bg)}>
-                <a.icon className={cn("h-[18px] w-[18px]", a.color)} strokeWidth={1.8} />
+              <div className={cn("relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl transition-transform duration-200 group-hover:scale-110", a.bg)}>
+                <a.icon className={cn("h-4 w-4 sm:h-[18px] sm:w-[18px]", a.color)} strokeWidth={1.8} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-[13px] font-bold text-foreground leading-tight">{a.label}</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-0.5 hidden sm:block">{a.desc}</p>
+                <p className="text-[11px] sm:text-[13px] font-bold text-foreground leading-tight">{a.label}</p>
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground/60 mt-0.5 hidden sm:block">{a.desc}</p>
+                {a.badge && (
+                  <span className="text-[8px] sm:hidden font-bold text-destructive mt-0.5 block truncate">
+                    {a.badge}
+                  </span>
+                )}
               </div>
               {a.badge && (
-                <span className="text-[9px] font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 shrink-0">
+                <span className="text-[9px] font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 shrink-0 hidden sm:inline">
                   {a.badge}
                 </span>
               )}
@@ -168,14 +173,14 @@ const Dashboard = () => {
       </div>
 
       {/* ── KPI STATS ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-5 sm:mb-7">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-7">
         <StatCard title="Medicamentos" value={s.total} icon={Pill} variant="info" onClick={() => navigate("/medicamentos")} />
         <StatCard title="Controlados" value={s.controlled} icon={ShieldCheck} variant="default" />
         <StatCard title="Estoque Baixo" value={s.lowStock} icon={Package} variant="warning" onClick={() => navigate("/alertas")} />
         <StatCard title="Crítico" value={s.critical} icon={AlertTriangle} variant="critical" onClick={() => navigate("/alertas")} />
         <StatCard title="Esgotado" value={s.outOfStock} icon={XCircle} variant="critical" />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5 sm:mb-7">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-7">
         <StatCard title="Vence 60d" value={s.expiringSoon} icon={Clock} variant="warning" />
         <StatCard title="Transferências" value={s.pendingTransfers} icon={ArrowLeftRight} variant="info" onClick={() => navigate("/transferencias")} />
         <StatCard title="CMM" value={s.cmm} icon={TrendingUp} variant="default" />

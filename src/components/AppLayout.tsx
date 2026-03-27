@@ -74,43 +74,42 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-[100dvh] flex w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="h-[56px] sm:h-[60px] flex items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-3 sm:px-5 sticky top-0 z-10">
+          <header className="h-[52px] sm:h-[60px] flex items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-2.5 sm:px-5 sticky top-0 z-10">
             {/* Left */}
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all rounded-xl h-8 w-8" />
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all rounded-xl h-9 w-9 sm:h-8 sm:w-8" />
               
               <img
                 src={logoImg}
                 alt="PsiRumoCerto"
-                className="h-8 w-8 rounded-xl object-cover ring-1 ring-primary/10 shadow-sm sm:hidden shrink-0"
+                className="h-7 w-7 rounded-lg object-cover ring-1 ring-primary/10 shadow-sm sm:hidden shrink-0"
               />
               
               <div className="h-5 w-px bg-border/60 hidden sm:block" />
-              <FilialSwitcher />
+              <div className="hidden sm:block">
+                <FilialSwitcher />
+              </div>
               
               <div className="min-w-0">
+                <h1 className="text-[13px] sm:text-sm font-extrabold text-foreground leading-tight truncate tracking-tight font-display">{title}</h1>
                 {breadcrumb && (
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60 mb-0.5">
+                  <div className="flex items-center gap-1 text-[9px] sm:text-[10px] text-muted-foreground/60">
                     <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors font-medium">
                       Dashboard
                     </button>
-                    <ChevronRight className="h-2.5 w-2.5 opacity-40" />
-                    <span className="text-foreground/70 font-semibold">{breadcrumb}</span>
+                    <ChevronRight className="h-2 w-2 sm:h-2.5 sm:w-2.5 opacity-40" />
+                    <span className="text-foreground/70 font-semibold truncate">{breadcrumb}</span>
                   </div>
-                )}
-                <h1 className="text-[13px] sm:text-sm font-extrabold text-foreground leading-tight truncate tracking-tight font-display">{title}</h1>
-                {subtitle && !breadcrumb && (
-                  <p className="text-[10px] text-muted-foreground/50 truncate mt-0.5">{subtitle}</p>
                 )}
               </div>
             </div>
 
             {/* Right */}
-            <div className="flex items-center gap-1 sm:gap-1.5">
+            <div className="flex items-center gap-0.5 sm:gap-1.5">
               {actions}
               
               <button
@@ -136,7 +135,7 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="text-muted-foreground hover:text-foreground h-8 w-8 rounded-xl hover:bg-muted/40 transition-all"
+                className="text-muted-foreground hover:text-foreground h-9 w-9 sm:h-8 sm:w-8 rounded-xl hover:bg-muted/40 transition-all"
               >
                 {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
               </Button>
@@ -145,7 +144,7 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-muted/30 transition-all group outline-none">
+                  <button className="flex items-center gap-2 rounded-xl px-1.5 sm:px-2 py-1 hover:bg-muted/30 transition-all group outline-none">
                     <div className="relative">
                       <Avatar className="h-8 w-8 ring-2 ring-border/40 group-hover:ring-primary/30 transition-all">
                         <AvatarFallback className="bg-gradient-to-br from-primary/15 to-accent/10 text-primary text-[11px] font-bold">
@@ -206,7 +205,7 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
             </div>
           </header>
 
-          <main className="flex-1 p-3 sm:p-5 lg:p-6 overflow-auto">
+          <main className="flex-1 p-2.5 sm:p-5 lg:p-6 overflow-auto pb-safe">
             <div className="page-enter">
               {children}
             </div>
