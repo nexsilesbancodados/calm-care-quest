@@ -11,7 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
@@ -100,7 +99,7 @@ const Perfil = () => {
     <AppLayout title="Meu Perfil" subtitle="Gerencie suas informações pessoais">
       <div className="max-w-2xl space-y-6">
         {/* Profile Card */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <div>
           <Card className="p-0 shadow-card overflow-hidden">
             {/* Header gradient */}
             <div className="h-24 gradient-hero relative">
@@ -157,10 +156,10 @@ const Perfil = () => {
               </div>
             </div>
           </Card>
-        </motion.div>
+        </div>
 
         {/* Permissions Card */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+        <div>
           <Card className="p-6 shadow-card">
             <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
               <Shield className="h-4 w-4 text-primary" />
@@ -179,10 +178,10 @@ const Perfil = () => {
               </div>
             )}
           </Card>
-        </motion.div>
+        </div>
 
         {/* Preferences */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <div>
           <Card className="p-6 shadow-card">
             <h3 className="text-sm font-semibold mb-4">Preferências</h3>
             <div className="space-y-4">
@@ -209,10 +208,10 @@ const Perfil = () => {
               </div>
             </div>
           </Card>
-        </motion.div>
+        </div>
 
         {/* Change Password */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <div>
           <Card className="p-6 shadow-card">
             <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
               <Key className="h-4 w-4 text-primary" />
@@ -233,7 +232,7 @@ const Perfil = () => {
               </Button>
             </div>
           </Card>
-        </motion.div>
+        </div>
       </div>
     </AppLayout>
   );

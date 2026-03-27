@@ -16,7 +16,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from "recharts";
 import {
@@ -369,11 +368,8 @@ const Estoque = () => {
             { label: "Controlados", value: totalControlados, icon: ShieldAlert, color: "text-info", bg: "bg-info/10", filter: null },
             { label: "Valor Total", value: `R$ ${(totalValue / 1000).toFixed(0)}k`, icon: DollarSign, color: "text-success", bg: "bg-success/10", filter: null },
           ].map((kpi, i) => (
-            <motion.div
+            <div
               key={kpi.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
               className={cn(
                 "rounded-xl border bg-card p-3.5 shadow-sm cursor-pointer transition-all hover:shadow-md",
                 kpi.filter && statusFilter === kpi.filter && "ring-2 ring-primary shadow-md"
@@ -389,15 +385,13 @@ const Estoque = () => {
                   <p className="text-lg font-bold leading-tight">{typeof kpi.value === "number" ? kpi.value : kpi.value}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
         {/* Alerta de vencimento */}
         {(totalVencidos > 0 || totalProxVenc > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className="mb-5 rounded-xl border border-warning/30 bg-warning/5 p-4"
           >
             <div className="flex items-start gap-3">
@@ -437,7 +431,7 @@ const Estoque = () => {
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Filters */}
@@ -512,7 +506,7 @@ const Estoque = () => {
 
         {viewMode === "table" ? (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -713,7 +707,7 @@ const Estoque = () => {
                   })}
                 </TableBody>
               </Table>
-            </motion.div>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -760,10 +754,10 @@ const Estoque = () => {
 
             <TabsContent value="estoque">
               <div className="grid lg:grid-cols-2 gap-6">
-                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card p-5 shadow-sm">
+                <div className="rounded-xl border bg-card p-5 shadow-sm">
                   <h3 className="text-sm font-semibold mb-4">Top 10 — Maior Estoque</h3>
                   <ResponsiveContainer width="100%" height={320}>
-                    <BarChart data={topStock} layout="vertical" margin={{ left: 10, right: 20 }}>
+                    <BarChart data={topStock} margin={{ left: 10, right: 20 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                       <XAxis type="number" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} />
                       <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
@@ -771,9 +765,9 @@ const Estoque = () => {
                       <Bar dataKey="estoque" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={18} />
                     </BarChart>
                   </ResponsiveContainer>
-                </motion.div>
+                </div>
 
-                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border bg-card p-5 shadow-sm">
+                <div className="rounded-xl border bg-card p-5 shadow-sm">
                   <h3 className="text-sm font-semibold mb-4">Distribuição por Status</h3>
                   <div className="flex items-center">
                     <ResponsiveContainer width="50%" height={240}>
@@ -807,12 +801,12 @@ const Estoque = () => {
                       ))}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="categorias">
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card p-5 shadow-sm">
+              <div className="rounded-xl border bg-card p-5 shadow-sm">
                 <h3 className="text-sm font-semibold mb-4">Unidades por Categoria</h3>
                 <div className="flex items-center gap-6">
                   <ResponsiveContainer width="50%" height={280}>
@@ -833,11 +827,11 @@ const Estoque = () => {
                     ))}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </TabsContent>
 
             <TabsContent value="valor">
-              <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border bg-card p-5 shadow-sm">
+              <div className="rounded-xl border bg-card p-5 shadow-sm">
                 <h3 className="text-sm font-semibold mb-2">Valor em Estoque por Categoria</h3>
                 <p className="text-xs text-muted-foreground mb-4">
                   Total: R$ {totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -854,7 +848,7 @@ const Estoque = () => {
                     <Bar dataKey="valor" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} barSize={32} />
                   </BarChart>
                 </ResponsiveContainer>
-              </motion.div>
+              </div>
             </TabsContent>
           </Tabs>
         )}

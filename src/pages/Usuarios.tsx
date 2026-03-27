@@ -16,7 +16,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { ROLE_LABELS, ROLE_PERMISSIONS, type AppRole, type Filial } from "@/types/database";
 
 const PERMISSION_LABELS: Record<string, string> = {
@@ -200,7 +199,7 @@ const Usuarios = () => {
         </Button>
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-card overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader><TableRow className="bg-muted/50">
             <TableHead className="text-xs font-semibold">Nome</TableHead>
@@ -297,7 +296,7 @@ const Usuarios = () => {
             })}
           </TableBody>
         </Table>
-      </motion.div>
+      </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-[520px] max-h-[85vh] overflow-y-auto">

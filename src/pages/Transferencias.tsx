@@ -20,7 +20,6 @@ import {
   ArrowRight, Package, X, Calendar, ArrowLeftRight, Info, ChevronLeft, ChevronRight, AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import type { Medicamento, ClinicaParceira, Lote, StatusTransferencia } from "@/types/database";
 
@@ -203,7 +202,7 @@ const Transferencias = () => {
           {(["pendente", "aprovado", "enviado", "recebido", "cancelado"] as const).map((s, i) => {
             const cfg = statusCfg[s];
             return (
-              <motion.div key={s} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+              <div key={s}
                 className={cn("rounded-xl border bg-card p-3 shadow-sm cursor-pointer transition-all hover:shadow-md text-center",
                   statusFilter === s && "ring-2 ring-primary")}
                 onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}>
@@ -212,20 +211,20 @@ const Transferencias = () => {
                 </div>
                 <p className="text-lg font-bold">{statusCounts[s] || 0}</p>
                 <p className="text-[10px] text-muted-foreground">{cfg.label}</p>
-              </motion.div>
+              </div>
             );
           })}
         </div>
 
         {/* Urgent alert */}
         {urgentCount > 0 && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex items-center gap-3">
+          <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex items-center gap-3">
             <Zap className="h-5 w-5 text-destructive shrink-0" />
             <div>
               <p className="text-sm font-semibold text-foreground">{urgentCount} transferência(s) urgente(s) pendente(s)</p>
               <p className="text-xs text-muted-foreground">Requerem ação imediata</p>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Filters */}
@@ -247,7 +246,7 @@ const Transferencias = () => {
         <p className="text-xs text-muted-foreground mb-2">{filtered.length} resultado(s)</p>
 
         {/* Table */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -333,7 +332,7 @@ const Transferencias = () => {
               })}
             </TableBody>
           </Table>
-        </motion.div>
+        </div>
 
         {/* Dialog Nova Transferência */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -9,7 +9,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle, Clock, XCircle, ShieldAlert, CheckCircle2, RefreshCw,
   Bell, Zap, Settings2, Play, Package, FileText, CalendarClock,
@@ -166,9 +165,9 @@ const Alertas = () => {
       }
     >
       {/* Automation Config Panel */}
-      <AnimatePresence>
+      
         {settingsOpen && isAdmin && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-6">
+          <div className="overflow-hidden mb-6">
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Zap className="h-4 w-4 text-primary" />
@@ -196,9 +195,9 @@ const Alertas = () => {
                 })}
               </div>
             </Card>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -208,8 +207,7 @@ const Alertas = () => {
           { key: "critico" as AlertType, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
           { key: "validade" as AlertType, icon: Clock, color: "text-warning", bg: "bg-warning/10" },
         ].map((item, i) => (
-          <motion.div key={item.key} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          <div key={item.key}
             className={cn(
               "group relative rounded-xl border bg-card p-4 shadow-card cursor-pointer transition-all hover:shadow-card-hover overflow-hidden",
               tab === item.key && "ring-2 ring-primary"
@@ -228,7 +226,7 @@ const Alertas = () => {
                 <p className="text-xl sm:text-2xl font-bold font-display leading-tight">{counts[item.key]}</p>
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -260,7 +258,7 @@ const Alertas = () => {
       {/* Alert List */}
       <div className="space-y-3 max-w-3xl">
         {filtered.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-success/10 mb-4">
               <CheckCircle2 className="h-8 w-8 text-success" />
             </div>
@@ -270,12 +268,12 @@ const Alertas = () => {
                 ? "Não há alertas no momento. Continue monitorando o estoque."
                 : `Não há alertas do tipo "${typeCfg[tab as AlertType]?.label || tab}" no momento.`}
             </p>
-          </motion.div>
+          </div>
         ) : (
           filtered.map((a, i) => {
             const cfg = typeCfg[a.type];
             return (
-              <motion.div key={a.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+              <div key={a.id}
                 className="group flex items-start gap-3 sm:gap-4 rounded-xl border bg-card p-3 sm:p-4 shadow-card hover:shadow-card-hover transition-all relative overflow-hidden"
               >
                 <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", cfg.className)}>
@@ -318,7 +316,7 @@ const Alertas = () => {
                     <CheckCircle2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             );
           })
         )}

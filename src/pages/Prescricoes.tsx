@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap } from "lucide-react";
 import type { Prescricao, ItemPrescricao, Medicamento, Lote, StatusPrescricao } from "@/types/database";
 import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
@@ -217,7 +216,7 @@ const Prescricoes = () => {
         </Button>
       </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-card overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -323,7 +322,7 @@ const Prescricoes = () => {
             })}
           </TableBody>
         </Table>
-      </motion.div>
+      </div>
 
       {/* New Prescription Dialog */}
       <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>

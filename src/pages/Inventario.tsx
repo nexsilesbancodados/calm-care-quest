@@ -12,7 +12,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Search, ClipboardCheck, CheckCircle2, AlertTriangle, Save, RotateCcw, Download, Package } from "lucide-react";
@@ -194,7 +193,7 @@ const Inventario = () => {
           { label: "Conferidos", value: stats.conferidos, icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
           { label: "Divergentes", value: stats.divergentes, icon: AlertTriangle, color: "text-warning", bg: "bg-warning/10" },
         ].map((s, i) => (
-          <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+          <div key={s.label}>
             <Card className="p-4 shadow-card">
               <div className="flex items-center gap-3">
                 <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg", s.bg)}>
@@ -206,7 +205,7 @@ const Inventario = () => {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -217,11 +216,8 @@ const Inventario = () => {
           <span className="text-sm font-bold text-primary">{stats.progress}%</span>
         </div>
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-          <motion.div
+          <div
             className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
-            initial={{ width: 0 }}
-            animate={{ width: `${stats.progress}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
           />
         </div>
       </Card>
@@ -248,7 +244,7 @@ const Inventario = () => {
       </div>
 
       {/* Table */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-xl border bg-card shadow-card overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -312,7 +308,7 @@ const Inventario = () => {
             ))}
           </TableBody>
         </Table>
-      </motion.div>
+      </div>
 
       {/* Confirmation */}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>

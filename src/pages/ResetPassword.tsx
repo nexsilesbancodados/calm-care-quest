@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Activity, Lock, Check, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +33,7 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
-      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-[380px]">
+      <div className="w-full max-w-[380px]">
         <div className="flex items-center gap-3 mb-10">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl gradient-hero shadow-lg shadow-primary/20">
             <Activity className="h-5 w-5 text-primary-foreground" />
@@ -46,13 +45,13 @@ const ResetPassword = () => {
         </div>
 
         {done ? (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
+          <div className="text-center py-8">
             <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-success/10 mb-4">
               <ShieldCheck className="h-8 w-8 text-success" />
             </div>
             <h2 className="text-xl font-bold">Senha atualizada!</h2>
             <p className="text-sm text-muted-foreground mt-2">Redirecionando ao painel...</p>
-          </motion.div>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="mb-6">
@@ -78,7 +77,7 @@ const ResetPassword = () => {
             </Button>
           </form>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };

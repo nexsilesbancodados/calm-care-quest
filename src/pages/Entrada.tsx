@@ -19,7 +19,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   Plus, Trash2, Upload, PackagePlus, FileText, Search, CheckCircle2,
@@ -318,11 +317,8 @@ const Entrada = () => {
             { label: "Valor Total", value: `R$ ${totalValue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, icon: DollarSign, color: "text-info", bg: "bg-info/10" },
             { label: "Medicamentos Cad.", value: meds.length, icon: CheckCircle2, color: "text-muted-foreground", bg: "bg-muted" },
           ].map((kpi, i) => (
-            <motion.div
+            <div
               key={kpi.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
               className="rounded-xl border bg-card p-3 sm:p-4 shadow-sm"
             >
               <div className="flex items-center gap-2 sm:gap-3">
@@ -334,7 +330,7 @@ const Entrada = () => {
                   <p className="text-base sm:text-lg font-bold leading-tight truncate">{kpi.value}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -546,9 +542,9 @@ const Entrada = () => {
                 </Card>
 
                 {/* Items Table */}
-                <AnimatePresence>
+                
                   {items.length > 0 && (
-                    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                    <div>
                       <Card className="shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b bg-muted/20 flex items-center justify-between">
                           <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -627,9 +623,9 @@ const Entrada = () => {
                           </TableBody>
                         </Table>
                       </Card>
-                    </motion.div>
+                    </div>
                   )}
-                </AnimatePresence>
+                
               </div>
 
               {/* Right - Summary */}

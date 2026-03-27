@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Building2, Save, Check, Plus, ScrollText, Palette, Pencil, GitBranch, MapPin, Phone, Mail, User, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { ConfigHospital, ClinicaParceira, Categoria, AuditEntry, Filial } from "@/types/database";
 
@@ -177,7 +176,7 @@ const Configuracoes = () => {
             ) : (
               <div className="grid sm:grid-cols-2 gap-4">
                 {filiais.map(f => (
-                  <motion.div key={f.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                  <div key={f.id}>
                     <Card className={cn("p-4 shadow-card cursor-pointer transition-all hover:shadow-card-hover", !f.ativo && "opacity-50")} onClick={() => openEditFilial(f)}>
                       <div className="flex items-start justify-between mb-2">
                         <p className="text-sm font-semibold">{f.nome}</p>
@@ -199,7 +198,7 @@ const Configuracoes = () => {
                         </div>
                       )}
                     </Card>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             )}
@@ -223,7 +222,7 @@ const Configuracoes = () => {
             <div className="flex justify-end"><Button onClick={openNewCat} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" />Nova Categoria</Button></div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {categorias.map(c => (
-                <motion.div key={c.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                <div key={c.id}
                   className={cn("flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all hover:shadow-card-hover", !c.ativo && "opacity-50")}
                   onClick={() => openEditCat(c)}>
                   <div className="h-5 w-5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: c.cor }} />
@@ -232,7 +231,7 @@ const Configuracoes = () => {
                     <Badge variant="outline" className={cn("text-[9px]", c.ativo ? "bg-success/10 text-success" : "bg-muted")}>{c.ativo ? "Ativa" : "Inativa"}</Badge>
                     <Pencil className="h-3 w-3 text-muted-foreground" />
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </TabsContent>
