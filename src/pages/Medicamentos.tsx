@@ -142,16 +142,11 @@ const Medicamentos = () => {
   }, [meds]);
 
   const filtered = useMemo(() => {
+    // Category, forma, and search are now applied server-side
+    // Only status filter needs client-side (depends on lotes data)
     let result = meds.filter(m => {
-      const matchSearch = !search ||
-        m.nome.toLowerCase().includes(search.toLowerCase()) ||
-        m.generico.toLowerCase().includes(search.toLowerCase()) ||
-        m.principio_ativo.toLowerCase().includes(search.toLowerCase()) ||
-        m.codigo_barras?.includes(search);
-      const matchCat = catFilter === "all" || m.categoria_id === catFilter;
       const matchStatus = statusFilter === "all" || getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === statusFilter;
-      const matchForma = formaFilter === "all" || m.forma_farmaceutica === formaFilter;
-      return matchSearch && matchCat && matchStatus && matchForma;
+      return matchStatus;
     });
 
     // Sort
