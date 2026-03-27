@@ -79,47 +79,50 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="h-[52px] sm:h-[60px] flex items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-2.5 sm:px-5 sticky top-0 z-10">
-            {/* Left */}
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <SidebarTrigger className="text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all rounded-xl h-9 w-9 sm:h-8 sm:w-8" />
-              
+          <header className="h-[52px] sm:h-14 flex items-center border-b border-border/30 bg-background/70 backdrop-blur-2xl px-3 sm:px-4 lg:px-5 sticky top-0 z-10">
+            {/* Left section */}
+            <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+              <SidebarTrigger className="text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all rounded-lg h-8 w-8 shrink-0" />
+
               <img
                 src={logoImg}
                 alt="PsiRumoCerto"
-                className="h-7 w-7 rounded-lg object-cover ring-1 ring-primary/10 shadow-sm sm:hidden shrink-0"
+                className="h-6 w-6 rounded-md object-cover ring-1 ring-primary/10 sm:hidden shrink-0"
               />
-              
-              <div className="h-5 w-px bg-border/60 hidden sm:block" />
-              <div className="hidden sm:block">
+
+              <div className="h-6 w-px bg-border/40 hidden sm:block shrink-0" />
+
+              <div className="hidden sm:block shrink-0">
                 <FilialSwitcher />
               </div>
-              
-              <div className="min-w-0">
-                <h1 className="text-[13px] sm:text-sm font-extrabold text-foreground leading-tight truncate tracking-tight font-display">{title}</h1>
+
+              <div className="h-6 w-px bg-border/40 hidden sm:block shrink-0" />
+
+              <div className="min-w-0 flex flex-col justify-center">
+                <h1 className="text-sm sm:text-[15px] font-bold text-foreground leading-tight truncate tracking-tight">{title}</h1>
                 {breadcrumb && (
-                  <div className="flex items-center gap-1 text-[9px] sm:text-[10px] text-muted-foreground/60">
-                    <button onClick={() => navigate("/")} className="hover:text-foreground transition-colors font-medium">
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 leading-none mt-0.5">
+                    <button onClick={() => navigate("/")} className="hover:text-foreground/80 transition-colors font-medium">
                       Dashboard
                     </button>
-                    <ChevronRight className="h-2 w-2 sm:h-2.5 sm:w-2.5 opacity-40" />
-                    <span className="text-foreground/70 font-semibold truncate">{breadcrumb}</span>
+                    <ChevronRight className="h-2.5 w-2.5 opacity-40" />
+                    <span className="text-foreground/60 font-semibold truncate">{breadcrumb}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right */}
-            <div className="flex items-center gap-0.5 sm:gap-1.5">
+            {/* Right section */}
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               {actions}
-              
+
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))}
-                className="hidden sm:flex items-center gap-2 rounded-xl border border-border/40 bg-muted/20 hover:bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground/60 hover:text-foreground transition-all group"
+                className="hidden sm:flex items-center gap-2 rounded-lg border border-border/30 bg-muted/15 hover:bg-muted/30 px-2.5 py-1.5 text-muted-foreground/50 hover:text-foreground/70 transition-all group"
               >
-                <Search className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
-                <span className="text-[11px]">Buscar...</span>
-                <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded-lg border border-border/40 bg-background/60 px-1.5 font-mono text-[10px] font-medium text-muted-foreground/50">
+                <Search className="h-3.5 w-3.5 group-hover:text-primary/70 transition-colors" />
+                <span className="text-[11px] font-medium">Buscar...</span>
+                <kbd className="pointer-events-none inline-flex h-[18px] select-none items-center gap-0.5 rounded border border-border/30 bg-background/50 px-1 font-mono text-[9px] font-medium text-muted-foreground/40">
                   <Command className="h-2.5 w-2.5" />K
                 </kbd>
               </button>
@@ -136,53 +139,53 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                className="text-muted-foreground hover:text-foreground h-9 w-9 sm:h-8 sm:w-8 rounded-xl hover:bg-muted/40 transition-all"
+                className="text-muted-foreground/50 hover:text-foreground h-8 w-8 rounded-lg hover:bg-muted/30 transition-all"
               >
-                {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+                {theme === "light" ? <Moon className="h-[15px] w-[15px]" /> : <Sun className="h-[15px] w-[15px]" />}
               </Button>
 
-              <div className="h-5 w-px bg-border/40 mx-0.5 hidden sm:block" />
+              <div className="h-6 w-px bg-border/30 mx-0.5 hidden sm:block" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 rounded-xl px-1.5 sm:px-2 py-1 hover:bg-muted/30 transition-all group outline-none">
+                  <button className="flex items-center gap-2.5 rounded-lg px-2 py-1 hover:bg-muted/20 transition-all group outline-none">
                     <div className="relative">
-                      <Avatar className="h-8 w-8 ring-2 ring-border/40 group-hover:ring-primary/30 transition-all">
-                        <AvatarFallback className="bg-gradient-to-br from-primary/15 to-accent/10 text-primary text-[11px] font-bold">
+                      <Avatar className="h-[30px] w-[30px] ring-[1.5px] ring-primary/20 group-hover:ring-primary/40 transition-all">
+                        <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary text-[10px] font-bold">
                           {displayInitials}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-success border-2 border-background" />
+                      <div className="absolute -bottom-px -right-px h-2 w-2 rounded-full bg-emerald-500 border-[1.5px] border-background" />
                     </div>
-                    <div className="hidden sm:block text-left">
-                      <p className="text-xs font-bold text-foreground leading-tight">{displayName}</p>
-                      <div className="flex items-center gap-1">
-                        <p className="text-[10px] text-muted-foreground/60 font-medium">{displayRole}</p>
-                        {profile?.role === "admin" && <Shield className="h-2.5 w-2.5 text-primary/60" />}
-                      </div>
+                    <div className="hidden sm:flex flex-col text-left leading-none">
+                      <span className="text-[12px] font-semibold text-foreground/90 leading-tight">{displayName}</span>
+                      <span className="text-[10px] text-muted-foreground/50 font-medium flex items-center gap-1 mt-px">
+                        {displayRole}
+                        {profile?.role === "admin" && <Shield className="h-2.5 w-2.5 text-primary/50" />}
+                      </span>
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60 rounded-2xl p-1.5 shadow-elevated">
-                  <DropdownMenuLabel className="font-normal px-3 py-3">
-                    <div className="flex items-center gap-3">
+                <DropdownMenuContent align="end" className="w-56 rounded-xl p-1 shadow-lg border-border/40">
+                  <DropdownMenuLabel className="font-normal px-3 py-2.5">
+                    <div className="flex items-center gap-2.5">
                       <div className="relative">
-                        <Avatar className="h-10 w-10 ring-2 ring-primary/15">
-                          <AvatarFallback className="bg-gradient-to-br from-primary/15 to-accent/10 text-primary text-sm font-bold">
+                        <Avatar className="h-9 w-9 ring-[1.5px] ring-primary/15">
+                          <AvatarFallback className="bg-gradient-to-br from-primary/10 to-primary/5 text-primary text-xs font-bold">
                             {displayInitials}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-popover" />
+                        <div className="absolute -bottom-px -right-px h-2.5 w-2.5 rounded-full bg-emerald-500 border-[1.5px] border-popover" />
                       </div>
-                      <div>
-                        <p className="text-sm font-extrabold font-display">{displayName}</p>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-bold truncate">{displayName}</p>
                         <Badge
                           variant="outline"
                           className={cn(
-                            "text-[9px] mt-1 font-bold",
+                            "text-[9px] mt-0.5 font-semibold h-4",
                             profile?.role === "admin"
-                              ? "border-primary/20 text-primary bg-primary/5"
-                              : "border-accent/20 text-accent bg-accent/5"
+                              ? "border-primary/15 text-primary/80 bg-primary/5"
+                              : "border-muted-foreground/15 text-muted-foreground/60 bg-muted/30"
                           )}
                         >
                           {displayRole}
@@ -190,15 +193,15 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
                       </div>
                     </div>
                   </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="mx-2" />
-                  <DropdownMenuItem onClick={() => navigate("/perfil")} className="gap-2.5 text-xs cursor-pointer rounded-xl mx-1 py-2.5">
-                    <User className="h-3.5 w-3.5 text-muted-foreground" /> Meu Perfil
+                  <DropdownMenuSeparator className="mx-2 bg-border/30" />
+                  <DropdownMenuItem onClick={() => navigate("/perfil")} className="gap-2 text-[12px] cursor-pointer rounded-lg mx-0.5 py-2">
+                    <User className="h-3.5 w-3.5 text-muted-foreground/60" /> Meu Perfil
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-2.5 text-xs cursor-pointer rounded-xl mx-1 py-2.5">
-                    <Settings className="h-3.5 w-3.5 text-muted-foreground" /> Configurações
+                  <DropdownMenuItem onClick={() => navigate("/configuracoes")} className="gap-2 text-[12px] cursor-pointer rounded-lg mx-0.5 py-2">
+                    <Settings className="h-3.5 w-3.5 text-muted-foreground/60" /> Configurações
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="mx-2" />
-                  <DropdownMenuItem onClick={handleLogout} className="gap-2.5 text-xs cursor-pointer rounded-xl mx-1 py-2.5 text-destructive focus:text-destructive">
+                  <DropdownMenuSeparator className="mx-2 bg-border/30" />
+                  <DropdownMenuItem onClick={handleLogout} className="gap-2 text-[12px] cursor-pointer rounded-lg mx-0.5 py-2 text-destructive focus:text-destructive">
                     <LogOut className="h-3.5 w-3.5" /> Encerrar Sessão
                   </DropdownMenuItem>
                 </DropdownMenuContent>
