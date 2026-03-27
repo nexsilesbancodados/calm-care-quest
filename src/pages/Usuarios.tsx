@@ -61,10 +61,12 @@ const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS);
 const Usuarios = () => {
   const { isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [filiais, setFiliais] = useState<Filial[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteNome, setInviteNome] = useState("");
+  const [inviteFilialId, setInviteFilialId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AppRole>("visualizador");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(getPermissionsForRole("visualizador"));
   const [sending, setSending] = useState(false);
