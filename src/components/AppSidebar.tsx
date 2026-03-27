@@ -78,31 +78,18 @@ export function AppSidebar() {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      const [{ data: medsData }, { data: lotesData }, { count: transCount }, { count: prescCount }] = await Promise.all([
-        supabase.from("medicamentos").select("id, estoque_minimo").eq("ativo", true),
-        supabase.from("lotes").select("id, medicamento_id, quantidade_atual, validade").eq("ativo", true),
-        supabase.from("transferencias").select("id", { count: "exact", head: true }).eq("status", "pendente"),
-        supabase.from("prescricoes").select("id", { count: "exact", head: true }).eq("status", "ativa"),
-      ]);
-
-      const now = new Date();
-      let alertCount = 0;
-      (medsData || []).forEach((m: any) => {
-        const mLotes = (lotesData || []).filter((l: any) => l.medicamento_id === m.id);
-        const total = mLotes.reduce((s: number, l: any) => s + l.quantidade_atual, 0);
-        if (total === 0) alertCount++;
-        else if (m.estoque_minimo > 0 && total <= m.estoque_minimo * 0.25) alertCount++;
-        mLotes.forEach((l: any) => {
-          const diff = (new Date(l.validade).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-          if (diff <= 0 || (diff > 0 && diff <= 60)) alertCount++;
+      const { data } = await supabase.rpc("get_sidebar_counts");
+      if (data) {
+        setBadgeCounts({
+          alerts: (data as any).alerts || 0,
+          transfers: (data as any).transfers || 0,
+          prescricoes: (data as any).prescricoes || 0,
         });
-      });
-
-      setBadgeCounts({ alerts: alertCount, transfers: transCount || 0, prescricoes: prescCount || 0 });
+      }
     };
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 60000);
+    const interval = setInterval(fetchCounts, 120000); // 2 min instead of 1 min
     return () => clearInterval(interval);
   }, []);
 

@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Medicamento, Lote } from "@/types/database";
 
 function getPeriodDates(period: string) {
   const now = new Date();
@@ -17,44 +16,95 @@ function getPeriodDates(period: string) {
   return { from, to };
 }
 
-async function fetchDashboardCore() {
-  const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: transData }, { count }, { count: prescCount }] =
-    await Promise.all([
-      supabase.from("medicamentos").select("*").eq("ativo", true),
-      supabase.from("lotes").select("*").eq("ativo", true),
-      supabase.from("categorias_medicamento").select("*"),
-      supabase.from("transferencias").select("id", { count: "exact" }).eq("status", "pendente"),
-      supabase.from("movimentacoes").select("id", { count: "exact", head: true }),
-      supabase.from("prescricoes").select("id", { count: "exact", head: true }).eq("status", "ativa"),
-    ]);
+export interface DashboardStats {
+  total: number;
+  controlled: number;
+  lowStock: number;
+  critical: number;
+  outOfStock: number;
+  expiringSoon: number;
+  totalUnits: number;
+  totalValue: number;
+  pendingTransfers: number;
+  totalMovements: number;
+  prescricoesAtivas: number;
+  cmm: number;
+}
 
-  const medsWithLotes = (medsData || []).map((m: any) => ({
-    ...m,
-    lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id),
-  })) as (Medicamento & { lotes: Lote[] })[];
-
-  const catData = (catsData || []).map((c: any) => ({
-    name: c.nome,
-    value: medsWithLotes
-      .filter((m) => m.categoria_id === c.id)
-      .reduce((s, m) => s + m.lotes.reduce((sl, l) => sl + l.quantidade_atual, 0), 0),
-  })).filter((c) => c.value > 0);
-
-  // CMM: average of last 3 months
-  const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-  const { data: cmmData } = await supabase.from("movimentacoes").select("quantidade")
-    .in("tipo", ["saida", "dispensacao"])
-    .gte("created_at", threeMonthsAgo.toISOString());
-  const cmm = Math.round((cmmData || []).reduce((s: number, m: any) => s + m.quantidade, 0) / 3);
-
+async function fetchDashboardStats(): Promise<DashboardStats> {
+  const { data, error } = await supabase.rpc("get_dashboard_stats");
+  if (error) throw error;
+  const d = data as any;
   return {
-    meds: medsWithLotes,
-    catData,
-    pendingTransfers: transData?.length || 0,
-    totalMovements: count || 0,
-    prescricoesAtivas: prescCount || 0,
-    cmm,
+    total: d.total || 0,
+    controlled: d.controlled || 0,
+    lowStock: d.lowStock || 0,
+    critical: d.critical || 0,
+    outOfStock: d.outOfStock || 0,
+    expiringSoon: d.expiringSoon || 0,
+    totalUnits: d.totalUnits || 0,
+    totalValue: d.totalValue || 0,
+    pendingTransfers: d.pendingTransfers || 0,
+    totalMovements: d.totalMovements || 0,
+    prescricoesAtivas: d.prescricoesAtivas || 0,
+    cmm: d.cmm || 0,
   };
+}
+
+async function fetchTopStocked() {
+  const { data } = await supabase
+    .from("medicamentos")
+    .select("id, nome")
+    .eq("ativo", true)
+    .limit(200);
+  
+  if (!data || data.length === 0) return [];
+
+  const { data: lotesData } = await supabase
+    .from("lotes")
+    .select("medicamento_id, quantidade_atual")
+    .eq("ativo", true)
+    .in("medicamento_id", data.map(m => m.id));
+
+  const qtyMap: Record<string, number> = {};
+  (lotesData || []).forEach((l: any) => {
+    qtyMap[l.medicamento_id] = (qtyMap[l.medicamento_id] || 0) + l.quantidade_atual;
+  });
+
+  return data
+    .map(m => ({ name: m.nome.length > 18 ? m.nome.slice(0, 18) + "…" : m.nome, qty: qtyMap[m.id] || 0 }))
+    .sort((a, b) => b.qty - a.qty)
+    .slice(0, 6);
+}
+
+async function fetchCategoryData() {
+  const { data: cats } = await supabase.from("categorias_medicamento").select("id, nome");
+  if (!cats || cats.length === 0) return [];
+
+  // Get total per category via lotes join
+  const { data: meds } = await supabase
+    .from("medicamentos")
+    .select("id, categoria_id")
+    .eq("ativo", true)
+    .not("categoria_id", "is", null);
+
+  const { data: lotes } = await supabase
+    .from("lotes")
+    .select("medicamento_id, quantidade_atual")
+    .eq("ativo", true);
+
+  const medCatMap: Record<string, string> = {};
+  (meds || []).forEach((m: any) => { if (m.categoria_id) medCatMap[m.id] = m.categoria_id; });
+
+  const catTotals: Record<string, number> = {};
+  (lotes || []).forEach((l: any) => {
+    const catId = medCatMap[l.medicamento_id];
+    if (catId) catTotals[catId] = (catTotals[catId] || 0) + l.quantidade_atual;
+  });
+
+  return cats
+    .map(c => ({ name: c.nome, value: catTotals[c.id] || 0 }))
+    .filter(c => c.value > 0);
 }
 
 async function fetchConsumoData(period: string) {
@@ -65,9 +115,9 @@ async function fetchConsumoData(period: string) {
     .lte("created_at", to.toISOString())
     .order("created_at");
 
-  const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 1000)) + 1;
   const dayMap: Record<string, number> = {};
-  for (let i = days - 1; i >= 0; i--) {
+  for (let i = Math.min(days, 90) - 1; i >= 0; i--) {
     const d = new Date(to.getTime() - i * 24 * 60 * 60 * 1000);
     dayMap[d.toISOString().slice(0, 10)] = 0;
   }
@@ -82,12 +132,28 @@ async function fetchConsumoData(period: string) {
   }));
 }
 
-export function useDashboardCore() {
+export function useDashboardStats() {
   return useQuery({
-    queryKey: ["dashboard-core"],
-    queryFn: fetchDashboardCore,
-    staleTime: 2 * 60 * 1000, // 2 min
+    queryKey: ["dashboard-stats"],
+    queryFn: fetchDashboardStats,
+    staleTime: 2 * 60 * 1000,
     refetchOnWindowFocus: true,
+  });
+}
+
+export function useTopStocked() {
+  return useQuery({
+    queryKey: ["dashboard-top-stocked"],
+    queryFn: fetchTopStocked,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCategoryData() {
+  return useQuery({
+    queryKey: ["dashboard-category-data"],
+    queryFn: fetchCategoryData,
+    staleTime: 5 * 60 * 1000,
   });
 }
 
