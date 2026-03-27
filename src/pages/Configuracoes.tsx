@@ -163,7 +163,48 @@ const Configuracoes = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="clinicas" className="space-y-4">
+          <TabsContent value="filiais" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">Filiais do Hospital Rumo Certo</p>
+              <Button onClick={openNewFilial} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" />Nova Filial</Button>
+            </div>
+            {filiais.length === 0 ? (
+              <Card className="p-8 text-center shadow-card">
+                <GitBranch className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhuma filial cadastrada</p>
+                <p className="text-xs text-muted-foreground/60 mt-1">Cadastre as filiais do Hospital Rumo Certo</p>
+              </Card>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {filiais.map(f => (
+                  <motion.div key={f.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                    <Card className={cn("p-4 shadow-card cursor-pointer transition-all hover:shadow-card-hover", !f.ativo && "opacity-50")} onClick={() => openEditFilial(f)}>
+                      <div className="flex items-start justify-between mb-2">
+                        <p className="text-sm font-semibold">{f.nome}</p>
+                        <Badge variant="outline" className={cn("text-[9px]", f.ativo ? "bg-success/10 text-success" : "bg-muted")}>{f.ativo ? "Ativa" : "Inativa"}</Badge>
+                      </div>
+                      {f.cnpj && <p className="text-xs text-muted-foreground">CNPJ: {f.cnpj}</p>}
+                      {f.cnes && <p className="text-xs text-muted-foreground">CNES: {f.cnes}</p>}
+                      <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />{f.cidade}{f.estado ? ` - ${f.estado}` : ""}
+                      </div>
+                      {f.responsavel && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <User className="h-3 w-3" />{f.responsavel}
+                        </div>
+                      )}
+                      {f.telefone && (
+                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                          <Phone className="h-3 w-3" />{f.telefone}
+                        </div>
+                      )}
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
             <div className="flex justify-end"><Button onClick={() => setClinicaDialog(true)} className="gradient-primary text-primary-foreground gap-2"><Plus className="h-4 w-4" />Nova Clínica</Button></div>
             <div className="grid sm:grid-cols-2 gap-4">
               {clinicas.map(c => (
