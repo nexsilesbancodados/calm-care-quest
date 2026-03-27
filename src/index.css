@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -54,8 +54,8 @@
     --info: 210 80% 55%;
     --info-foreground: 0 0% 100%;
 
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --font-display: 'Syne', system-ui, sans-serif;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     --gradient-primary: linear-gradient(135deg, hsl(152 58% 34%), hsl(152 62% 46%));
@@ -123,10 +123,21 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    letter-spacing: -0.011em;
+    line-height: 1.5;
   }
-  h1, h2, h3 {
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
   }
+  h1 { @apply text-2xl sm:text-3xl font-bold; }
+  h2 { @apply text-xl sm:text-2xl font-semibold; }
+  h3 { @apply text-lg font-semibold; }
+  h4 { @apply text-base font-semibold; }
+  p { @apply leading-relaxed; }
+  small { @apply text-xs text-muted-foreground; }
 
   ::-webkit-scrollbar {
     width: 5px;
