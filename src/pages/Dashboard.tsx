@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const COLORS = ["hsl(152, 58%, 38%)", "hsl(190, 55%, 42%)", "hsl(210, 80%, 55%)", "hsl(38, 92%, 50%)", "hsl(0, 72%, 51%)", "hsl(160, 50%, 50%)", "hsl(155, 10%, 46%)"];
+const COLORS = ["hsl(152, 56%, 36%)", "hsl(178, 48%, 40%)", "hsl(212, 82%, 54%)", "hsl(40, 96%, 50%)", "hsl(4, 76%, 50%)", "hsl(160, 50%, 46%)", "hsl(148, 10%, 42%)"];
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
@@ -42,7 +42,6 @@ const Dashboard = () => {
   const { data: core, isLoading } = useDashboardCore();
   const { data: consumoData = [] } = useConsumoData(period);
 
-  // Fetch consumo 30d for coverage calculation
   const { data: consumo30d = {} } = useQuery({
     queryKey: ["dashboard-consumo-30d-coverage"],
     queryFn: async () => {
@@ -59,7 +58,6 @@ const Dashboard = () => {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Fetch today's dispensações count
   const { data: dispensacoesHoje = 0 } = useQuery({
     queryKey: ["dashboard-dispensacoes-hoje"],
     queryFn: async () => {
@@ -101,7 +99,6 @@ const Dashboard = () => {
   const expiredMeds = meds.filter(m => m.lotes.some(l => new Date(l.validade) < now));
   const lowStockMeds = meds.filter(m => { const t = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0); return t > 0 && t <= m.estoque_minimo; });
 
-  // Critical coverage: meds with ≤ 7 days coverage
   const criticalCoverageMeds = useMemo(() => {
     return meds.filter(m => {
       const total = m.lotes.reduce((s, l) => s + l.quantidade_atual, 0);
@@ -123,24 +120,23 @@ const Dashboard = () => {
 
   const totalAlerts = expiredMeds.length + lowStockMeds.length + (pendingTransfers > 0 ? 1 : 0);
 
-  // Quick actions with badges
   const quickActions = useMemo(() => [
-    { label: "Entrada", desc: "Receber", icon: ArrowDownCircle, path: "/entrada", color: "text-success", bg: "bg-success/8 group-hover:bg-success/12", badge: stats.outOfStock > 0 ? `${stats.outOfStock} em falta` : null },
-    { label: "Dispensar", desc: "Saída", icon: ArrowUpCircle, path: "/dispensacao", color: "text-info", bg: "bg-info/8 group-hover:bg-info/12", badge: dispensacoesHoje > 0 ? `${dispensacoesHoje} hoje` : null },
-    { label: "Etiquetas", desc: "Imprimir", icon: Barcode, path: "/etiquetas", color: "text-primary", bg: "bg-primary/8 group-hover:bg-primary/12", badge: null },
-    { label: "Transferir", desc: "Clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "text-warning", bg: "bg-warning/8 group-hover:bg-warning/12", badge: pendingTransfers > 0 ? `${pendingTransfers} pendentes` : null },
+    { label: "Entrada", desc: "Receber medicamentos", icon: ArrowDownCircle, path: "/entrada", color: "text-success", bg: "bg-success/6", badge: stats.outOfStock > 0 ? `${stats.outOfStock} em falta` : null },
+    { label: "Dispensar", desc: "Saída de estoque", icon: ArrowUpCircle, path: "/dispensacao", color: "text-info", bg: "bg-info/6", badge: dispensacoesHoje > 0 ? `${dispensacoesHoje} hoje` : null },
+    { label: "Etiquetas", desc: "Imprimir etiquetas", icon: Barcode, path: "/etiquetas", color: "text-primary", bg: "bg-primary/6", badge: null },
+    { label: "Transferir", desc: "Entre clínicas", icon: ArrowLeftRight, path: "/transferencias", color: "text-warning", bg: "bg-warning/6", badge: pendingTransfers > 0 ? `${pendingTransfers} pendentes` : null },
   ], [stats.outOfStock, dispensacoesHoje, pendingTransfers]);
 
   if (isLoading)
     return (
       <AppLayout title="Dashboard" subtitle="Carregando...">
         <div className="space-y-4">
-          <Skeleton className="h-24 sm:h-28 rounded-xl" />
+          <Skeleton className="h-28 sm:h-32 rounded-2xl" />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
-            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-16 sm:h-20 rounded-xl" />)}
+            {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-2xl" />)}
           </div>
           <div className="grid gap-4">
-            <Skeleton className="h-56 sm:h-72 rounded-xl" />
+            <Skeleton className="h-64 rounded-2xl" />
           </div>
         </div>
       </AppLayout>
@@ -148,45 +144,50 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Dashboard" subtitle="Visão geral da farmácia hospitalar">
-      {/* ── Hero Banner ── */}
-      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 24 }} className="mb-4 sm:mb-6">
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl gradient-hero text-white p-4 sm:p-6 lg:p-7 border border-white/[0.08] shadow-[0_4px_40px_hsl(152_50%_30%/0.15)]">
+      {/* ── HERO BANNER ── */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, type: "spring", stiffness: 180, damping: 22 }} className="mb-5 sm:mb-7">
+        <div className="relative overflow-hidden rounded-2xl gradient-hero text-white p-5 sm:p-7 lg:p-8 border border-white/[0.06]">
+          {/* Ambient effects */}
           <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 15% 60%, hsla(152,60%,50%,0.18) 0%, transparent 45%),
-              radial-gradient(circle at 85% 25%, hsla(190,55%,45%,0.12) 0%, transparent 45%),
-              radial-gradient(circle at 50% 90%, hsla(170,50%,40%,0.08) 0%, transparent 40%)`,
+            backgroundImage: `radial-gradient(ellipse at 10% 60%, hsla(152,55%,45%,0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 90% 20%, hsla(178,48%,42%,0.1) 0%, transparent 50%)`,
           }} />
-          <div className="absolute top-0 right-0 w-40 sm:w-72 h-40 sm:h-72 bg-white/[0.03] rounded-full -translate-y-1/2 translate-x-1/3 blur-sm" />
-          <div className="absolute bottom-0 left-0 w-32 sm:w-48 h-32 sm:h-48 bg-primary/[0.04] rounded-full translate-y-1/2 -translate-x-1/4 blur-md" />
+          <div className="absolute top-0 right-0 w-56 sm:w-80 h-56 sm:h-80 bg-white/[0.02] rounded-full -translate-y-1/2 translate-x-1/4" />
+          
+          {/* Dot grid */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, white 0.5px, transparent 0.5px)",
+            backgroundSize: "20px 20px",
+          }} />
 
-          <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4">
-            <div className="space-y-1 sm:space-y-2 min-w-0">
-              <p className="text-[9px] sm:text-[10px] font-semibold text-white/40 uppercase tracking-[0.2em] font-mono">
-                {now.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })}
+          <div className="relative flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div className="space-y-2 min-w-0">
+              <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.25em] font-mono">
+                {now.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
               </p>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight font-display truncate">
-                {greeting()}, <span className="text-white/90">{profile?.nome?.split(" ")[0] || "Usuário"}</span>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-display leading-none">
+                {greeting()}, <span className="text-white/85">{profile?.nome?.split(" ")[0] || "Usuário"}</span>
               </h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] sm:text-xs text-white/50">
-                <span className="flex items-center gap-1">
-                  <Package className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  {totalUnits.toLocaleString("pt-BR")} un
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-white/40 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  {totalUnits.toLocaleString("pt-BR")} unidades
                 </span>
-                <span className="flex items-center gap-1">
-                  <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                  {totalMovements} mov.
+                <span className="flex items-center gap-1.5">
+                  <Activity className="h-3.5 w-3.5" />
+                  {totalMovements} movimentações
                 </span>
                 {totalAlerts > 0 && (
-                  <span className="flex items-center gap-1 text-warning">
-                    <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                  <span className="flex items-center gap-1.5 text-warning/80">
+                    <AlertTriangle className="h-3.5 w-3.5" />
                     {totalAlerts} alerta{totalAlerts > 1 ? "s" : ""}
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="text-left sm:text-right flex sm:flex-col items-baseline sm:items-end gap-2 sm:gap-1">
-              <p className="text-3xl sm:text-4xl lg:text-5xl font-bold tabular-nums tracking-tighter font-display leading-none" style={{ textShadow: '0 0 30px hsla(152,55%,48%,0.3)' }}>
+            <div className="text-left sm:text-right">
+              <p className="text-4xl sm:text-5xl font-extrabold tabular-nums tracking-tighter font-display leading-none" style={{ textShadow: '0 0 40px hsla(152,55%,48%,0.25)' }}>
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
@@ -194,56 +195,51 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* ── Quick Actions with badges ── */}
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} className="mb-4 sm:mb-6">
-        <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
+      {/* ── QUICK ACTIONS ── */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5 sm:mb-7">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           {quickActions.map((a, i) => (
             <motion.button
               key={a.label}
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.04 }}
+              transition={{ delay: 0.12 + i * 0.05 }}
               onClick={() => navigate(a.path)}
-              className="group flex flex-col sm:flex-row items-center sm:items-center gap-1.5 sm:gap-3 rounded-xl border border-border/50 bg-card p-2.5 sm:p-3.5 hover:border-primary/30 hover:shadow-[0_4px_20px_hsl(var(--primary)/0.08)] transition-all duration-300 active:scale-[0.96] text-center sm:text-left relative overflow-hidden"
+              className="group relative flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-3.5 sm:p-4 hover:border-primary/25 transition-all duration-300 active:scale-[0.97] text-left overflow-hidden"
+              style={{ boxShadow: "var(--shadow-card)" }}
             >
-              {/* Hover glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
-              <div className={cn("relative flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-300 group-hover:scale-110", a.bg)}>
-                <a.icon className={cn("h-3.5 w-3.5 sm:h-4.5 sm:w-4.5", a.color)} />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className={cn("relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-all duration-300 group-hover:scale-110", a.bg)}>
+                <a.icon className={cn("h-[18px] w-[18px]", a.color)} strokeWidth={1.8} />
               </div>
-              <div className="min-w-0">
-                <p className="text-[10px] sm:text-sm font-semibold text-foreground leading-tight truncate">{a.label}</p>
-                <p className="text-[8px] sm:text-[10px] text-muted-foreground mt-0 sm:mt-0.5 truncate hidden sm:block">{a.desc}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-[13px] font-bold text-foreground leading-tight">{a.label}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5 hidden sm:block">{a.desc}</p>
               </div>
               {a.badge && (
-                <span className="text-[9px] font-semibold bg-destructive/15 text-destructive rounded-full px-1.5 py-0.5 absolute top-1 right-1 sm:static sm:ml-auto whitespace-nowrap">
+                <span className="text-[9px] font-bold bg-destructive/10 text-destructive rounded-full px-2 py-0.5 shrink-0">
                   {a.badge}
                 </span>
               )}
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 ml-auto shrink-0 group-hover:text-primary group-hover:translate-x-0.5 transition-all hidden sm:block" />
+              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/20 shrink-0 group-hover:text-primary/50 group-hover:translate-x-0.5 transition-all hidden sm:block" />
             </motion.button>
           ))}
         </div>
       </motion.div>
 
-      {/* ── Critical Coverage Alert ── */}
+      {/* ── CRITICAL COVERAGE ── */}
       {criticalCoverageMeds.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12 }}
-          className="mb-4 sm:mb-6"
-        >
-          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mb-5 sm:mb-7">
+          <div className="rounded-2xl border border-destructive/15 bg-destructive/[0.03] p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/8">
+                <AlertTriangle className="h-5 w-5 text-destructive" strokeWidth={1.8} />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-foreground">
+                <p className="text-xs sm:text-sm font-bold text-foreground">
                   {criticalCoverageMeds.length} medicamento{criticalCoverageMeds.length > 1 ? "s" : ""} com menos de 7 dias de cobertura
                 </p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
+                <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-0.5 truncate">
                   {criticalCoverageMeds.slice(0, 3).map(m => m.nome).join(", ")}{criticalCoverageMeds.length > 3 ? ` e mais ${criticalCoverageMeds.length - 3}` : ""}
                 </p>
               </div>
@@ -251,7 +247,7 @@ const Dashboard = () => {
             <Button
               variant="outline"
               size="sm"
-              className="shrink-0 text-xs gap-1 border-destructive/20 text-destructive hover:bg-destructive/10 w-full sm:w-auto"
+              className="shrink-0 text-xs gap-1.5 border-destructive/15 text-destructive hover:bg-destructive/8 w-full sm:w-auto rounded-xl"
               onClick={() => navigate("/estoque")}
             >
               Ver no Estoque <ArrowRight className="h-3 w-3" />
@@ -260,116 +256,116 @@ const Dashboard = () => {
         </motion.div>
       )}
 
-      {/* ── KPI Stats Grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2.5 mb-4 sm:mb-6">
-        <StatCard title="Medicamentos" value={stats.total} icon={Pill} variant="info" delay={0.12} onClick={() => navigate("/medicamentos")} />
-        <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.14} />
-        <StatCard title="Estoque Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.16} onClick={() => navigate("/alertas")} />
-        <StatCard title="Crítico" value={stats.critical} icon={AlertTriangle} variant="critical" delay={0.18} onClick={() => navigate("/alertas")} />
-        <StatCard title="Esgotado" value={stats.outOfStock} icon={XCircle} variant="critical" delay={0.20} />
+      {/* ── KPI STATS ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-5 sm:mb-7">
+        <StatCard title="Medicamentos" value={stats.total} icon={Pill} variant="info" delay={0.15} onClick={() => navigate("/medicamentos")} />
+        <StatCard title="Controlados" value={stats.controlled} icon={ShieldCheck} variant="default" delay={0.17} />
+        <StatCard title="Estoque Baixo" value={stats.lowStock} icon={Package} variant="warning" delay={0.19} onClick={() => navigate("/alertas")} />
+        <StatCard title="Crítico" value={stats.critical} icon={AlertTriangle} variant="critical" delay={0.21} onClick={() => navigate("/alertas")} />
+        <StatCard title="Esgotado" value={stats.outOfStock} icon={XCircle} variant="critical" delay={0.23} />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mb-4 sm:mb-6">
-        <StatCard title="Vence 60d" value={stats.expiringSoon} icon={Clock} variant="warning" delay={0.22} />
-        <StatCard title="Transf." value={stats.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.24} onClick={() => navigate("/transferencias")} />
-        <StatCard title="CMM" value={cmm} icon={TrendingUp} variant="default" delay={0.26} />
-        <StatCard title="Prescrições" value={prescricoesAtivas} icon={FileText} variant="info" delay={0.28} onClick={() => navigate("/prescricoes")} />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5 sm:mb-7">
+        <StatCard title="Vence 60d" value={stats.expiringSoon} icon={Clock} variant="warning" delay={0.25} />
+        <StatCard title="Transferências" value={stats.pendingTransfers} icon={ArrowLeftRight} variant="info" delay={0.27} onClick={() => navigate("/transferencias")} />
+        <StatCard title="CMM" value={cmm} icon={TrendingUp} variant="default" delay={0.29} />
+        <StatCard title="Prescrições" value={prescricoesAtivas} icon={FileText} variant="info" delay={0.31} onClick={() => navigate("/prescricoes")} />
       </div>
 
-      {/* ── Charts ── */}
-      <div className="grid lg:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
-        {/* Consumo Chart */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="lg:col-span-3">
-           <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-3 sm:mb-5">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/8">
-                  <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+      {/* ── CHARTS ── */}
+      <div className="grid lg:grid-cols-5 gap-3 sm:gap-4 mb-5 sm:mb-7">
+        {/* Consumo */}
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-3">
+          <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/6 ring-1 ring-primary/10">
+                  <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.8} />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold tracking-tight font-display">Consumo</h3>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground hidden sm:block">Saídas e dispensações</p>
+                  <h3 className="text-sm font-extrabold tracking-tight font-display">Consumo</h3>
+                  <p className="text-[10px] text-muted-foreground/50 hidden sm:block">Saídas e dispensações no período</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Select value={period} onValueChange={setPeriod}>
-                  <SelectTrigger className="h-7 sm:h-8 text-[10px] sm:text-xs w-[100px] sm:w-[110px] rounded-lg border-border/50"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-8 text-[11px] w-[110px] rounded-xl border-border/40"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {PERIOD_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                <Badge variant="outline" className="text-[9px] sm:text-[10px] font-bold bg-primary/5 border-primary/15 tabular-nums">
+                <Badge variant="outline" className="text-[10px] font-bold bg-primary/4 border-primary/10 tabular-nums">
                   {consumoData.reduce((s, d) => s + d.qty, 0).toLocaleString("pt-BR")} un
                 </Badge>
               </div>
             </div>
             {consumoData.every(d => d.qty === 0) ? (
-              <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-muted-foreground">
-                <Activity className="h-6 w-6 sm:h-8 sm:w-8 mb-2 opacity-30" />
-                <p className="text-[10px] sm:text-xs">Nenhuma saída no período</p>
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/40">
+                <Activity className="h-8 w-8 mb-3" strokeWidth={1.2} />
+                <p className="text-xs font-medium">Nenhuma saída no período</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={consumoData} margin={{ left: -12, right: 4, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorQty" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.12} />
                       <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))", fontFamily: "var(--font-mono)" }} interval={Math.max(0, Math.floor(consumoData.length / 6))} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))", fontFamily: "var(--font-mono)" }} width={28} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" vertical={false} />
+                  <XAxis dataKey="day" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground) / 0.5)", fontFamily: "var(--font-mono)" }} interval={Math.max(0, Math.floor(consumoData.length / 6))} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground) / 0.5)", fontFamily: "var(--font-mono)" }} width={30} axisLine={false} tickLine={false} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 10,
+                      border: "1px solid hsl(var(--border) / 0.4)",
+                      borderRadius: 14,
                       fontSize: 11,
                       boxShadow: "var(--shadow-elevated)",
                       fontFamily: "var(--font-sans)",
                     }}
-                    cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1, strokeDasharray: "4 4" }}
+                    cursor={{ stroke: "hsl(var(--primary) / 0.3)", strokeWidth: 1, strokeDasharray: "4 4" }}
                   />
-                  <Area type="monotone" dataKey="qty" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorQty)" name="Unidades" dot={false} activeDot={{ r: 3, strokeWidth: 2, fill: "hsl(var(--card))" }} />
+                  <Area type="monotone" dataKey="qty" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#colorQty)" name="Unidades" dot={false} activeDot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--card))" }} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </Card>
         </motion.div>
 
-        {/* Categories Pie */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
-          <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
-            <div className="flex items-center gap-2 mb-3 sm:mb-5">
-              <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-accent/8">
-                <Pill className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-accent" />
+        {/* Categories */}
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="lg:col-span-2">
+          <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/6 ring-1 ring-accent/10">
+                <Pill className="h-4 w-4 text-accent" strokeWidth={1.8} />
               </div>
               <div>
-                <h3 className="text-xs sm:text-sm font-bold tracking-tight font-display">Categorias</h3>
-                <p className="text-[9px] sm:text-[10px] text-muted-foreground hidden sm:block">Distribuição por tipo</p>
+                <h3 className="text-sm font-extrabold tracking-tight font-display">Categorias</h3>
+                <p className="text-[10px] text-muted-foreground/50 hidden sm:block">Distribuição por tipo</p>
               </div>
             </div>
             {catData.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-muted-foreground">
-                <Pill className="h-6 w-6 sm:h-8 sm:w-8 mb-2 opacity-30" />
-                <p className="text-[10px] sm:text-xs">Sem dados</p>
+              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/40">
+                <Pill className="h-8 w-8 mb-3" strokeWidth={1.2} />
+                <p className="text-xs font-medium">Sem dados</p>
               </div>
             ) : (
               <div className="flex flex-col items-center">
                 <ResponsiveContainer width="100%" height={140}>
                   <PieChart>
-                    <Pie data={catData} cx="50%" cy="50%" innerRadius={35} outerRadius={60} dataKey="value" stroke="hsl(var(--card))" strokeWidth={2} paddingAngle={3}>
+                    <Pie data={catData} cx="50%" cy="50%" innerRadius={38} outerRadius={62} dataKey="value" stroke="hsl(var(--card))" strokeWidth={3} paddingAngle={3}>
                       {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11, boxShadow: "var(--shadow-elevated)" }} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.4)", borderRadius: 14, fontSize: 11, boxShadow: "var(--shadow-elevated)" }} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="w-full space-y-1 mt-1 sm:mt-2">
+                <div className="w-full space-y-1 mt-2">
                   {catData.map((c, i) => (
-                    <div key={c.name} className="flex items-center gap-2 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md hover:bg-muted/50 transition-colors">
-                      <div className="h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full shrink-0 ring-2 ring-background" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                      <span className="text-muted-foreground truncate flex-1">{c.name}</span>
-                      <span className="font-bold tabular-nums text-foreground">{c.value}</span>
+                    <div key={c.name} className="flex items-center gap-2.5 text-[11px] px-2 py-1.5 rounded-lg hover:bg-muted/30 transition-colors">
+                      <div className="h-2.5 w-2.5 rounded-full shrink-0 ring-2 ring-background" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                      <span className="text-muted-foreground/70 truncate flex-1">{c.name}</span>
+                      <span className="font-bold tabular-nums text-foreground font-mono text-[10px]">{c.value}</span>
                     </div>
                   ))}
                 </div>
@@ -379,110 +375,102 @@ const Dashboard = () => {
         </motion.div>
       </div>
 
-      {/* ── Top Stock + Alerts ── */}
+      {/* ── TOP STOCK + ALERTS ── */}
       <div className="grid lg:grid-cols-2 gap-3 sm:gap-4">
-        {/* Top Stocked */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-          <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
-            <div className="flex items-center justify-between mb-3 sm:mb-5">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-success/8">
-                  <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success" />
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/6 ring-1 ring-success/10">
+                  <Package className="h-4 w-4 text-success" strokeWidth={1.8} />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold tracking-tight font-display">Maiores Estoques</h3>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground hidden sm:block">Top 6 medicamentos</p>
+                  <h3 className="text-sm font-extrabold tracking-tight font-display">Maiores Estoques</h3>
+                  <p className="text-[10px] text-muted-foreground/50 hidden sm:block">Top 6 medicamentos</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="text-[9px] sm:text-[10px] gap-1 h-6 sm:h-7 text-muted-foreground hover:text-foreground" onClick={() => navigate("/estoque")}>
+              <Button variant="ghost" size="sm" className="text-[10px] gap-1 h-7 text-muted-foreground/50 hover:text-foreground rounded-lg" onClick={() => navigate("/estoque")}>
                 Ver <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
             {topStocked.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 sm:py-14 text-muted-foreground">
-                <Package className="h-6 w-6 sm:h-8 sm:w-8 mb-2 opacity-30" />
-                <p className="text-[10px] sm:text-xs">Nenhum medicamento</p>
+              <div className="flex flex-col items-center justify-center py-14 text-muted-foreground/40">
+                <Package className="h-8 w-8 mb-3" strokeWidth={1.2} />
+                <p className="text-xs font-medium">Nenhum medicamento</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={180}>
+              <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={topStocked} layout="vertical" margin={{ left: 0, right: 4 }}>
                   <defs>
                     <linearGradient id="barGrad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                      <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.9} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                      <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.85} />
                     </linearGradient>
                   </defs>
-                  <XAxis type="number" tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))", fontFamily: "var(--font-mono)" }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 10, fontSize: 11, boxShadow: "var(--shadow-elevated)" }} />
-                  <Bar dataKey="qty" fill="url(#barGrad)" radius={[0, 6, 6, 0]} barSize={12} name="Unidades" />
+                  <XAxis type="number" tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground) / 0.5)", fontFamily: "var(--font-mono)" }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" width={95} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground) / 0.6)" }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border) / 0.4)", borderRadius: 14, fontSize: 11, boxShadow: "var(--shadow-elevated)" }} />
+                  <Bar dataKey="qty" fill="url(#barGrad)" radius={[0, 8, 8, 0]} barSize={14} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </Card>
         </motion.div>
 
-        {/* Alerts */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="p-3 sm:p-5 h-full border-border/50 hover:border-border/80 transition-colors duration-300 hover:shadow-lg">
-            <div className="flex items-center justify-between mb-3 sm:mb-5">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-warning/8">
-                  <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+          <Card className="p-4 sm:p-6 h-full border-border/40 rounded-2xl transition-all duration-300 hover:shadow-lg" style={{ boxShadow: "var(--shadow-card)" }}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/6 ring-1 ring-warning/10">
+                  <Zap className="h-4 w-4 text-warning" strokeWidth={1.8} />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-bold tracking-tight font-display">Alertas</h3>
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground hidden sm:block">Atenção necessária</p>
+                  <h3 className="text-sm font-extrabold tracking-tight font-display">Alertas</h3>
+                  <p className="text-[10px] text-muted-foreground/50 hidden sm:block">Atenção necessária</p>
                 </div>
               </div>
               {totalAlerts > 0 && (
-                <Button variant="ghost" size="sm" className="text-[9px] sm:text-[10px] gap-1 h-6 sm:h-7 text-muted-foreground hover:text-foreground" onClick={() => navigate("/alertas")}>
+                <Button variant="ghost" size="sm" className="text-[10px] gap-1 h-7 text-muted-foreground/50 hover:text-foreground rounded-lg" onClick={() => navigate("/alertas")}>
                   Ver <ArrowRight className="h-3 w-3" />
                 </Button>
               )}
             </div>
 
             {totalAlerts === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 sm:py-14 text-muted-foreground">
-                <ShieldCheck className="h-6 w-6 sm:h-8 sm:w-8 mb-2 text-success/40" />
-                <p className="text-[10px] sm:text-xs font-medium text-success">Tudo em ordem!</p>
+              <div className="flex flex-col items-center justify-center py-14 text-muted-foreground/40">
+                <ShieldCheck className="h-8 w-8 mb-3 text-success/40" strokeWidth={1.2} />
+                <p className="text-xs font-bold text-success/60">Tudo em ordem!</p>
               </div>
             ) : (
-              <div className="space-y-1.5 sm:space-y-2">
+              <div className="space-y-2">
                 {expiredMeds.slice(0, 3).map(m => (
-                  <div key={m.id} className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs rounded-lg border border-destructive/10 bg-destructive/[0.03] p-2 sm:p-3 transition-colors hover:bg-destructive/[0.06]">
-                    <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-md bg-destructive/10">
-                      <XCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-destructive" />
+                  <div key={m.id} className="flex items-center gap-3 text-xs rounded-xl border border-destructive/8 bg-destructive/[0.02] p-3 transition-all hover:bg-destructive/[0.04] hover:border-destructive/15">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-destructive/6">
+                      <XCircle className="h-3.5 w-3.5 text-destructive" strokeWidth={1.8} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-foreground truncate block text-[10px] sm:text-xs">{m.nome}</span>
-                    </div>
-                    <Badge variant="outline" className="text-[7px] sm:text-[8px] bg-destructive/8 text-destructive border-destructive/15 uppercase tracking-wider font-bold shrink-0">Vencido</Badge>
+                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{m.nome}</span>
+                    <Badge variant="outline" className="text-[8px] bg-destructive/6 text-destructive border-destructive/10 uppercase tracking-wider font-bold">Vencido</Badge>
                   </div>
                 ))}
                 {lowStockMeds.slice(0, 3).map(m => (
-                  <div key={m.id} className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs rounded-lg border border-warning/10 bg-warning/[0.03] p-2 sm:p-3 transition-colors hover:bg-warning/[0.06]">
-                    <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-md bg-warning/10">
-                      <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-warning" />
+                  <div key={m.id} className="flex items-center gap-3 text-xs rounded-xl border border-warning/8 bg-warning/[0.02] p-3 transition-all hover:bg-warning/[0.04] hover:border-warning/15">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/6">
+                      <AlertTriangle className="h-3.5 w-3.5 text-warning" strokeWidth={1.8} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-foreground truncate block text-[10px] sm:text-xs">{m.nome}</span>
-                    </div>
-                    <Badge variant="outline" className="text-[7px] sm:text-[8px] bg-warning/8 text-warning border-warning/15 uppercase tracking-wider font-bold shrink-0">Baixo</Badge>
+                    <span className="font-bold text-foreground truncate flex-1 text-[11px]">{m.nome}</span>
+                    <Badge variant="outline" className="text-[8px] bg-warning/6 text-warning border-warning/10 uppercase tracking-wider font-bold">Baixo</Badge>
                   </div>
                 ))}
                 {pendingTransfers > 0 && (
                   <div
-                    className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs rounded-lg border border-info/10 bg-info/[0.03] p-2 sm:p-3 cursor-pointer transition-colors hover:bg-info/[0.06]"
+                    className="flex items-center gap-3 text-xs rounded-xl border border-info/8 bg-info/[0.02] p-3 cursor-pointer transition-all hover:bg-info/[0.04] hover:border-info/15"
                     onClick={() => navigate("/transferencias")}
                   >
-                    <div className="flex h-6 w-6 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-md bg-info/10">
-                      <ArrowLeftRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-info" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-info/6">
+                      <ArrowLeftRight className="h-3.5 w-3.5 text-info" strokeWidth={1.8} />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <span className="font-semibold text-foreground">{pendingTransfers} transferência(s)</span>
-                    </div>
-                    <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-info shrink-0" />
+                    <span className="font-bold text-foreground flex-1 text-[11px]">{pendingTransfers} transferência(s)</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-info/50 shrink-0" />
                   </div>
                 )}
               </div>
