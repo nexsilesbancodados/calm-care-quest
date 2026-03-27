@@ -67,11 +67,34 @@ const Medicamentos = () => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    const { count } = await supabase.from("medicamentos").select("id", { count: "exact", head: true }).eq("ativo", true);
+    // Build query with server-side filters
+    let countQuery = supabase.from("medicamentos").select("id", { count: "exact", head: true }).eq("ativo", true);
+    let medsQuery = supabase.from("medicamentos").select("*").eq("ativo", true).order("nome");
+
+    // Apply category filter at DB level
+    if (catFilter !== "all") {
+      countQuery = countQuery.eq("categoria_id", catFilter);
+      medsQuery = medsQuery.eq("categoria_id", catFilter);
+    }
+
+    // Apply forma filter at DB level
+    if (formaFilter !== "all") {
+      countQuery = countQuery.eq("forma_farmaceutica", formaFilter);
+      medsQuery = medsQuery.eq("forma_farmaceutica", formaFilter);
+    }
+
+    // Apply search filter at DB level
+    if (search.trim()) {
+      const term = `%${search.trim()}%`;
+      countQuery = countQuery.or(`nome.ilike.${term},generico.ilike.${term},principio_ativo.ilike.${term},codigo_barras.ilike.${term}`);
+      medsQuery = medsQuery.or(`nome.ilike.${term},generico.ilike.${term},principio_ativo.ilike.${term},codigo_barras.ilike.${term}`);
+    }
+
+    const { count } = await countQuery;
     setTotalCount(count || 0);
 
     const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: fornData }] = await Promise.all([
-      supabase.from("medicamentos").select("*").eq("ativo", true).order("nome").range(from, to),
+      medsQuery.range(from, to),
       supabase.from("lotes").select("*").eq("ativo", true),
       supabase.from("categorias_medicamento").select("*").eq("ativo", true),
       supabase.from("fornecedores").select("*").eq("ativo", true).order("nome"),
@@ -86,7 +109,7 @@ const Medicamentos = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page]);
+  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, search, statusFilter]);
 
   const now = new Date();
 
