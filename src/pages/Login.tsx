@@ -296,7 +296,7 @@ const Login = () => {
 
           <div>
             {forgotOpen ? (
-              <motion.div key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+              <div>
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>Esqueceu a senha?</h2>
                   <p className="text-sm text-muted-foreground mt-2">Informe seu e-mail e enviaremos um link de redefinição.</p>
