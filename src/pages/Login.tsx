@@ -28,7 +28,7 @@ const floatingIcons = [
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, resetPassword, session, loading: authLoading } = useAuth();
+  const { login, resetPassword, session, loading: authLoading, refreshProfile } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedFilial, setSelectedFilial] = useState("");
@@ -79,11 +79,18 @@ const Login = () => {
       .single();
 
     if (roleData?.role === "admin") {
-      // Update admin's filial_id to selected unit
-      await supabase
-        .from("profiles")
-        .update({ filial_id: selectedFilial })
-        .eq("user_id", user.id);
+      const { error: filialError } = await supabase.rpc("set_active_filial", {
+        _filial_id: selectedFilial,
+      });
+
+      if (filialError) {
+        await supabase.auth.signOut();
+        setLoading(false);
+        toast.error("Não foi possível ativar a unidade selecionada.");
+        return;
+      }
+
+      await refreshProfile();
       setLoading(false);
       toast.success("Login realizado com sucesso!");
       navigate("/");

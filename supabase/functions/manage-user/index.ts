@@ -59,6 +59,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    const { data: callerProfile } = await adminClient
+      .from("profiles")
+      .select("filial_id")
+      .eq("user_id", caller.id)
+      .single();
+
+    const { data: targetProfile } = await adminClient
+      .from("profiles")
+      .select("filial_id")
+      .eq("user_id", user_id)
+      .single();
+
+    if (!callerProfile?.filial_id || !targetProfile?.filial_id || callerProfile.filial_id !== targetProfile.filial_id) {
+      return new Response(JSON.stringify({ error: "Você só pode gerenciar funcionários da unidade ativa" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Prevent self-actions
     if (user_id === caller.id) {
       return new Response(JSON.stringify({ error: "Você não pode realizar esta ação em si mesmo" }), {
