@@ -206,11 +206,13 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
             </div>
           </header>
 
-          <main className="flex-1 p-2.5 sm:p-5 lg:p-6 overflow-auto pb-safe">
+          <main className="flex-1 p-2.5 sm:p-5 lg:p-6 overflow-auto pb-20 sm:pb-6">
             <div className="page-enter">
               {children}
             </div>
           </main>
+
+          <MobileBottomNav />
         </div>
       </div>
     </SidebarProvider>
