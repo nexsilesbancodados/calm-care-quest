@@ -38,9 +38,6 @@ const mainItems: MenuItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: null, badgeKey: null },
   { title: "Medicamentos", url: "/medicamentos", icon: Pill, roles: null, badgeKey: null },
   { title: "Estoque", url: "/estoque", icon: Package, roles: null, badgeKey: null },
-];
-
-const operationItems: MenuItem[] = [
   { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"], badgeKey: null },
   { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
   { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null, badgeKey: null },
@@ -52,9 +49,6 @@ const toolItems: MenuItem[] = [
   { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null, badgeKey: null },
   { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"], badgeKey: null },
   { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"], badgeKey: null },
-];
-
-const reportItems: MenuItem[] = [
   { title: "Alertas", url: "/alertas", icon: AlertTriangle, roles: null, badgeKey: "alerts" },
   { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null, badgeKey: null },
   { title: "Pacientes", url: "/pacientes", icon: User, roles: null, badgeKey: null },
@@ -254,10 +248,8 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2.5 space-y-0.5">
-        {renderGroup("Principal", mainItems)}
-        {renderGroup("Operações", operationItems)}
-        {renderGroup("Ferramentas", toolItems)}
-        {renderGroup("Cadastros & Relatórios", reportItems)}
+        {renderGroup("Gestão", mainItems)}
+        {renderGroup("Ferramentas & Cadastros", toolItems)}
         {renderGroup("Administração", systemItems, false)}
       </SidebarContent>
 
