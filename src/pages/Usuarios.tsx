@@ -11,13 +11,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserPlus, Shield, Send, Mail, Ban, Trash2, ShieldCheck, MoreHorizontal, UserX, UserCheck } from "lucide-react";
+import { Users, UserPlus, Shield, Send, Mail, Ban, Trash2, ShieldCheck, MoreHorizontal, UserX, UserCheck, Building2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { ROLE_LABELS, ROLE_PERMISSIONS, type AppRole } from "@/types/database";
+import { ROLE_LABELS, ROLE_PERMISSIONS, type AppRole, type Filial } from "@/types/database";
 
 const PERMISSION_LABELS: Record<string, string> = {
   manage_stock: "Gerenciar Estoque",
@@ -61,10 +61,12 @@ const ALL_PERMISSIONS = Object.keys(PERMISSION_LABELS);
 const Usuarios = () => {
   const { isAdmin } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [filiais, setFiliais] = useState<Filial[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteNome, setInviteNome] = useState("");
+  const [inviteFilialId, setInviteFilialId] = useState<string>("");
   const [selectedRole, setSelectedRole] = useState<AppRole>("visualizador");
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>(getPermissionsForRole("visualizador"));
   const [sending, setSending] = useState(false);
@@ -73,14 +75,19 @@ const Usuarios = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data: profs } = await supabase.from("profiles").select("*").order("created_at");
+      const [{ data: profs }, { data: filiaisData }] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at"),
+        supabase.from("filiais").select("*").eq("ativo", true).order("nome"),
+      ]);
       if (profs) {
         const withRoles = await Promise.all(profs.map(async (p: any) => {
           const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", p.user_id).single();
-          return { ...p, role: roleData?.role || "visualizador" };
+          const filial = filiaisData?.find((f: any) => f.id === p.filial_id);
+          return { ...p, role: roleData?.role || "visualizador", filial };
         }));
         setProfiles(withRoles);
       }
+      setFiliais(filiaisData as Filial[] || []);
       setLoading(false);
     };
     fetch();
@@ -125,9 +132,16 @@ const Usuarios = () => {
       }
 
       toast.success(`Convite enviado para ${inviteEmail}!`);
+
+      // Update filial_id on profile if set
+      if (inviteFilialId && data?.user_id) {
+        await supabase.from("profiles").update({ filial_id: inviteFilialId }).eq("user_id", data.user_id);
+      }
+
       setDialogOpen(false);
       setInviteEmail("");
       setInviteNome("");
+      setInviteFilialId("");
       setSelectedRole("visualizador");
       setSelectedPermissions(getPermissionsForRole("visualizador"));
 
@@ -195,7 +209,8 @@ const Usuarios = () => {
         <Table>
           <TableHeader><TableRow className="bg-muted/50">
             <TableHead className="text-xs font-semibold">Nome</TableHead>
-            <TableHead className="text-xs font-semibold">Papel</TableHead>
+             <TableHead className="text-xs font-semibold">Papel</TableHead>
+            <TableHead className="text-xs font-semibold">Filial</TableHead>
             <TableHead className="text-xs font-semibold">Permissões</TableHead>
             <TableHead className="text-xs font-semibold">Status</TableHead>
             <TableHead className="text-xs font-semibold">Criado em</TableHead>
@@ -211,6 +226,21 @@ const Usuarios = () => {
                     <Select value={p.role} onValueChange={(v) => changeRole(p.user_id, v as AppRole)}>
                       <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>{Object.entries(ROLE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Select value={p.filial_id || "sem_filial"} onValueChange={async (v) => {
+                      const filialId = v === "sem_filial" ? null : v;
+                      await supabase.from("profiles").update({ filial_id: filialId }).eq("user_id", p.user_id);
+                      const filial = filiais.find(f => f.id === filialId);
+                      setProfiles(prev => prev.map(pr => pr.user_id === p.user_id ? { ...pr, filial_id: filialId, filial } : pr));
+                      toast.success("Filial atualizada!");
+                    }}>
+                      <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Sem filial" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sem_filial">Sem filial</SelectItem>
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                      </SelectContent>
                     </Select>
                   </TableCell>
                   <TableCell>
@@ -302,6 +332,20 @@ const Usuarios = () => {
                   onChange={e => setInviteEmail(e.target.value)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5" />
+                Filial
+              </Label>
+              <Select value={inviteFilialId || "sem_filial"} onValueChange={(v) => setInviteFilialId(v === "sem_filial" ? "" : v)}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione a filial" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sem_filial">Sem filial (matriz)</SelectItem>
+                  {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">

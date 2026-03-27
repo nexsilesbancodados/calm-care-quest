@@ -10,7 +10,9 @@ export interface Profile {
   avatar_url: string | null;
   ativo: boolean;
   created_at: string;
+  filial_id: string | null;
   role: AppRole;
+  filial?: Filial;
 }
 
 export interface Categoria {
