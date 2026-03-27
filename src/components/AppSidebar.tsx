@@ -247,7 +247,7 @@ export function AppSidebar() {
                 PsiRumoCerto
                 <Sparkles className="h-3.5 w-3.5 text-primary" />
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium tracking-wide">Farmácia Hospitalar</span>
+              <span className="text-[11px] text-muted-foreground font-medium tracking-wide truncate max-w-[140px]">{profile?.filial?.nome || "Farmácia Hospitalar"}</span>
             </div>
           )}
         </div>
