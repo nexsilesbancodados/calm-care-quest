@@ -58,7 +58,7 @@ const Fornecedores = () => {
       await log({ acao: "Atualização", tabela: "fornecedores", registro_id: editItem.id });
       toast.success("Fornecedor atualizado!");
     } else {
-      const { data, error } = await supabase.from("fornecedores").insert(form).select().single();
+      const { data, error } = await supabase.from("fornecedores").insert({ ...form, filial_id: profile?.filial_id }).select().single();
       if (error) { toast.error("Erro ao cadastrar"); return; }
       setSuppliers(prev => [data as Fornecedor, ...prev]);
       await log({ acao: "Cadastro", tabela: "fornecedores", registro_id: data.id });
