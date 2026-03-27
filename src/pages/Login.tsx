@@ -31,10 +31,25 @@ const Login = () => {
   const { login, resetPassword, session, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedFilial, setSelectedFilial] = useState("");
+  const [filiais, setFiliais] = useState<{ id: string; nome: string }[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Load filiais for the selector
+  useEffect(() => {
+    const loadFiliais = async () => {
+      const { data } = await supabase
+        .from("filiais")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (data) setFiliais(data);
+    };
+    loadFiliais();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && session) navigate("/");
@@ -43,11 +58,57 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { toast.error("Preencha todos os campos"); return; }
+    if (!selectedFilial) { toast.error("Selecione sua unidade"); return; }
     setLoading(true);
     const { error } = await login(email, password);
+    if (error) {
+      setLoading(false);
+      toast.error(error);
+      return;
+    }
+
+    // After successful auth, check if user belongs to the selected filial
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); toast.error("Erro ao verificar usuário"); return; }
+
+    // Check if admin (admins can access any filial)
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (roleData?.role === "admin") {
+      setLoading(false);
+      toast.success("Login realizado com sucesso!");
+      navigate("/");
+      return;
+    }
+
+    // For non-admins, verify filial matches
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("filial_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profileData?.filial_id) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error("Seu perfil não está vinculado a nenhuma unidade. Contate o administrador.");
+      return;
+    }
+
+    if (profileData.filial_id !== selectedFilial) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error("Você não pertence a esta unidade. Selecione a unidade correta.");
+      return;
+    }
+
     setLoading(false);
-    if (error) toast.error(error);
-    else { toast.success("Login realizado com sucesso!"); navigate("/"); }
+    toast.success("Login realizado com sucesso!");
+    navigate("/");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
