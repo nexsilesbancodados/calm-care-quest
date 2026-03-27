@@ -37,15 +37,15 @@
 
     --radius: 0.875rem;
 
-    --sidebar-background: 215 28% 8%;
-    --sidebar-foreground: 210 10% 58%;
-    --sidebar-primary: 205 85% 58%;
+    --sidebar-background: 210 20% 97%;
+    --sidebar-foreground: 215 15% 40%;
+    --sidebar-primary: 205 85% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 22% 14%;
-    --sidebar-accent-foreground: 210 12% 92%;
-    --sidebar-border: 215 18% 15%;
-    --sidebar-ring: 205 85% 58%;
-    --sidebar-muted: 215 16% 11%;
+    --sidebar-accent: 210 20% 93%;
+    --sidebar-accent-foreground: 215 25% 15%;
+    --sidebar-border: 210 14% 90%;
+    --sidebar-ring: 205 85% 55%;
+    --sidebar-muted: 210 15% 95%;
 
     --warning: 40 96% 50%;
     --warning-foreground: 40 96% 14%;
@@ -59,7 +59,7 @@
     --font-mono: 'JetBrains Mono', monospace;
 
     --gradient-primary: linear-gradient(135deg, hsl(205 85% 50%), hsl(195 90% 60%));
-    --gradient-sidebar: linear-gradient(180deg, hsl(215 28% 9%), hsl(215 34% 5%));
+    --gradient-sidebar: linear-gradient(180deg, hsl(210 20% 97%), hsl(210 18% 95%));
     --gradient-hero: linear-gradient(145deg, hsl(205 60% 18%), hsl(200 50% 24%), hsl(195 45% 30%));
     --gradient-accent: linear-gradient(135deg, hsl(200 70% 46%), hsl(195 75% 56%));
     --gradient-warm: linear-gradient(135deg, hsl(205 85% 55%), hsl(195 90% 62%));
