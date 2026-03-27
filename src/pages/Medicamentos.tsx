@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ type SortDir = "asc" | "desc";
 
 const Medicamentos = () => {
   const { log } = useAudit();
+  const { profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[]; categoria?: Categoria })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -189,7 +191,7 @@ const Medicamentos = () => {
   const handleSave = async () => {
     if (!form.nome) { toast.error("Nome é obrigatório"); return; }
     setSaving(true);
-    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario };
+    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
 
     if (editMed) {
       const { error } = await supabase.from("medicamentos").update(row).eq("id", editMed.id);

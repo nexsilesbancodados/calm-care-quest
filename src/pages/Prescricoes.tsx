@@ -23,7 +23,7 @@ import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
 
 const Prescricoes = () => {
   const { log } = useAudit();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { dispensarPrescricao } = useAutomations();
   const [prescricoes, setPrescricoes] = useState<(Prescricao & { itens?: (ItemPrescricao & { medicamento?: Medicamento })[] })[]>([]);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
@@ -87,6 +87,7 @@ const Prescricoes = () => {
       ...form,
       validade_dias: form.validade_dias,
       usuario_id: user?.id,
+      filial_id: profile?.filial_id,
     }).select().single();
     if (error) { toast.error("Erro ao criar prescrição"); return; }
     await log({ acao: "Nova Prescrição", tabela: "prescricoes", registro_id: data.id });
@@ -158,6 +159,7 @@ const Prescricoes = () => {
         usuario_id: user?.id,
         paciente: selectedPrescricao.paciente,
         prontuario: selectedPrescricao.prontuario,
+        filial_id: profile?.filial_id,
         setor: selectedPrescricao.setor,
         observacao: `Dispensação via prescrição #${selectedPrescricao.numero_receita}`,
         prescricao_id: selectedPrescricao.id,

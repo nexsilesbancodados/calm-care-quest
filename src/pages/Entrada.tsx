@@ -41,7 +41,7 @@ interface EntradaItem {
 
 const Entrada = () => {
   const { log } = useAudit();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<Medicamento[]>([]);
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
@@ -246,6 +246,7 @@ const Entrada = () => {
             validade: item.validade,
             quantidade_atual: item.quantidade,
             preco_unitario: item.preco_unitario,
+            filial_id: profile?.filial_id,
           })
           .select()
           .single();
@@ -261,6 +262,7 @@ const Entrada = () => {
         usuario_id: user?.id,
         nota_fiscal: notaFiscal || null,
         observacao: observacao || `NF: ${notaFiscal || "—"} | Fornecedor: ${fornecedores.find(f => f.id === fornecedorId)?.nome || "—"}`,
+        filial_id: profile?.filial_id,
       });
 
       await log({

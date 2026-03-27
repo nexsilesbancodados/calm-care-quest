@@ -33,7 +33,7 @@ const statusCfg: Record<string, { label: string; icon: any; className: string }>
 };
 
 const Transferencias = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { log } = useAudit();
   const [transfers, setTransfers] = useState<any[]>([]);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
@@ -106,7 +106,7 @@ const Transferencias = () => {
     const { data, error } = await supabase.from("transferencias").insert({
       medicamento_id: form.medicamento_id, lote_id: form.lote_id, quantidade: form.quantidade,
       clinica_destino_id: form.clinica_destino_id, urgencia: form.urgencia, observacao: form.observacao,
-      solicitante_id: user?.id, status: "pendente" as any,
+      solicitante_id: user?.id, status: "pendente" as any, filial_id: profile?.filial_id,
     }).select("*, medicamentos(nome, concentracao), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome), lotes(numero_lote, validade)").single();
     if (error) { toast.error("Erro ao criar transferência"); return; }
     setTransfers(prev => [data, ...prev]);
@@ -139,6 +139,7 @@ const Transferencias = () => {
       quantidade: recebimentoQtd,
       usuario_id: user?.id,
       observacao: `Recebimento de transferência${isDivergent ? " (com divergência)" : ""}: ${recebimentoObs || "—"}`,
+      filial_id: profile?.filial_id,
     });
 
     if (isDivergent) {

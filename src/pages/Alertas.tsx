@@ -36,7 +36,7 @@ const priorityOrder: AlertType[] = ["vencido", "esgotado", "critico", "validade"
 
 const Alertas = () => {
   const navigate = useNavigate();
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, profile } = useAuth();
   const { log } = useAudit();
   const {
     configs, loading: automLoading, running,
@@ -111,6 +111,7 @@ const Alertas = () => {
       quantidade: baixaTarget.quantidade,
       usuario_id: user?.id,
       observacao: "Baixa por vencimento — automático via Alertas",
+      filial_id: profile?.filial_id,
     });
     await log({ acao: "Baixa por vencimento", tabela: "lotes", registro_id: baixaTarget.loteId });
     toast.success(`Lote ${baixaTarget.loteNum} baixado com sucesso`);

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const PAGE_SIZE = 30;
 
 const Fornecedores = () => {
   const { log } = useAudit();
+  const { profile } = useAuth();
   const [suppliers, setSuppliers] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -58,7 +60,7 @@ const Fornecedores = () => {
       await log({ acao: "Atualização", tabela: "fornecedores", registro_id: editItem.id });
       toast.success("Fornecedor atualizado!");
     } else {
-      const { data, error } = await supabase.from("fornecedores").insert(form).select().single();
+      const { data, error } = await supabase.from("fornecedores").insert({ ...form, filial_id: profile?.filial_id }).select().single();
       if (error) { toast.error("Erro ao cadastrar"); return; }
       setSuppliers(prev => [data as Fornecedor, ...prev]);
       await log({ acao: "Cadastro", tabela: "fornecedores", registro_id: data.id });
