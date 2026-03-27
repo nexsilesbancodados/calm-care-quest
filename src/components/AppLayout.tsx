@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { FilialSwitcher } from "@/components/FilialSwitcher";
 import { useAutomations } from "@/hooks/useAutomations";
 import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { useEffect } from "react";
