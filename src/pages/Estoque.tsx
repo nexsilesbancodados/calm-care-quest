@@ -70,7 +70,7 @@ type SortDir = "asc" | "desc";
 
 const Estoque = () => {
   const { log } = useAudit();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
@@ -314,6 +314,7 @@ const Estoque = () => {
       quantidade: Math.abs(delta),
       usuario_id: user?.id,
       observacao: `[${MOTIVOS_AJUSTE.find(m => m.value === ajusteForm.motivo)?.label}] ${ajusteForm.observacao}`,
+      filial_id: profile?.filial_id,
     });
 
     await log({
