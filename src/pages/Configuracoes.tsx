@@ -102,6 +102,33 @@ const Configuracoes = () => {
     toast.success(cat.ativo ? "Categoria desativada" : "Categoria reativada");
   };
 
+  const openNewFilial = () => { setEditFilial(null); setFilialForm({ nome: "", cnpj: "", cnes: "", endereco: "", cidade: "", estado: "", telefone: "", email: "", responsavel: "" }); setFilialDialog(true); };
+  const openEditFilial = (f: Filial) => { setEditFilial(f); setFilialForm({ nome: f.nome, cnpj: f.cnpj, cnes: f.cnes, endereco: f.endereco, cidade: f.cidade, estado: f.estado, telefone: f.telefone, email: f.email, responsavel: f.responsavel }); setFilialDialog(true); };
+
+  const handleSaveFilial = async () => {
+    if (!filialForm.nome) { toast.error("Nome é obrigatório"); return; }
+    if (editFilial) {
+      const { error } = await supabase.from("filiais").update({ ...filialForm, updated_at: new Date().toISOString() }).eq("id", editFilial.id);
+      if (error) { toast.error("Erro ao atualizar"); return; }
+      setFiliais(prev => prev.map(f => f.id === editFilial.id ? { ...f, ...filialForm, updated_at: new Date().toISOString() } as Filial : f));
+      await log({ acao: "Atualização Filial", tabela: "filiais", registro_id: editFilial.id });
+      toast.success("Filial atualizada!");
+    } else {
+      const { data, error } = await supabase.from("filiais").insert(filialForm).select().single();
+      if (error) { toast.error("Erro ao cadastrar"); return; }
+      setFiliais(prev => [...prev, data as Filial]);
+      await log({ acao: "Cadastro Filial", tabela: "filiais", registro_id: data.id });
+      toast.success("Filial cadastrada!");
+    }
+    setFilialDialog(false);
+  };
+
+  const toggleFilialActive = async (filial: Filial) => {
+    await supabase.from("filiais").update({ ativo: !filial.ativo, updated_at: new Date().toISOString() }).eq("id", filial.id);
+    setFiliais(prev => prev.map(f => f.id === filial.id ? { ...f, ativo: !f.ativo } : f));
+    toast.success(filial.ativo ? "Filial desativada" : "Filial reativada");
+  };
+
   if (!isAdmin) return <AppLayout title="Configurações"><p className="text-muted-foreground text-center py-12">Acesso restrito a administradores</p></AppLayout>;
   if (loading) return <AppLayout title="Configurações"><Skeleton className="h-64 rounded-xl" /></AppLayout>;
 
