@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse } from "lucide-react";
+import { Activity, Eye, EyeOff, Mail, Lock, ArrowRight, Shield, BarChart3, Package, Zap, Pill, HeartPulse, Building2 } from "lucide-react";
 import logoImg from "@/assets/logo.jpg";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const features = [
@@ -29,10 +31,25 @@ const Login = () => {
   const { login, resetPassword, session, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [selectedFilial, setSelectedFilial] = useState("");
+  const [filiais, setFiliais] = useState<{ id: string; nome: string }[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Load filiais for the selector
+  useEffect(() => {
+    const loadFiliais = async () => {
+      const { data } = await supabase
+        .from("filiais")
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome");
+      if (data) setFiliais(data);
+    };
+    loadFiliais();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && session) navigate("/");
@@ -41,11 +58,57 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { toast.error("Preencha todos os campos"); return; }
+    if (!selectedFilial) { toast.error("Selecione sua unidade"); return; }
     setLoading(true);
     const { error } = await login(email, password);
+    if (error) {
+      setLoading(false);
+      toast.error(error);
+      return;
+    }
+
+    // After successful auth, check if user belongs to the selected filial
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); toast.error("Erro ao verificar usuário"); return; }
+
+    // Check if admin (admins can access any filial)
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (roleData?.role === "admin") {
+      setLoading(false);
+      toast.success("Login realizado com sucesso!");
+      navigate("/");
+      return;
+    }
+
+    // For non-admins, verify filial matches
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("filial_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profileData?.filial_id) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error("Seu perfil não está vinculado a nenhuma unidade. Contate o administrador.");
+      return;
+    }
+
+    if (profileData.filial_id !== selectedFilial) {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error("Você não pertence a esta unidade. Selecione a unidade correta.");
+      return;
+    }
+
     setLoading(false);
-    if (error) toast.error(error);
-    else { toast.success("Login realizado com sucesso!"); navigate("/"); }
+    toast.success("Login realizado com sucesso!");
+    navigate("/");
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -350,9 +413,35 @@ const Login = () => {
                   </motion.div>
 
                   <motion.div
+                    className="space-y-2"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.75 }}
+                    transition={{ delay: 0.72 }}
+                  >
+                    <Label className="text-xs font-semibold text-foreground">Unidade</Label>
+                    <div className="relative group">
+                      <Building2 className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 z-10 transition-colors duration-200 ${focusedField === "filial" ? "text-primary" : "text-muted-foreground"}`} />
+                      <Select value={selectedFilial} onValueChange={setSelectedFilial}>
+                        <SelectTrigger
+                          className="pl-10 h-12 text-sm bg-card border-border/60 focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
+                          onFocus={() => setFocusedField("filial")}
+                          onBlur={() => setFocusedField(null)}
+                        >
+                          <SelectValue placeholder="Selecione sua unidade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filiais.map((f) => (
+                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 }}
                   >
                     <Button
                       type="submit"
