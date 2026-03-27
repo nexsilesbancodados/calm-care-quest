@@ -52,8 +52,8 @@ const Login = () => {
   }, []);
 
   useEffect(() => {
-    if (!authLoading && session) navigate("/");
-  }, [session, authLoading, navigate]);
+    if (!authLoading && session && !loading) navigate("/");
+  }, [session, authLoading, loading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,9 +119,10 @@ const Login = () => {
       return;
     }
 
+    await refreshProfile();
     setLoading(false);
     toast.success("Login realizado com sucesso!");
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
