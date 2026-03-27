@@ -42,11 +42,12 @@ const Configuracoes = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const [{ data: cfgData }, { data: cData }, { data: catData }, { data: auditData }] = await Promise.all([
+    const [{ data: cfgData }, { data: cData }, { data: catData }, { data: auditData }, { data: filiaisData }] = await Promise.all([
         supabase.from("configuracoes_hospital").select("*").single(),
         supabase.from("clinicas_parceiras").select("*").order("nome"),
         supabase.from("categorias_medicamento").select("*").order("nome"),
         supabase.from("audit_log").select("*").order("created_at", { ascending: false }).limit(50),
+        supabase.from("filiais").select("*").order("nome"),
       ]);
       setConfig(cfgData as ConfigHospital || null);
       setClinicas(cData as ClinicaParceira[] || []);
