@@ -128,21 +128,21 @@ export const AppSidebar = memo(function AppSidebar() {
             onMouseEnter={() => prefetchPage(item.url)}
             onFocus={() => prefetchPage(item.url)}
             className={cn(
-              "group relative flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 overflow-hidden",
-              "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground",
+              "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+              "text-sidebar-foreground hover:text-sidebar-accent-foreground",
               active
-                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-sidebar-primary/25"
-                : "hover:bg-sidebar-accent/60"
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                : "hover:bg-sidebar-accent/70"
             )}
             activeClassName=""
           >
             <div className="relative z-10">
               <item.icon className={cn(
-                "h-[18px] w-[18px] shrink-0 transition-all duration-200",
+                "h-5 w-5 shrink-0 transition-colors duration-200",
                 active
                   ? "text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground"
-              )} strokeWidth={active ? 2.2 : 1.7} />
+                  : "text-sidebar-foreground/60 group-hover:text-sidebar-accent-foreground"
+              )} strokeWidth={active ? 2 : 1.8} />
               {collapsed && count > 0 && (
                 <div className="absolute -top-1 -right-1.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-sidebar-background animate-pulse" />
               )}
@@ -150,8 +150,8 @@ export const AppSidebar = memo(function AppSidebar() {
             {!collapsed && (
               <>
                 <span className={cn(
-                  "text-[13px] flex-1 relative z-10 transition-all duration-200",
-                  active ? "font-bold text-sidebar-primary-foreground" : "font-medium"
+                  "text-sm flex-1 relative z-10 leading-snug",
+                  active ? "font-semibold text-sidebar-primary-foreground" : "font-medium"
                 )}>
                   {item.title}
                 </span>
@@ -188,7 +188,7 @@ export const AppSidebar = memo(function AppSidebar() {
       return (
         <SidebarGroup key={label}>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-0.5">
+            <SidebarMenu className="space-y-1">
               {filtered.map((item) => renderMenuItem(item))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -200,14 +200,14 @@ export const AppSidebar = memo(function AppSidebar() {
       <Collapsible key={label} defaultOpen={defaultOpen || hasActiveItem} className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex items-center w-full text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/30 px-3 mb-0.5 font-bold hover:text-sidebar-foreground/50 transition-colors cursor-pointer">
+            <CollapsibleTrigger className="flex items-center w-full text-[11px] uppercase tracking-[0.12em] text-sidebar-foreground/45 px-3 mb-1 mt-1 font-bold hover:text-sidebar-foreground/70 transition-colors cursor-pointer">
               <span className="flex-1 text-left">{label}</span>
-              <ChevronRight className="h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-40" />
+              <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-50" />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
           <CollapsibleContent className="transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-0.5">
+              <SidebarMenu className="space-y-1">
                 {filtered.map((item) => renderMenuItem(item))}
               </SidebarMenu>
             </SidebarGroupContent>
