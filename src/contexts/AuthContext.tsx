@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, filiais(*)")
         .eq("user_id", userId)
         .single();
 
@@ -42,9 +42,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (profileData) {
+        const { filiais, ...rest } = profileData as any;
         setProfile({
-          ...profileData,
+          ...rest,
           role: (roleData?.role as AppRole) || "visualizador",
+          filial: filiais || undefined,
         } as Profile);
       }
     } catch (e) {
