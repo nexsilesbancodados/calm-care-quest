@@ -411,20 +411,18 @@ const Login = () => {
                     <Label className="text-xs font-semibold text-foreground">Unidade</Label>
                     <div className="relative group">
                       <Building2 className={`absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 z-10 transition-colors duration-200 ${focusedField === "filial" ? "text-primary" : "text-muted-foreground"}`} />
-                      <Select value={selectedFilial} onValueChange={setSelectedFilial}>
-                        <SelectTrigger
-                          className="pl-10 h-12 text-sm bg-card border-border/60 focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
-                          onFocus={() => setFocusedField("filial")}
-                          onBlur={() => setFocusedField(null)}
-                        >
-                          <SelectValue placeholder="Selecione sua unidade" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filiais.map((f) => (
-                            <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <select
+                        value={selectedFilial}
+                        onChange={(e) => setSelectedFilial(e.target.value)}
+                        onFocus={() => setFocusedField("filial")}
+                        onBlur={() => setFocusedField(null)}
+                        className="w-full pl-10 h-12 text-sm bg-card border border-border/60 focus:border-primary/40 focus:ring-2 focus:ring-primary/20 transition-all rounded-xl appearance-none text-foreground"
+                      >
+                        <option value="" disabled>Selecione sua unidade</option>
+                        {filiais.map((f) => (
+                          <option key={f.id} value={f.id}>{f.nome}</option>
+                        ))}
+                      </select>
                     </div>
                   </motion.div>
 
