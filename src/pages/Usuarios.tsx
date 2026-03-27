@@ -209,7 +209,8 @@ const Usuarios = () => {
         <Table>
           <TableHeader><TableRow className="bg-muted/50">
             <TableHead className="text-xs font-semibold">Nome</TableHead>
-            <TableHead className="text-xs font-semibold">Papel</TableHead>
+             <TableHead className="text-xs font-semibold">Papel</TableHead>
+            <TableHead className="text-xs font-semibold">Filial</TableHead>
             <TableHead className="text-xs font-semibold">Permissões</TableHead>
             <TableHead className="text-xs font-semibold">Status</TableHead>
             <TableHead className="text-xs font-semibold">Criado em</TableHead>
