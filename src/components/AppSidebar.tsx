@@ -23,6 +23,7 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 type MenuItem = {
@@ -127,35 +128,30 @@ export const AppSidebar = memo(function AppSidebar() {
             onMouseEnter={() => prefetchPage(item.url)}
             onFocus={() => prefetchPage(item.url)}
             className={cn(
-              "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150",
-              "text-sidebar-foreground/60 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50",
-              active && [
-                "bg-sidebar-primary/12 text-sidebar-accent-foreground",
-                "shadow-[inset_0_0_0_1px_hsl(var(--sidebar-primary)/0.2),0_0_16px_hsl(var(--sidebar-primary)/0.08)]",
-              ]
+              "group relative flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 overflow-hidden",
+              "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground",
+              active
+                ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-sidebar-primary/25"
+                : "hover:bg-sidebar-accent/60"
             )}
             activeClassName=""
           >
-            {active && (
-              <div className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-sidebar-primary shadow-[0_0_8px_hsl(var(--sidebar-primary)/0.5)]" />
-            )}
-
-            <div className="relative">
+            <div className="relative z-10">
               <item.icon className={cn(
-                "h-[17px] w-[17px] shrink-0 transition-colors duration-150",
+                "h-[18px] w-[18px] shrink-0 transition-all duration-200",
                 active
-                  ? "text-sidebar-primary drop-shadow-[0_0_6px_hsl(var(--sidebar-primary)/0.4)]"
-                  : "text-sidebar-foreground/40 group-hover:text-sidebar-accent-foreground"
-              )} strokeWidth={active ? 2 : 1.6} />
+                  ? "text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground/50 group-hover:text-sidebar-accent-foreground"
+              )} strokeWidth={active ? 2.2 : 1.7} />
               {collapsed && count > 0 && (
-                <div className="absolute -top-1 -right-1.5 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar-background" />
+                <div className="absolute -top-1 -right-1.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-sidebar-background animate-pulse" />
               )}
             </div>
             {!collapsed && (
               <>
                 <span className={cn(
-                  "text-[13px] flex-1",
-                  active ? "font-bold" : "font-medium"
+                  "text-[13px] flex-1 relative z-10 transition-all duration-200",
+                  active ? "font-bold text-sidebar-primary-foreground" : "font-medium"
                 )}>
                   {item.title}
                 </span>
@@ -163,10 +159,12 @@ export const AppSidebar = memo(function AppSidebar() {
                   <Badge
                     variant="outline"
                     className={cn(
-                      "h-5 min-w-[22px] px-1.5 text-[10px] font-bold tabular-nums border-0",
-                      item.badgeKey === "alerts"
-                        ? "bg-destructive/15 text-destructive"
-                        : "bg-sidebar-primary/15 text-sidebar-primary"
+                      "h-5 min-w-[22px] px-1.5 text-[10px] font-bold tabular-nums border-0 relative z-10",
+                      active
+                        ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground"
+                        : item.badgeKey === "alerts"
+                          ? "bg-destructive/15 text-destructive"
+                          : "bg-sidebar-primary/15 text-sidebar-primary"
                     )}
                   >
                     {count}
@@ -190,7 +188,7 @@ export const AppSidebar = memo(function AppSidebar() {
       return (
         <SidebarGroup key={label}>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-0.5">
               {filtered.map((item) => renderMenuItem(item))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -202,7 +200,7 @@ export const AppSidebar = memo(function AppSidebar() {
       <Collapsible key={label} defaultOpen={defaultOpen || hasActiveItem} className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex items-center w-full text-[9px] uppercase tracking-[0.16em] text-sidebar-foreground/25 px-3 mb-1 font-bold hover:text-sidebar-foreground/40 transition-colors cursor-pointer">
+            <CollapsibleTrigger className="flex items-center w-full text-[10px] uppercase tracking-[0.14em] text-sidebar-foreground/30 px-3 mb-0.5 font-bold hover:text-sidebar-foreground/50 transition-colors cursor-pointer">
               <span className="flex-1 text-left">{label}</span>
               <ChevronRight className="h-3 w-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-40" />
             </CollapsibleTrigger>
@@ -220,39 +218,50 @@ export const AppSidebar = memo(function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4 pb-5">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/60 hidden sm:flex">
+      <SidebarHeader className="p-4 pb-3">
         <div className="flex items-center gap-3">
-          <img
-            src={logoImg}
-            alt="PsiRumoCerto"
-            className="h-11 w-11 rounded-2xl object-cover shadow-md shadow-primary/15 ring-1 ring-primary/10 shrink-0 hover:scale-105 transition-transform duration-200"
-          />
+          <div className="relative">
+            <img
+              src={logoImg}
+              alt="PsiRumoCerto"
+              className="h-10 w-10 rounded-2xl object-cover shadow-lg shadow-primary/20 ring-1 ring-primary/15 shrink-0 hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-success border-2 border-sidebar-background" />
+          </div>
           {!collapsed && (
             <div className="flex flex-col min-w-0">
               <span className="text-[15px] font-extrabold text-foreground tracking-tight flex items-center gap-1.5 font-display">
                 PsiRumoCerto
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <Sparkles className="h-3.5 w-3.5 text-primary animate-pulse" />
               </span>
-              <span className="text-[11px] text-muted-foreground font-medium tracking-wide truncate max-w-[140px]">{profile?.filial?.nome || "Farmácia Hospitalar"}</span>
+              <span className="text-[11px] text-muted-foreground/70 font-medium tracking-wide truncate max-w-[140px]">
+                {profile?.filial?.nome || "Farmácia Hospitalar"}
+              </span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2.5 space-y-0.5">
+      {!collapsed && (
+        <div className="px-5 mb-1">
+          <Separator className="bg-sidebar-border/40" />
+        </div>
+      )}
+
+      <SidebarContent className="px-2.5 space-y-0">
         {renderGroup("Gestão", mainItems)}
-        {renderGroup("Ferramentas & Cadastros", toolItems)}
-        {renderGroup("Administração", systemItems, false)}
+        {renderGroup("Ferramentas", toolItems)}
+        {renderGroup("Sistema", systemItems, false)}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
         {!collapsed ? (
-          <div className="rounded-xl bg-sidebar-accent/40 border border-sidebar-border/50 p-3 backdrop-blur-sm">
+          <div className="rounded-2xl bg-gradient-to-br from-sidebar-accent/50 to-sidebar-accent/30 border border-sidebar-border/40 p-3">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <Avatar className="h-9 w-9 ring-2 ring-sidebar-primary/20">
-                  <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/20 to-sidebar-accent text-sidebar-primary text-[11px] font-bold">
+                <Avatar className="h-9 w-9 ring-2 ring-sidebar-primary/25 shadow-sm">
+                  <AvatarFallback className="bg-gradient-to-br from-sidebar-primary to-sidebar-primary/70 text-sidebar-primary-foreground text-[11px] font-bold">
                     {displayInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -260,11 +269,11 @@ export const AppSidebar = memo(function AppSidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-bold text-sidebar-accent-foreground truncate leading-tight">{displayName}</p>
-                <p className="text-[10px] text-sidebar-foreground/35 font-medium truncate">{displayRole}</p>
+                <p className="text-[10px] text-sidebar-foreground/40 font-medium truncate">{displayRole}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-sidebar-foreground/25 hover:text-destructive hover:bg-destructive/10 transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-sidebar-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
                 title="Sair"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -274,8 +283,8 @@ export const AppSidebar = memo(function AppSidebar() {
         ) : (
           <div className="flex flex-col items-center gap-2">
             <div className="relative">
-              <Avatar className="h-8 w-8 ring-2 ring-sidebar-primary/20">
-                <AvatarFallback className="bg-gradient-to-br from-sidebar-primary/20 to-sidebar-accent text-sidebar-primary text-[10px] font-bold">
+              <Avatar className="h-8 w-8 ring-2 ring-sidebar-primary/25">
+                <AvatarFallback className="bg-gradient-to-br from-sidebar-primary to-sidebar-primary/70 text-sidebar-primary-foreground text-[10px] font-bold">
                   {displayInitials}
                 </AvatarFallback>
               </Avatar>
