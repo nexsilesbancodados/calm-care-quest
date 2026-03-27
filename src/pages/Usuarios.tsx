@@ -348,6 +348,7 @@ const Usuarios = () => {
               </Select>
             </div>
 
+            <div className="space-y-1.5">
               <Label className="text-xs font-medium">Papel</Label>
               <Select value={selectedRole} onValueChange={(v) => handleRoleChange(v as AppRole)}>
                 <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
