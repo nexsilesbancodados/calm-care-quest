@@ -90,7 +90,8 @@ const Login = () => {
       return;
     }
 
-    // For non-admins, verify filial matches
+    // For non-admins, update filial_id to selected unit (must match their assigned filial)
+
     const { data: profileData } = await supabase
       .from("profiles")
       .select("filial_id")
