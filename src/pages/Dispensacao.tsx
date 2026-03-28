@@ -527,6 +527,26 @@ const Dispensacao = () => {
 
                   <div className="space-y-1.5"><Label className="text-xs">Observação</Label><Textarea value={form.observacao} onChange={e => setForm({ ...form, observacao: e.target.value })} rows={2} maxLength={500} /></div>
 
+                  {/* Bloco 5: Controlled med validation */}
+                  {selectedMed?.controlado && (
+                    <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-warning">
+                        <ShieldAlert className="h-4 w-4" />
+                        Validação do Farmacêutico — Medicamento Controlado
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Número CRF *</Label>
+                          <Input value={crfResponsavel} onChange={e => setCrfResponsavel(e.target.value)} placeholder="CRF-XX 00000" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Senha de confirmação *</Label>
+                          <Input type="password" value={crfSenha} onChange={e => setCrfSenha(e.target.value)} placeholder="Sua senha" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <Button
                     className="w-full gradient-primary text-primary-foreground gap-2"
                     disabled={submitting || !form.medicamento_id || !form.lote_id || !form.quantidade}
