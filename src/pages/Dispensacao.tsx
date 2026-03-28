@@ -318,6 +318,7 @@ const Dispensacao = () => {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="dispensar" className="gap-1.5"><Syringe className="h-3.5 w-3.5" /> Nova Dispensação</TabsTrigger>
+            <TabsTrigger value="devolucao" className="gap-1.5"><RotateCcw className="h-3.5 w-3.5" /> Devolução</TabsTrigger>
             <TabsTrigger value="historico" className="gap-1.5"><History className="h-3.5 w-3.5" /> Histórico</TabsTrigger>
           </TabsList>
 
