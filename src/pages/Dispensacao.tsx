@@ -202,12 +202,18 @@ const Dispensacao = () => {
     if (freshLote.quantidade_atual < form.quantidade) { toast.error(`Estoque insuficiente! Disponível: ${freshLote.quantidade_atual} un.`); setSubmitting(false); return; }
 
     await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual - form.quantidade }).eq("id", form.lote_id);
-    await supabase.from("movimentacoes").insert({
+    const movData: any = {
       tipo: "dispensacao" as any, medicamento_id: form.medicamento_id, lote_id: form.lote_id,
       quantidade: form.quantidade, usuario_id: user?.id, paciente: form.paciente || null,
       prontuario: form.prontuario || null, setor: form.setor || null, observacao: form.observacao, prescricao_id: form.prescricao_id || null,
       filial_id: profile?.filial_id,
-    });
+    };
+    // Bloco 5: Add CRF fields for controlled meds
+    if (selectedMed?.controlado && crfResponsavel) {
+      movData.crf_responsavel = crfResponsavel;
+      movData.validado_em = new Date().toISOString();
+    }
+    await supabase.from("movimentacoes").insert(movData);
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
 
     // 1b: Save paciente recorrente
