@@ -964,9 +964,11 @@ export type Database = {
         Args: { _prescricao_id: string; _usuario_id: string }
         Returns: Json
       }
+      get_advanced_kpis: { Args: never; Returns: Json }
       get_dashboard_stats: { Args: never; Returns: Json }
       get_sidebar_counts: { Args: never; Returns: Json }
       get_user_filial_id: { Args: { _user_id: string }; Returns: string }
+      get_user_productivity: { Args: { _days?: number }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -983,6 +985,7 @@ export type Database = {
         Returns: boolean
       }
       promote_to_admin: { Args: { _email: string }; Returns: undefined }
+      quarantine_expired_lotes: { Args: never; Returns: number }
       set_active_filial: { Args: { _filial_id: string }; Returns: undefined }
     }
     Enums: {
