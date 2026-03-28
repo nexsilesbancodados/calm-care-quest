@@ -437,11 +437,13 @@ export type Database = {
       movimentacoes: {
         Row: {
           created_at: string
+          crf_responsavel: string | null
           filial_id: string | null
           id: string
           lote_id: string | null
           medicamento_id: string | null
           nota_fiscal: string | null
+          nota_fiscal_url: string | null
           observacao: string
           paciente: string | null
           prescricao_id: string | null
@@ -450,14 +452,17 @@ export type Database = {
           setor: string | null
           tipo: Database["public"]["Enums"]["tipo_movimentacao"]
           usuario_id: string | null
+          validado_em: string | null
         }
         Insert: {
           created_at?: string
+          crf_responsavel?: string | null
           filial_id?: string | null
           id?: string
           lote_id?: string | null
           medicamento_id?: string | null
           nota_fiscal?: string | null
+          nota_fiscal_url?: string | null
           observacao?: string
           paciente?: string | null
           prescricao_id?: string | null
@@ -466,14 +471,17 @@ export type Database = {
           setor?: string | null
           tipo?: Database["public"]["Enums"]["tipo_movimentacao"]
           usuario_id?: string | null
+          validado_em?: string | null
         }
         Update: {
           created_at?: string
+          crf_responsavel?: string | null
           filial_id?: string | null
           id?: string
           lote_id?: string | null
           medicamento_id?: string | null
           nota_fiscal?: string | null
+          nota_fiscal_url?: string | null
           observacao?: string
           paciente?: string | null
           prescricao_id?: string | null
@@ -482,6 +490,7 @@ export type Database = {
           setor?: string | null
           tipo?: Database["public"]["Enums"]["tipo_movimentacao"]
           usuario_id?: string | null
+          validado_em?: string | null
         }
         Relationships: [
           {
@@ -597,6 +606,68 @@ export type Database = {
           },
         ]
       }
+      pacientes: {
+        Row: {
+          ativo: boolean | null
+          cpf: string | null
+          created_at: string | null
+          data_nascimento: string | null
+          diagnostico_cid: string | null
+          filial_id: string | null
+          id: string
+          leito: string | null
+          nome: string
+          prontuario: string
+          responsavel_nome: string | null
+          responsavel_telefone: string | null
+          setor: string | null
+          sexo: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cpf?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          diagnostico_cid?: string | null
+          filial_id?: string | null
+          id?: string
+          leito?: string | null
+          nome: string
+          prontuario: string
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          setor?: string | null
+          sexo?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cpf?: string | null
+          created_at?: string | null
+          data_nascimento?: string | null
+          diagnostico_cid?: string | null
+          filial_id?: string | null
+          id?: string
+          leito?: string | null
+          nome?: string
+          prontuario?: string
+          responsavel_nome?: string | null
+          responsavel_telefone?: string | null
+          setor?: string | null
+          sexo?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pacientes_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescricoes: {
         Row: {
           created_at: string | null
@@ -693,6 +764,66 @@ export type Database = {
             columns: ["filial_id"]
             isOneToOne: false
             referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      solicitacoes_medicamentos: {
+        Row: {
+          atendida_em: string | null
+          created_at: string | null
+          filial_id: string | null
+          id: string
+          medicamento_id: string | null
+          observacao: string | null
+          quantidade: number
+          resposta_farmaceutico: string | null
+          setor: string
+          solicitante_id: string
+          status: string
+          urgencia: boolean | null
+        }
+        Insert: {
+          atendida_em?: string | null
+          created_at?: string | null
+          filial_id?: string | null
+          id?: string
+          medicamento_id?: string | null
+          observacao?: string | null
+          quantidade: number
+          resposta_farmaceutico?: string | null
+          setor?: string
+          solicitante_id: string
+          status?: string
+          urgencia?: boolean | null
+        }
+        Update: {
+          atendida_em?: string | null
+          created_at?: string | null
+          filial_id?: string | null
+          id?: string
+          medicamento_id?: string | null
+          observacao?: string | null
+          quantidade?: number
+          resposta_farmaceutico?: string | null
+          setor?: string
+          solicitante_id?: string
+          status?: string
+          urgencia?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_medicamentos_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_medicamentos_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
             referencedColumns: ["id"]
           },
         ]
