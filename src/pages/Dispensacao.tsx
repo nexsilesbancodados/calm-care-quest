@@ -441,11 +441,22 @@ const Dispensacao = () => {
                           <AlertTriangle className="h-3 w-3 shrink-0" /> Lote com validade posterior ao recomendado. Confirme se necessário.
                         </div>
                       )}
-                      {selectedLote && (
-                        <p className="text-[11px] text-muted-foreground">
-                          Disponível: <span className="font-semibold">{selectedLote.quantidade_atual} un.</span> • Val: {new Date(selectedLote.validade).toLocaleDateString("pt-BR")}
-                        </p>
-                      )}
+                      {selectedLote && (() => {
+                        const daysLeft = Math.ceil((new Date(selectedLote.validade).getTime() - now.getTime()) / 86400000);
+                        return (
+                          <>
+                            {daysLeft <= 15 && daysLeft > 0 && (
+                              <div className="flex items-center gap-1.5 text-destructive text-[11px] bg-destructive/10 rounded-md p-2">
+                                <AlertTriangle className="h-3 w-3 shrink-0" /> Atenção: lote vence em {daysLeft} dia{daysLeft > 1 ? "s" : ""}! Priorize o uso.
+                              </div>
+                            )}
+                            <p className="text-[11px] text-muted-foreground">
+                              Disponível: <span className="font-semibold">{selectedLote.quantidade_atual} un.</span> • Val: {new Date(selectedLote.validade).toLocaleDateString("pt-BR")}
+                              {daysLeft <= 60 && <span className={cn("ml-1 font-bold", daysLeft <= 15 ? "text-destructive" : "text-warning")}>({daysLeft}d)</span>}
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
 

@@ -25,7 +25,11 @@ Deno.serve(async (req) => {
     const { data: vencResult, error: vencErr } = await supabase.rpc("check_vencimento_lotes");
     results.vencimento = { alerts: vencResult, error: vencErr?.message };
 
-    // 3. Auto-expire prescriptions past their validity
+    // 3. Quarantine expired lots
+    const { data: quarantineResult, error: quarantineErr } = await supabase.rpc("quarantine_expired_lotes");
+    results.quarentena = { blocked: quarantineResult, error: quarantineErr?.message };
+
+    // 4. Auto-expire prescriptions past their validity
     const { data: expiredPrescs, error: prescErr } = await supabase
       .from("prescricoes")
       .select("id, paciente, data_prescricao, validade_dias")
@@ -53,7 +57,7 @@ Deno.serve(async (req) => {
       results.prescricoes_vencidas = { count: expiredCount };
     }
 
-    // 4. Generate daily summary notification
+    // 5. Generate daily summary notification
     const today = new Date().toISOString().slice(0, 10);
     const { count: todayMovs } = await supabase
       .from("movimentacoes")

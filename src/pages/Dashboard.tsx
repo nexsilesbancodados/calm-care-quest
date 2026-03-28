@@ -18,8 +18,9 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-// Lazy load heavy chart components
+// Lazy load heavy components
 const DashboardCharts = lazy(() => import("@/components/DashboardCharts"));
+const AdvancedKpisPanel = lazy(() => import("@/components/AdvancedKpisPanel"));
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
@@ -186,6 +187,11 @@ const Dashboard = () => {
         <StatCard title="CMM" value={s.cmm} icon={TrendingUp} variant="default" />
         <StatCard title="Prescrições" value={s.prescricoesAtivas} icon={FileText} variant="info" onClick={() => navigate("/prescricoes")} />
       </div>
+
+      {/* ── ADVANCED KPIs (lazy loaded) ── */}
+      <Suspense fallback={<Skeleton className="h-28 rounded-2xl" />}>
+        <AdvancedKpisPanel />
+      </Suspense>
 
       {/* ── CHARTS (lazy loaded) ── */}
       <Suspense fallback={<Skeleton className="h-64 rounded-2xl" />}>

@@ -64,13 +64,31 @@ export function useAutomations() {
     if (!user) return;
     loadAll();
 
-    // Realtime subscription for new notifications
+    // Realtime subscriptions for notifications, solicitações, movimentações and lotes
     const channel = supabase
-      .channel("realtime-notificacoes")
+      .channel("realtime-farmacia")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notificacoes" }, (payload) => {
         const n = payload.new as Notificacao;
         setNotificacoes((prev) => [n, ...prev]);
         toast.info(n.titulo, { description: n.mensagem });
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "solicitacoes_medicamentos" }, (payload) => {
+        toast.info("Nova solicitação de medicamento", { description: `Quantidade: ${(payload.new as any).quantidade}` });
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "solicitacoes_medicamentos" }, (payload) => {
+        const s = payload.new as any;
+        if (s.status === "aprovada") toast.success("Solicitação aprovada!");
+        else if (s.status === "recusada") toast.error("Solicitação recusada");
+        else if (s.status === "atendida") toast.info("Solicitação atendida");
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "movimentacoes" }, () => {
+        // Silently trigger refetch of related queries
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "lotes" }, (payload) => {
+        const l = payload.new as any;
+        if (l.ativo === false && l.quantidade_atual > 0) {
+          toast.warning("Lote bloqueado por vencimento", { description: `Lote ${l.numero_lote} entrou em quarentena` });
+        }
       })
       .subscribe();
 

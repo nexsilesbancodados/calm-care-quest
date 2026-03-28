@@ -12,8 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity } from "lucide-react";
+import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserProductivity } from "@/hooks/useAdvancedKpis";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
@@ -61,6 +62,7 @@ function printReport(title: string, content: string, hospitalNome?: string, user
 
 const Relatorios = () => {
   const { profile } = useAuth();
+  const { data: productivityData = [] } = useUserProductivity(30);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
@@ -241,6 +243,8 @@ const Relatorios = () => {
           <TabsTrigger value="transferencias" className="text-xs gap-1"><ArrowLeftRight className="h-3.5 w-3.5" /> Transferências</TabsTrigger>
           <TabsTrigger value="psicotropicos" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Psicotrópicos</TabsTrigger>
           <TabsTrigger value="cmm" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> CMM</TabsTrigger>
+          <TabsTrigger value="curvaABC" className="text-xs gap-1"><BarChart3 className="h-3.5 w-3.5" /> Curva ABC</TabsTrigger>
+          <TabsTrigger value="produtividade" className="text-xs gap-1"><Users className="h-3.5 w-3.5" /> Produtividade</TabsTrigger>
         </TabsList>
 
         {/* TAB: Estoque Atual */}
@@ -606,6 +610,195 @@ const Relatorios = () => {
                     </TableRow>
                   );
                 })}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: Curva ABC */}
+        <TabsContent value="curvaABC" className="space-y-4">
+          {(() => {
+            const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+            const abcData = meds.map(med => {
+              const consumo = movements.filter(m =>
+                m.medicamento_id === med.id && ["saida", "dispensacao"].includes(m.tipo) && m.created_at >= threeMonthsAgo
+              );
+              const valorConsumo = consumo.reduce((s: number, m: any) => {
+                const lote = med.lotes.find((l: any) => l.id === m.lote_id);
+                return s + m.quantidade * (lote?.preco_unitario || med.preco_unitario || 0);
+              }, 0);
+              return { med, valorConsumo, qty: consumo.reduce((s: number, m: any) => s + m.quantidade, 0) };
+            }).filter(d => d.valorConsumo > 0).sort((a, b) => b.valorConsumo - a.valorConsumo);
+
+            const totalValor = abcData.reduce((s, d) => s + d.valorConsumo, 0);
+            let acum = 0;
+            const classified = abcData.map(d => {
+              acum += d.valorConsumo;
+              const pct = totalValor > 0 ? (acum / totalValor) * 100 : 100;
+              const classe = pct <= 80 ? "A" : pct <= 95 ? "B" : "C";
+              return { ...d, pctAcum: pct, classe };
+            });
+
+            const countA = classified.filter(d => d.classe === "A").length;
+            const countB = classified.filter(d => d.classe === "B").length;
+            const countC = classified.filter(d => d.classe === "C").length;
+
+            const chartData = classified.slice(0, 15).map(d => ({
+              name: d.med.nome.length > 18 ? d.med.nome.slice(0, 18) + "…" : d.med.nome,
+              valor: Math.round(d.valorConsumo * 100) / 100,
+              classe: d.classe,
+            }));
+
+            return (
+              <>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+                    downloadCSV(
+                      ["Medicamento", "Classe", "Valor Consumo (R$)", "Qtd Consumida", "% Acumulado"],
+                      classified.map(d => [d.med.nome, d.classe, d.valorConsumo.toFixed(2), d.qty, d.pctAcum.toFixed(1) + "%"]),
+                      "curva-abc"
+                    );
+                  }}><Download className="h-3.5 w-3.5" />CSV</Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+                    const rows = classified.map(d => {
+                      const cls = d.classe === "A" ? "red" : d.classe === "B" ? "yellow" : "green";
+                      return `<tr><td>${d.med.nome}</td><td style="text-align:center"><span class="badge ${cls}">${d.classe}</span></td><td style="text-align:right">R$ ${d.valorConsumo.toFixed(2)}</td><td style="text-align:center">${d.qty}</td><td style="text-align:center">${d.pctAcum.toFixed(1)}%</td></tr>`;
+                    }).join("");
+                    printReport("Curva ABC — Análise de Consumo", `<div class="nota">Classificação baseada no valor de consumo dos últimos 90 dias. A: 80% do valor | B: 80-95% | C: 95-100%</div><p style="margin-top:12px"><span class="badge red">A: ${countA}</span> <span class="badge yellow">B: ${countB}</span> <span class="badge green">C: ${countC}</span> — Total: <strong>R$ ${totalValor.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Classe</th><th>Valor (R$)</th><th>Qtd</th><th>% Acum.</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+                  }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-2">
+                  <div className="rounded-xl border bg-card p-4 shadow-card">
+                    <p className="text-[11px] text-muted-foreground uppercase mb-1">Classe A (80%)</p>
+                    <p className="text-xl font-bold text-destructive">{countA}</p>
+                    <p className="text-[10px] text-muted-foreground">itens de alto valor</p>
+                  </div>
+                  <div className="rounded-xl border bg-card p-4 shadow-card">
+                    <p className="text-[11px] text-muted-foreground uppercase mb-1">Classe B (15%)</p>
+                    <p className="text-xl font-bold text-warning">{countB}</p>
+                    <p className="text-[10px] text-muted-foreground">itens intermediários</p>
+                  </div>
+                  <div className="rounded-xl border bg-card p-4 shadow-card">
+                    <p className="text-[11px] text-muted-foreground uppercase mb-1">Classe C (5%)</p>
+                    <p className="text-xl font-bold text-success">{countC}</p>
+                    <p className="text-[10px] text-muted-foreground">itens de baixo valor</p>
+                  </div>
+                </div>
+
+                {chartData.length > 0 && (
+                  <Card className="p-5 shadow-card">
+                    <h3 className="text-sm font-semibold mb-4">Top 15 — Valor de Consumo (90 dias)</h3>
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={chartData} margin={{ left: 10, right: 20 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                        <XAxis type="number" tick={{ fontSize: 11 }} />
+                        <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 10 }} />
+                        <Tooltip formatter={(v: number) => `R$ ${v.toFixed(2)}`} />
+                        <Bar dataKey="valor" radius={[0, 4, 4, 0]} barSize={16} name="Valor (R$)">
+                          {chartData.map((d, i) => (
+                            <Cell key={i} fill={d.classe === "A" ? "#ef4444" : d.classe === "B" ? "#f59e0b" : "#10b981"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Card>
+                )}
+
+                <Card className="shadow-card overflow-hidden">
+                  <Table>
+                    <TableHeader><TableRow className="bg-muted/50">
+                      <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                      <TableHead className="text-xs font-semibold text-center">Classe</TableHead>
+                      <TableHead className="text-xs font-semibold text-right">Valor (R$)</TableHead>
+                      <TableHead className="text-xs font-semibold text-center">Qtd</TableHead>
+                      <TableHead className="text-xs font-semibold text-center">% Acum.</TableHead>
+                    </TableRow></TableHeader>
+                    <TableBody>
+                      {classified.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">Nenhum consumo nos últimos 90 dias</TableCell></TableRow>
+                      ) : classified.map(d => (
+                        <TableRow key={d.med.id}>
+                          <TableCell>
+                            <p className="text-sm font-medium">{d.med.nome}</p>
+                            <p className="text-[11px] text-muted-foreground">{d.med.concentracao}</p>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className={cn("text-[10px] font-bold",
+                              d.classe === "A" ? "bg-destructive/10 text-destructive border-destructive/20" :
+                              d.classe === "B" ? "bg-warning/10 text-warning border-warning/20" :
+                              "bg-success/10 text-success border-success/20"
+                            )}>{d.classe}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm">R$ {d.valorConsumo.toFixed(2)}</TableCell>
+                          <TableCell className="text-center font-semibold">{d.qty}</TableCell>
+                          <TableCell className="text-center text-xs text-muted-foreground">{d.pctAcum.toFixed(1)}%</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </>
+            );
+          })()}
+        </TabsContent>
+
+        {/* TAB: Produtividade por Usuário */}
+        <TabsContent value="produtividade" className="space-y-4">
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+              downloadCSV(
+                ["Usuário", "Total Mov.", "Dispensações", "Entradas", "Devoluções", "Unidades"],
+                productivityData.map((d: any) => [d.usuario, d.total_movimentacoes, d.dispensacoes, d.entradas, d.devolucoes, d.total_unidades]),
+                "produtividade-usuarios"
+              );
+            }}><Download className="h-3.5 w-3.5" />CSV</Button>
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+              const rows = productivityData.map((d: any) => `<tr><td>${d.usuario}</td><td style="text-align:center">${d.total_movimentacoes}</td><td style="text-align:center">${d.dispensacoes}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.devolucoes}</td><td style="text-align:center;font-weight:600">${d.total_unidades}</td></tr>`).join("");
+              printReport("Produtividade por Usuário (30 dias)", `<p><strong>${productivityData.length}</strong> usuários ativos no período</p><table><thead><tr><th>Usuário</th><th>Total Mov.</th><th>Dispensações</th><th>Entradas</th><th>Devoluções</th><th>Unidades</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+          </div>
+
+          <Badge variant="outline" className="text-xs">{productivityData.length} usuários ativos (últimos 30 dias)</Badge>
+
+          {productivityData.length > 0 && (
+            <Card className="p-5 shadow-card">
+              <h3 className="text-sm font-semibold mb-4">Movimentações por Usuário</h3>
+              <ResponsiveContainer width="100%" height={Math.max(200, productivityData.length * 40)}>
+                <BarChart data={productivityData.slice(0, 15).map((d: any) => ({ name: d.usuario.length > 20 ? d.usuario.slice(0, 20) + "…" : d.usuario, total: d.total_movimentacoes }))} margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Bar dataKey="total" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Movimentações" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+
+          <Card className="shadow-card overflow-hidden">
+            <Table>
+              <TableHeader><TableRow className="bg-muted/50">
+                <TableHead className="text-xs font-semibold">Usuário</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Total</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Dispensações</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Entradas</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Devoluções</TableHead>
+                <TableHead className="text-xs font-semibold text-center">Unidades</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {productivityData.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">Nenhuma movimentação no período</TableCell></TableRow>
+                ) : productivityData.map((d: any, i: number) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-sm font-medium">{d.usuario}</TableCell>
+                    <TableCell className="text-center font-semibold">{d.total_movimentacoes}</TableCell>
+                    <TableCell className="text-center text-info">{d.dispensacoes}</TableCell>
+                    <TableCell className="text-center text-success">{d.entradas}</TableCell>
+                    <TableCell className="text-center">{d.devolucoes}</TableCell>
+                    <TableCell className="text-center font-semibold">{d.total_unidades}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </Card>
