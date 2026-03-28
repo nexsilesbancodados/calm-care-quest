@@ -33,6 +33,7 @@ const AdminPanel = lazy(pages["/admin"]);
 const Pacientes = lazy(pages["/pacientes"]);
 const Inventario = lazy(pages["/inventario"]);
 const Perfil = lazy(pages["/perfil"]);
+const Solicitacoes = lazy(pages["/solicitacoes"]);
 const Login = lazy(pages["/login"]);
 const ResetPassword = lazy(pages["/reset-password"]);
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -88,6 +89,7 @@ const App = () => (
                   <Route path="/pacientes" element={<P><S><Pacientes /></S></P>} />
                   <Route path="/inventario" element={<P><S><Inventario /></S></P>} />
                   <Route path="/perfil" element={<P><S><Perfil /></S></P>} />
+                  <Route path="/solicitacoes" element={<P><S><Solicitacoes /></S></P>} />
                   <Route path="*" element={<S><NotFound /></S>} />
                 </Routes>
               </BrowserRouter>

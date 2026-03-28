@@ -75,6 +75,11 @@ const Dispensacao = () => {
   // 1c: Quantidade incomum alert
   const [qtyAlertOpen, setQtyAlertOpen] = useState(false);
 
+  // Bloco 5: Controlled med validation
+  const [crfResponsavel, setCrfResponsavel] = useState("");
+  const [crfSenha, setCrfSenha] = useState("");
+  const [validatingCrf, setValidatingCrf] = useState(false);
+
   // 1d: Show kept-patient message
   const [showKeptMessage, setShowKeptMessage] = useState(false);
 
@@ -157,11 +162,32 @@ const Dispensacao = () => {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
+    // Bloco 5: If controlled, validate CRF first
+    if (selectedMed?.controlado) {
+      if (!crfResponsavel.trim()) { toast.error("Informe o CRF do farmacêutico responsável"); return; }
+      if (!crfSenha) { toast.error("Informe a senha de confirmação"); return; }
+    }
     if (form.quantidade > 20) {
       setQtyAlertOpen(true);
+    } else if (selectedMed?.controlado) {
+      handleCrfValidation();
     } else {
       setConfirmOpen(true);
     }
+  };
+
+  // Bloco 5: CRF validation
+  const handleCrfValidation = async () => {
+    if (!user?.email) return;
+    setValidatingCrf(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: user.email, password: crfSenha });
+    if (error) {
+      toast.error("Senha inválida. Validação do farmacêutico falhou.");
+      setValidatingCrf(false);
+      return;
+    }
+    setValidatingCrf(false);
+    setConfirmOpen(true);
   };
 
   const handleSubmit = async () => {
@@ -174,12 +200,18 @@ const Dispensacao = () => {
     if (freshLote.quantidade_atual < form.quantidade) { toast.error(`Estoque insuficiente! Disponível: ${freshLote.quantidade_atual} un.`); setSubmitting(false); return; }
 
     await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual - form.quantidade }).eq("id", form.lote_id);
-    await supabase.from("movimentacoes").insert({
+    const movData: any = {
       tipo: "dispensacao" as any, medicamento_id: form.medicamento_id, lote_id: form.lote_id,
       quantidade: form.quantidade, usuario_id: user?.id, paciente: form.paciente || null,
       prontuario: form.prontuario || null, setor: form.setor || null, observacao: form.observacao, prescricao_id: form.prescricao_id || null,
       filial_id: profile?.filial_id,
-    });
+    };
+    // Bloco 5: Add CRF fields for controlled meds
+    if (selectedMed?.controlado && crfResponsavel) {
+      movData.crf_responsavel = crfResponsavel;
+      movData.validado_em = new Date().toISOString();
+    }
+    await supabase.from("movimentacoes").insert(movData);
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
 
     // 1b: Save paciente recorrente
@@ -492,6 +524,26 @@ const Dispensacao = () => {
                   </div>
 
                   <div className="space-y-1.5"><Label className="text-xs">Observação</Label><Textarea value={form.observacao} onChange={e => setForm({ ...form, observacao: e.target.value })} rows={2} maxLength={500} /></div>
+
+                  {/* Bloco 5: Controlled med validation */}
+                  {selectedMed?.controlado && (
+                    <div className="rounded-xl border border-warning/30 bg-warning/5 p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-warning">
+                        <ShieldAlert className="h-4 w-4" />
+                        Validação do Farmacêutico — Medicamento Controlado
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Número CRF *</Label>
+                          <Input value={crfResponsavel} onChange={e => setCrfResponsavel(e.target.value)} placeholder="CRF-XX 00000" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Senha de confirmação *</Label>
+                          <Input type="password" value={crfSenha} onChange={e => setCrfSenha(e.target.value)} placeholder="Sua senha" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <Button
                     className="w-full gradient-primary text-primary-foreground gap-2"
