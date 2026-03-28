@@ -209,6 +209,54 @@ const Dispensacao = () => {
     setShowKeptMessage(false);
   };
 
+  // Devolução helpers
+  const devSelectedMed = meds.find(m => m.id === devForm.medicamento_id);
+  const devSelectedLote = devSelectedMed?.lotes.find(l => l.id === devForm.lote_id);
+  const devFilteredMeds = useMemo(() => {
+    if (!devMedSearch) return meds;
+    const s = devMedSearch.toLowerCase();
+    return meds.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s));
+  }, [meds, devMedSearch]);
+
+  const handleDevMedChange = (medId: string) => {
+    setDevForm(prev => ({ ...prev, medicamento_id: medId, lote_id: "" }));
+  };
+
+  const handleDevolucao = async () => {
+    if (!devForm.medicamento_id || !devForm.lote_id || !devForm.quantidade || !devForm.motivo) {
+      toast.error("Preencha medicamento, lote, quantidade e motivo");
+      return;
+    }
+    setDevSubmitting(true);
+
+    // Update lote quantity (add back)
+    const { data: freshLote, error: loteErr } = await supabase.from("lotes").select("quantidade_atual").eq("id", devForm.lote_id).single();
+    if (loteErr || !freshLote) { toast.error("Erro ao verificar lote"); setDevSubmitting(false); return; }
+
+    await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual + devForm.quantidade }).eq("id", devForm.lote_id);
+
+    // Insert movimentacao
+    const obs = `Devolução: ${devForm.motivo}${devForm.observacao ? ` — ${devForm.observacao}` : ""}`;
+    await supabase.from("movimentacoes").insert({
+      tipo: "devolucao" as any,
+      medicamento_id: devForm.medicamento_id,
+      lote_id: devForm.lote_id,
+      quantidade: devForm.quantidade,
+      usuario_id: user?.id,
+      paciente: devForm.paciente || null,
+      prontuario: devForm.prontuario || null,
+      observacao: obs,
+      filial_id: profile?.filial_id,
+    });
+
+    await log({ acao: "Devolução de medicamento", tabela: "movimentacoes", dados_novos: { ...devForm, observacao: obs } });
+
+    toast.success("Devolução registrada com sucesso!");
+    setDevForm({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", motivo: "", observacao: "" });
+    setDevSubmitting(false);
+    loadData();
+  };
+
   // Stats
   const todayStr = now.toISOString().slice(0, 10);
   const todayCount = history.filter(h => h.created_at?.slice(0, 10) === todayStr).length;
