@@ -63,7 +63,6 @@ function printReport(title: string, content: string, hospitalNome?: string, user
 const Relatorios = () => {
   const { profile } = useAuth();
   const { data: productivityData = [] } = useUserProductivity(30);
-  const { profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [movements, setMovements] = useState<any[]>([]);
