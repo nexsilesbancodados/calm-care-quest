@@ -563,6 +563,139 @@ const Dispensacao = () => {
             </div>
           </TabsContent>
 
+          {/* Devolução Tab */}
+          <TabsContent value="devolucao">
+            <div className="grid lg:grid-cols-5 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <RotateCcw className="h-4 w-4 text-accent-foreground" />
+                    Registrar Devolução
+                  </div>
+
+                  {/* Paciente */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Paciente</Label>
+                      <Input value={devForm.paciente} onChange={e => setDevForm({ ...devForm, paciente: e.target.value })} placeholder="Nome do paciente" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Prontuário</Label>
+                      <Input value={devForm.prontuario} onChange={e => setDevForm({ ...devForm, prontuario: e.target.value })} />
+                    </div>
+                  </div>
+
+                  {/* Medicamento */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Medicamento *</Label>
+                    <Select value={devForm.medicamento_id} onValueChange={handleDevMedChange}>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 pb-2">
+                          <Input placeholder="Buscar..." value={devMedSearch} onChange={e => setDevMedSearch(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                        {devFilteredMeds.slice(0, 50).map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Lote */}
+                  {devSelectedMed && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Lote *</Label>
+                      <Select value={devForm.lote_id} onValueChange={v => setDevForm({ ...devForm, lote_id: v })}>
+                        <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
+                        <SelectContent>
+                          {devSelectedMed.lotes.map(l => (
+                            <SelectItem key={l.id} value={l.id}>
+                              Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Quantidade */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Quantidade devolvida *</Label>
+                    <Input type="number" min={1} value={devForm.quantidade || ""} onChange={e => setDevForm({ ...devForm, quantidade: Number(e.target.value) })} />
+                  </div>
+
+                  {/* Motivo */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Motivo da devolução *</Label>
+                    <Select value={devForm.motivo} onValueChange={v => setDevForm({ ...devForm, motivo: v })}>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar motivo" /></SelectTrigger>
+                      <SelectContent>
+                        {MOTIVOS_DEVOLUCAO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Observação */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Observação</Label>
+                    <Textarea value={devForm.observacao} onChange={e => setDevForm({ ...devForm, observacao: e.target.value })} rows={2} maxLength={500} />
+                  </div>
+
+                  <Button
+                    className="w-full gap-2"
+                    variant="outline"
+                    disabled={devSubmitting || !devForm.medicamento_id || !devForm.lote_id || !devForm.quantidade || !devForm.motivo}
+                    onClick={handleDevolucao}
+                    size="lg"
+                  >
+                    {devSubmitting ? <div className="h-4 w-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" /> :
+                      <><RotateCcw className="h-4 w-4" /> Registrar Devolução</>}
+                  </Button>
+                </Card>
+              </div>
+
+              {/* Devoluções recentes */}
+              <div className="lg:col-span-3">
+                <Card className="shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
+                    <RotateCcw className="h-4 w-4 text-accent-foreground" />
+                    <h3 className="text-sm font-semibold">Devoluções Recentes</h3>
+                    <Badge variant="secondary" className="ml-auto text-[10px]">{devHistory.length}</Badge>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableHead className="text-xs font-semibold">Data</TableHead>
+                        <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                        <TableHead className="text-xs font-semibold text-center">Qtd</TableHead>
+                        <TableHead className="text-xs font-semibold">Paciente</TableHead>
+                        <TableHead className="text-xs font-semibold">Motivo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {devHistory.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                          <RotateCcw className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                          <p className="text-sm">Nenhuma devolução registrada</p>
+                        </TableCell></TableRow>
+                      ) : devHistory.slice(0, 50).map(h => (
+                        <TableRow key={h.id}>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(h.created_at).toLocaleDateString("pt-BR")} {new Date(h.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">{h.medicamentos?.nome || "—"}</TableCell>
+                          <TableCell className="text-center font-semibold text-success">+{h.quantidade}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{h.paciente || "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{h.observacao || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="historico">
             <Card className="shadow-sm overflow-hidden">
               <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
