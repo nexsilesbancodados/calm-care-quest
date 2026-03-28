@@ -19,6 +19,7 @@ const pages = {
   "/pacientes": () => import("@/pages/Pacientes"),
   "/inventario": () => import("@/pages/Inventario"),
   "/perfil": () => import("@/pages/Perfil"),
+  "/solicitacoes": () => import("@/pages/Solicitacoes"),
   "/login": () => import("@/pages/Login"),
   "/reset-password": () => import("@/pages/ResetPassword"),
 } as Record<string, () => Promise<any>>;

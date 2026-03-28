@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Pill, AlertTriangle, ClipboardList, Package,
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Shield, FileText,
-  User, ClipboardCheck, ChevronRight, LogOut, Sparkles,
+  User, ClipboardCheck, ChevronRight, LogOut, Sparkles, MessageSquareText,
 } from "lucide-react";
 import logoImg from "@/assets/logo-new.png";
 import { NavLink } from "@/components/NavLink";
@@ -43,6 +43,7 @@ const mainItems: MenuItem[] = [
   { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null, badgeKey: null },
   { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"], badgeKey: "transfers" },
   { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: "prescricoes" },
+  { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"], badgeKey: null },
 ];
 
 const toolItems: MenuItem[] = [
