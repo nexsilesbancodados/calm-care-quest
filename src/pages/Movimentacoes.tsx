@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Search, ArrowDownCircle, ArrowUpCircle, Repeat, ChevronLeft, ChevronRight,
-  Calendar, Download, ClipboardList, RefreshCw, Wrench, ArrowLeftRight, X
+  Calendar, Download, ClipboardList, RefreshCw, Wrench, ArrowLeftRight, X, RotateCcw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,7 @@ const typeConfig: Record<string, { label: string; icon: any; className: string; 
   dispensacao: { label: "Dispensação", icon: ArrowUpCircle, className: "bg-info/10 text-info border-info/20", qtyClass: "text-info" },
   ajuste: { label: "Ajuste", icon: Wrench, className: "bg-warning/10 text-warning border-warning/20", qtyClass: "text-warning" },
   transferencia: { label: "Transferência", icon: ArrowLeftRight, className: "bg-primary/10 text-primary border-primary/20", qtyClass: "text-primary" },
+  devolucao: { label: "Devolução", icon: RotateCcw, className: "bg-accent/10 text-accent-foreground border-accent/20", qtyClass: "text-accent-foreground" },
 };
 
 const PAGE_SIZE = 50;
@@ -189,7 +190,7 @@ const Movimentacoes = () => {
                     </TableRow>
                   ) : filtered.map(m => {
                     const cfg = typeConfig[m.tipo] || typeConfig.entrada;
-                    const isEntry = m.tipo === "entrada";
+                    const isEntry = m.tipo === "entrada" || m.tipo === "devolucao";
                     return (
                       <TableRow key={m.id} className="hover:bg-accent/30">
                         <TableCell className="text-xs text-muted-foreground whitespace-nowrap">

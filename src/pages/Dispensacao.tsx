@@ -24,9 +24,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
-  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown
+  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown, RotateCcw
 } from "lucide-react";
 import type { Medicamento, Lote, Prescricao } from "@/types/database";
+
+const MOTIVOS_DEVOLUCAO = [
+  "Alta hospitalar",
+  "Troca de medicamento",
+  "Reação adversa",
+  "Sobra de dose",
+  "Outro",
+] as const;
 
 // --- Paciente recorrente helpers ---
 interface PacienteRecorrente { nome: string; prontuario: string; setor: string; }
@@ -70,12 +78,19 @@ const Dispensacao = () => {
   // 1d: Show kept-patient message
   const [showKeptMessage, setShowKeptMessage] = useState(false);
 
+  // Devolução form state
+  const [devForm, setDevForm] = useState({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", motivo: "", observacao: "" });
+  const [devSubmitting, setDevSubmitting] = useState(false);
+  const [devMedSearch, setDevMedSearch] = useState("");
+  const [devHistory, setDevHistory] = useState<any[]>([]);
+
   const loadData = async () => {
-    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }] = await Promise.all([
+    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }, { data: devHistData }] = await Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
       supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "dispensacao").order("created_at", { ascending: false }).limit(100),
       supabase.from("prescricoes").select("*").in("status", ["ativa", "parcialmente_dispensada"]).order("created_at", { ascending: false }),
+      supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "devolucao" as any).order("created_at", { ascending: false }).limit(50),
     ]);
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
@@ -84,6 +99,7 @@ const Dispensacao = () => {
     setMeds(medsWithLotes);
     setHistory(histData || []);
     setPrescricoes((prescData as Prescricao[]) || []);
+    setDevHistory(devHistData || []);
 
     const medId = searchParams.get("medicamento_id");
     if (medId && medsWithLotes.find((m: any) => m.id === medId)) {
@@ -193,6 +209,54 @@ const Dispensacao = () => {
     setShowKeptMessage(false);
   };
 
+  // Devolução helpers
+  const devSelectedMed = meds.find(m => m.id === devForm.medicamento_id);
+  const devSelectedLote = devSelectedMed?.lotes.find(l => l.id === devForm.lote_id);
+  const devFilteredMeds = useMemo(() => {
+    if (!devMedSearch) return meds;
+    const s = devMedSearch.toLowerCase();
+    return meds.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s));
+  }, [meds, devMedSearch]);
+
+  const handleDevMedChange = (medId: string) => {
+    setDevForm(prev => ({ ...prev, medicamento_id: medId, lote_id: "" }));
+  };
+
+  const handleDevolucao = async () => {
+    if (!devForm.medicamento_id || !devForm.lote_id || !devForm.quantidade || !devForm.motivo) {
+      toast.error("Preencha medicamento, lote, quantidade e motivo");
+      return;
+    }
+    setDevSubmitting(true);
+
+    // Update lote quantity (add back)
+    const { data: freshLote, error: loteErr } = await supabase.from("lotes").select("quantidade_atual").eq("id", devForm.lote_id).single();
+    if (loteErr || !freshLote) { toast.error("Erro ao verificar lote"); setDevSubmitting(false); return; }
+
+    await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual + devForm.quantidade }).eq("id", devForm.lote_id);
+
+    // Insert movimentacao
+    const obs = `Devolução: ${devForm.motivo}${devForm.observacao ? ` — ${devForm.observacao}` : ""}`;
+    await supabase.from("movimentacoes").insert({
+      tipo: "devolucao" as any,
+      medicamento_id: devForm.medicamento_id,
+      lote_id: devForm.lote_id,
+      quantidade: devForm.quantidade,
+      usuario_id: user?.id,
+      paciente: devForm.paciente || null,
+      prontuario: devForm.prontuario || null,
+      observacao: obs,
+      filial_id: profile?.filial_id,
+    });
+
+    await log({ acao: "Devolução de medicamento", tabela: "movimentacoes", dados_novos: { ...devForm, observacao: obs } });
+
+    toast.success("Devolução registrada com sucesso!");
+    setDevForm({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", motivo: "", observacao: "" });
+    setDevSubmitting(false);
+    loadData();
+  };
+
   // Stats
   const todayStr = now.toISOString().slice(0, 10);
   const todayCount = history.filter(h => h.created_at?.slice(0, 10) === todayStr).length;
@@ -254,6 +318,7 @@ const Dispensacao = () => {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="dispensar" className="gap-1.5"><Syringe className="h-3.5 w-3.5" /> Nova Dispensação</TabsTrigger>
+            <TabsTrigger value="devolucao" className="gap-1.5"><RotateCcw className="h-3.5 w-3.5" /> Devolução</TabsTrigger>
             <TabsTrigger value="historico" className="gap-1.5"><History className="h-3.5 w-3.5" /> Histórico</TabsTrigger>
           </TabsList>
 
@@ -489,6 +554,139 @@ const Dispensacao = () => {
                           <TableCell className="text-center font-semibold text-destructive">-{h.quantidade}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{h.paciente || "—"}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">{h.setor || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Devolução Tab */}
+          <TabsContent value="devolucao">
+            <div className="grid lg:grid-cols-5 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <RotateCcw className="h-4 w-4 text-accent-foreground" />
+                    Registrar Devolução
+                  </div>
+
+                  {/* Paciente */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Paciente</Label>
+                      <Input value={devForm.paciente} onChange={e => setDevForm({ ...devForm, paciente: e.target.value })} placeholder="Nome do paciente" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Prontuário</Label>
+                      <Input value={devForm.prontuario} onChange={e => setDevForm({ ...devForm, prontuario: e.target.value })} />
+                    </div>
+                  </div>
+
+                  {/* Medicamento */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Medicamento *</Label>
+                    <Select value={devForm.medicamento_id} onValueChange={handleDevMedChange}>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
+                      <SelectContent>
+                        <div className="px-2 pb-2">
+                          <Input placeholder="Buscar..." value={devMedSearch} onChange={e => setDevMedSearch(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                        {devFilteredMeds.slice(0, 50).map(m => (
+                          <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Lote */}
+                  {devSelectedMed && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Lote *</Label>
+                      <Select value={devForm.lote_id} onValueChange={v => setDevForm({ ...devForm, lote_id: v })}>
+                        <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar lote" /></SelectTrigger>
+                        <SelectContent>
+                          {devSelectedMed.lotes.map(l => (
+                            <SelectItem key={l.id} value={l.id}>
+                              Lote {l.numero_lote} — {l.quantidade_atual} un. — Val: {new Date(l.validade).toLocaleDateString("pt-BR")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {/* Quantidade */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Quantidade devolvida *</Label>
+                    <Input type="number" min={1} value={devForm.quantidade || ""} onChange={e => setDevForm({ ...devForm, quantidade: Number(e.target.value) })} />
+                  </div>
+
+                  {/* Motivo */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Motivo da devolução *</Label>
+                    <Select value={devForm.motivo} onValueChange={v => setDevForm({ ...devForm, motivo: v })}>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar motivo" /></SelectTrigger>
+                      <SelectContent>
+                        {MOTIVOS_DEVOLUCAO.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Observação */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Observação</Label>
+                    <Textarea value={devForm.observacao} onChange={e => setDevForm({ ...devForm, observacao: e.target.value })} rows={2} maxLength={500} />
+                  </div>
+
+                  <Button
+                    className="w-full gap-2"
+                    variant="outline"
+                    disabled={devSubmitting || !devForm.medicamento_id || !devForm.lote_id || !devForm.quantidade || !devForm.motivo}
+                    onClick={handleDevolucao}
+                    size="lg"
+                  >
+                    {devSubmitting ? <div className="h-4 w-4 border-2 border-foreground/30 border-t-foreground rounded-full animate-spin" /> :
+                      <><RotateCcw className="h-4 w-4" /> Registrar Devolução</>}
+                  </Button>
+                </Card>
+              </div>
+
+              {/* Devoluções recentes */}
+              <div className="lg:col-span-3">
+                <Card className="shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
+                    <RotateCcw className="h-4 w-4 text-accent-foreground" />
+                    <h3 className="text-sm font-semibold">Devoluções Recentes</h3>
+                    <Badge variant="secondary" className="ml-auto text-[10px]">{devHistory.length}</Badge>
+                  </div>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableHead className="text-xs font-semibold">Data</TableHead>
+                        <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+                        <TableHead className="text-xs font-semibold text-center">Qtd</TableHead>
+                        <TableHead className="text-xs font-semibold">Paciente</TableHead>
+                        <TableHead className="text-xs font-semibold">Motivo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {devHistory.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                          <RotateCcw className="h-8 w-8 mx-auto mb-2 text-muted-foreground/30" />
+                          <p className="text-sm">Nenhuma devolução registrada</p>
+                        </TableCell></TableRow>
+                      ) : devHistory.slice(0, 50).map(h => (
+                        <TableRow key={h.id}>
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(h.created_at).toLocaleDateString("pt-BR")} {new Date(h.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </TableCell>
+                          <TableCell className="text-sm font-medium">{h.medicamentos?.nome || "—"}</TableCell>
+                          <TableCell className="text-center font-semibold text-success">+{h.quantidade}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{h.paciente || "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">{h.observacao || "—"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

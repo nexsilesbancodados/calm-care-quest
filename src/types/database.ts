@@ -1,5 +1,5 @@
 export type AppRole = "admin" | "farmaceutico" | "auxiliar_farmacia" | "enfermeiro" | "visualizador";
-export type TipoMovimentacao = "entrada" | "saida" | "transferencia" | "ajuste" | "dispensacao";
+export type TipoMovimentacao = "entrada" | "saida" | "transferencia" | "ajuste" | "dispensacao" | "devolucao";
 export type StatusTransferencia = "pendente" | "aprovado" | "enviado" | "recebido" | "cancelado";
 export type StatusPrescricao = "ativa" | "parcialmente_dispensada" | "totalmente_dispensada" | "vencida" | "cancelada";
 
