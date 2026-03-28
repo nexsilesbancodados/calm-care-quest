@@ -169,12 +169,10 @@ const Dispensacao = () => {
     }
     if (form.quantidade > 20) {
       setQtyAlertOpen(true);
+    } else if (selectedMed?.controlado) {
+      handleCrfValidation();
     } else {
-      if (selectedMed?.controlado) {
-        handleCrfValidation();
-      } else {
-        setConfirmOpen(true);
-      }
+      setConfirmOpen(true);
     }
   };
 

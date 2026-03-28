@@ -260,9 +260,10 @@ const Entrada = () => {
         quantidade: item.quantidade,
         usuario_id: user?.id,
         nota_fiscal: notaFiscal || null,
+        nota_fiscal_url: nfUrl || null,
         observacao: observacao || `NF: ${notaFiscal || "—"} | Fornecedor: ${fornecedores.find(f => f.id === fornecedorId)?.nome || "—"}`,
         filial_id: profile?.filial_id,
-      });
+      } as any);
 
       await log({
         acao: "Entrada de Medicamento",
