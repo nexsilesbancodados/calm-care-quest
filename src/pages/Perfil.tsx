@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,11 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun } from "lucide-react";
+import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun, Camera, Loader2 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { ROLE_LABELS, ROLE_PERMISSIONS } from "@/types/database";
 
@@ -32,8 +32,31 @@ const PERMISSION_LABELS: Record<string, string> = {
   view_basic_reports: "Relatórios Básicos",
 };
 
+async function resizeImage(file: File, maxSize: number = 400): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.src = e.target?.result as string;
+    };
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let w = img.width, h = img.height;
+      if (w > h) { h = (maxSize * h) / w; w = maxSize; }
+      else { w = (maxSize * w) / h; h = maxSize; }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Resize failed")), "image/jpeg", 0.85);
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 const Perfil = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [nome, setNome] = useState(profile?.nome || "");
   const [saving, setSaving] = useState(false);
@@ -41,6 +64,8 @@ const Perfil = () => {
   const [passwordForm, setPasswordForm] = useState({ current: "", newPass: "", confirm: "" });
   const [changingPass, setChangingPass] = useState(false);
   const [notifEnabled, setNotifEnabled] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (profile) setNome(profile.nome);
@@ -56,6 +81,35 @@ const Perfil = () => {
     setSaved(true);
     setSaving(false);
     setTimeout(() => setSaved(false), 2000);
+    refreshProfile();
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem"); return; }
+
+    setUploadingAvatar(true);
+    try {
+      const resized = await resizeImage(file);
+      const ext = "jpg";
+      const path = `${user!.id}/avatar.${ext}`;
+
+      // Upload (upsert)
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, resized, { upsert: true, contentType: "image/jpeg" });
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", user!.id);
+      await refreshProfile();
+      toast.success("Avatar atualizado!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar avatar: " + (err.message || ""));
+    }
+    setUploadingAvatar(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleChangePassword = async () => {
@@ -101,17 +155,40 @@ const Perfil = () => {
         {/* Profile Card */}
         <div>
           <Card className="p-0 shadow-card overflow-hidden">
-            {/* Header gradient */}
             <div className="h-24 gradient-hero relative">
               <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
             </div>
             <div className="px-6 pb-6 -mt-10 relative">
               <div className="flex items-end gap-5 mb-6">
-                <Avatar className="h-20 w-20 ring-4 ring-card shadow-elevated">
-                  <AvatarFallback className="bg-gradient-to-br from-primary/20 via-primary/10 to-info/10 text-primary text-2xl font-bold">
-                    {displayInitials}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative group">
+                  <Avatar className="h-20 w-20 ring-4 ring-card shadow-elevated">
+                    {profile?.avatar_url ? (
+                      <AvatarImage src={profile.avatar_url} alt={nome} />
+                    ) : null}
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 via-primary/10 to-info/10 text-primary text-2xl font-bold">
+                      {displayInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Camera overlay */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
                 <div className="pb-1">
                   <h2 className="text-xl font-bold">{nome}</h2>
                   <p className="text-sm text-muted-foreground flex items-center gap-1.5">
