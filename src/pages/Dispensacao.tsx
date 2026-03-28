@@ -24,9 +24,17 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
-  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown
+  Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown, RotateCcw
 } from "lucide-react";
 import type { Medicamento, Lote, Prescricao } from "@/types/database";
+
+const MOTIVOS_DEVOLUCAO = [
+  "Alta hospitalar",
+  "Troca de medicamento",
+  "Reação adversa",
+  "Sobra de dose",
+  "Outro",
+] as const;
 
 // --- Paciente recorrente helpers ---
 interface PacienteRecorrente { nome: string; prontuario: string; setor: string; }
@@ -70,12 +78,19 @@ const Dispensacao = () => {
   // 1d: Show kept-patient message
   const [showKeptMessage, setShowKeptMessage] = useState(false);
 
+  // Devolução form state
+  const [devForm, setDevForm] = useState({ medicamento_id: "", lote_id: "", quantidade: 0, paciente: "", prontuario: "", motivo: "", observacao: "" });
+  const [devSubmitting, setDevSubmitting] = useState(false);
+  const [devMedSearch, setDevMedSearch] = useState("");
+  const [devHistory, setDevHistory] = useState<any[]>([]);
+
   const loadData = async () => {
-    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }] = await Promise.all([
+    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }, { data: devHistData }] = await Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
       supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "dispensacao").order("created_at", { ascending: false }).limit(100),
       supabase.from("prescricoes").select("*").in("status", ["ativa", "parcialmente_dispensada"]).order("created_at", { ascending: false }),
+      supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "devolucao" as any).order("created_at", { ascending: false }).limit(50),
     ]);
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
@@ -84,6 +99,7 @@ const Dispensacao = () => {
     setMeds(medsWithLotes);
     setHistory(histData || []);
     setPrescricoes((prescData as Prescricao[]) || []);
+    setDevHistory(devHistData || []);
 
     const medId = searchParams.get("medicamento_id");
     if (medId && medsWithLotes.find((m: any) => m.id === medId)) {
