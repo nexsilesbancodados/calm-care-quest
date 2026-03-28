@@ -12,8 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity } from "lucide-react";
+import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserProductivity } from "@/hooks/useAdvancedKpis";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
@@ -60,6 +61,8 @@ function printReport(title: string, content: string, hospitalNome?: string, user
 }
 
 const Relatorios = () => {
+  const { profile } = useAuth();
+  const { data: productivityData = [] } = useUserProductivity(30);
   const { profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -241,6 +244,8 @@ const Relatorios = () => {
           <TabsTrigger value="transferencias" className="text-xs gap-1"><ArrowLeftRight className="h-3.5 w-3.5" /> Transferências</TabsTrigger>
           <TabsTrigger value="psicotropicos" className="text-xs gap-1"><ShieldCheck className="h-3.5 w-3.5" /> Psicotrópicos</TabsTrigger>
           <TabsTrigger value="cmm" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> CMM</TabsTrigger>
+          <TabsTrigger value="curvaABC" className="text-xs gap-1"><BarChart3 className="h-3.5 w-3.5" /> Curva ABC</TabsTrigger>
+          <TabsTrigger value="produtividade" className="text-xs gap-1"><Users className="h-3.5 w-3.5" /> Produtividade</TabsTrigger>
         </TabsList>
 
         {/* TAB: Estoque Atual */}
