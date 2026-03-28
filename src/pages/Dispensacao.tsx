@@ -75,6 +75,11 @@ const Dispensacao = () => {
   // 1c: Quantidade incomum alert
   const [qtyAlertOpen, setQtyAlertOpen] = useState(false);
 
+  // Bloco 5: Controlled med validation
+  const [crfResponsavel, setCrfResponsavel] = useState("");
+  const [crfSenha, setCrfSenha] = useState("");
+  const [validatingCrf, setValidatingCrf] = useState(false);
+
   // 1d: Show kept-patient message
   const [showKeptMessage, setShowKeptMessage] = useState(false);
 
@@ -157,11 +162,34 @@ const Dispensacao = () => {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
+    // Bloco 5: If controlled, validate CRF first
+    if (selectedMed?.controlado) {
+      if (!crfResponsavel.trim()) { toast.error("Informe o CRF do farmacêutico responsável"); return; }
+      if (!crfSenha) { toast.error("Informe a senha de confirmação"); return; }
+    }
     if (form.quantidade > 20) {
       setQtyAlertOpen(true);
     } else {
-      setConfirmOpen(true);
+      if (selectedMed?.controlado) {
+        handleCrfValidation();
+      } else {
+        setConfirmOpen(true);
+      }
     }
+  };
+
+  // Bloco 5: CRF validation
+  const handleCrfValidation = async () => {
+    if (!user?.email) return;
+    setValidatingCrf(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: user.email, password: crfSenha });
+    if (error) {
+      toast.error("Senha inválida. Validação do farmacêutico falhou.");
+      setValidatingCrf(false);
+      return;
+    }
+    setValidatingCrf(false);
+    setConfirmOpen(true);
   };
 
   const handleSubmit = async () => {
