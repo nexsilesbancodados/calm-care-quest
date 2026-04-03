@@ -18,7 +18,15 @@ import { useUserProductivity } from "@/hooks/useAdvancedKpis";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
-const COLORS = ["#1e3a5f", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#6b7280"];
+const COLORS = [
+  "hsl(205, 60%, 24%)",
+  "hsl(205, 85%, 55%)",
+  "hsl(152, 56%, 40%)",
+  "hsl(40, 96%, 50%)",
+  "hsl(4, 76%, 50%)",
+  "hsl(239, 84%, 67%)",
+  "hsl(215, 8%, 50%)",
+];
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-BR");
@@ -146,10 +154,10 @@ const Relatorios = () => {
 
   // Stock status breakdown
   const stockStatus = [
-    { name: "Normal", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "normal").length, color: "#10b981" },
-    { name: "Baixo", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "baixo").length, color: "#f59e0b" },
-    { name: "Crítico", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "critico").length, color: "#ef4444" },
-    { name: "Esgotado", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "esgotado").length, color: "#6b7280" },
+    { name: "Normal", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "normal").length, color: "hsl(152, 56%, 40%)" },
+    { name: "Baixo", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "baixo").length, color: "hsl(40, 96%, 50%)" },
+    { name: "Crítico", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "critico").length, color: "hsl(4, 76%, 50%)" },
+    { name: "Esgotado", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "esgotado").length, color: "hsl(215, 8%, 50%)" },
   ];
 
   const topStock = [...filteredMeds].map((m) => ({ name: m.nome.length > 20 ? m.nome.slice(0, 20) + "…" : m.nome, qty: getEstoqueTotal(m.lotes) })).sort((a, b) => b.qty - a.qty).slice(0, 8);
@@ -292,7 +300,7 @@ const Relatorios = () => {
                 <BarChart data={topStock} margin={{ left: 10, right: 20 }}>
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
-                  <Tooltip /><Bar dataKey="qty" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
+                  <Tooltip /><Bar dataKey="qty" fill="hsl(205, 85%, 55%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
@@ -436,7 +444,7 @@ const Relatorios = () => {
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
-                  <Tooltip /><Bar dataKey="value" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
+                  <Tooltip /><Bar dataKey="value" fill="hsl(205, 85%, 55%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -770,7 +778,7 @@ const Relatorios = () => {
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Bar dataKey="total" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Movimentações" />
+                  <Bar dataKey="total" fill="hsl(205, 85%, 55%)" radius={[0, 4, 4, 0]} barSize={16} name="Movimentações" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>

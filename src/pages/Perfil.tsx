@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun, Camera, Loader2 } from "lucide-react";
+import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun, Camera, Loader2, Building2 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { ROLE_LABELS, ROLE_PERMISSIONS } from "@/types/database";
 
@@ -234,6 +234,27 @@ const Perfil = () => {
             </div>
           </Card>
         </div>
+
+        {/* Filial Card */}
+        {profile?.filial && (
+          <div>
+            <Card className="p-6 shadow-card">
+              <h3 className="text-sm font-semibold flex items-center gap-2 mb-4">
+                <Building2 className="h-4 w-4 text-primary" />
+                Unidade Vinculada
+              </h3>
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                <p className="text-sm font-semibold">{profile.filial.nome}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  {profile.filial.cidade && <p>📍 {profile.filial.cidade} — {profile.filial.estado}</p>}
+                  {profile.filial.cnes && <p>CNES: {profile.filial.cnes}</p>}
+                  {profile.filial.telefone && <p>📞 {profile.filial.telefone}</p>}
+                  {profile.filial.responsavel && <p>Resp: {profile.filial.responsavel}</p>}
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Permissions Card */}
         <div>

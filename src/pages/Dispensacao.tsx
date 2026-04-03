@@ -36,17 +36,8 @@ const MOTIVOS_DEVOLUCAO = [
   "Outro",
 ] as const;
 
-// --- Paciente recorrente helpers ---
-interface PacienteRecorrente { nome: string; prontuario: string; setor: string; }
-const PACIENTES_KEY = "dispensacao_pacientes";
-function getPacientesRecorrentes(): PacienteRecorrente[] {
-  try { return JSON.parse(localStorage.getItem(PACIENTES_KEY) || "[]"); } catch { return []; }
-}
-function savePacienteRecorrente(p: PacienteRecorrente) {
-  const list = getPacientesRecorrentes().filter(x => x.nome !== p.nome || x.prontuario !== p.prontuario);
-  list.unshift(p);
-  localStorage.setItem(PACIENTES_KEY, JSON.stringify(list.slice(0, 10)));
-}
+// --- Paciente helpers (from DB) ---
+interface PacienteDB { id: string; nome: string; prontuario: string; setor: string | null; leito: string | null; }
 
 const Dispensacao = () => {
   const { log } = useAudit();
@@ -68,9 +59,9 @@ const Dispensacao = () => {
   // 1a: Auto FEFO state
   const [autoFefoLoteId, setAutoFefoLoteId] = useState<string>("");
 
-  // 1b: Paciente recorrente combobox
+  // 1b: Paciente combobox (from DB)
   const [pacienteOpen, setPacienteOpen] = useState(false);
-  const pacientesRecorrentes = useMemo(() => getPacientesRecorrentes(), [history]);
+  const [pacientesDB, setPacientesDB] = useState<PacienteDB[]>([]);
 
   // 1c: Quantidade incomum alert
   const [qtyAlertOpen, setQtyAlertOpen] = useState(false);
@@ -90,12 +81,13 @@ const Dispensacao = () => {
   const [devHistory, setDevHistory] = useState<any[]>([]);
 
   const loadData = async () => {
-    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }, { data: devHistData }] = await Promise.all([
+    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }, { data: devHistData }, { data: pacData }] = await Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
       supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "dispensacao").order("created_at", { ascending: false }).limit(100),
       supabase.from("prescricoes").select("*").in("status", ["ativa", "parcialmente_dispensada"]).order("created_at", { ascending: false }),
       supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "devolucao" as any).order("created_at", { ascending: false }).limit(50),
+      supabase.from("pacientes").select("id, nome, prontuario, setor, leito").eq("ativo", true).order("nome"),
     ]);
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
@@ -105,6 +97,7 @@ const Dispensacao = () => {
     setHistory(histData || []);
     setPrescricoes((prescData as Prescricao[]) || []);
     setDevHistory(devHistData || []);
+    setPacientesDB((pacData as PacienteDB[]) || []);
 
     const medId = searchParams.get("medicamento_id");
     if (medId && medsWithLotes.find((m: any) => m.id === medId)) {
@@ -214,10 +207,7 @@ const Dispensacao = () => {
     await supabase.from("movimentacoes").insert(movData);
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
 
-    // 1b: Save paciente recorrente
-    if (form.paciente.trim()) {
-      savePacienteRecorrente({ nome: form.paciente, prontuario: form.prontuario, setor: form.setor });
-    }
+    // No more localStorage — pacientes come from DB
 
     toast.success("Dispensação registrada com sucesso!");
 
@@ -304,12 +294,12 @@ const Dispensacao = () => {
     return matchSearch && matchFrom && matchTo;
   });
 
-  // Filter pacientes for combobox
+  // Filter pacientes for combobox (from DB)
   const filteredPacientes = useMemo(() => {
-    if (!form.paciente) return pacientesRecorrentes;
+    if (!form.paciente) return pacientesDB;
     const s = form.paciente.toLowerCase();
-    return pacientesRecorrentes.filter(p => p.nome.toLowerCase().includes(s));
-  }, [form.paciente, pacientesRecorrentes]);
+    return pacientesDB.filter(p => p.nome.toLowerCase().includes(s) || p.prontuario.toLowerCase().includes(s));
+  }, [form.paciente, pacientesDB]);
 
   if (loading) return (
     <AppLayout title="Dispensação">
@@ -503,23 +493,23 @@ const Dispensacao = () => {
                             />
                             <CommandList>
                               <CommandEmpty>
-                                <span className="text-xs">Nenhum paciente recente. Digite o nome.</span>
+                                <span className="text-xs">Nenhum paciente encontrado. Digite o nome.</span>
                               </CommandEmpty>
                               {filteredPacientes.length > 0 && (
-                                <CommandGroup heading="Pacientes recentes">
-                                  {filteredPacientes.map((p, i) => (
+                                <CommandGroup heading="Pacientes cadastrados">
+                                  {filteredPacientes.slice(0, 20).map((p) => (
                                     <CommandItem
-                                      key={`${p.nome}-${i}`}
+                                      key={p.id}
                                       value={p.nome}
                                       onSelect={() => {
-                                        setForm({ ...form, paciente: p.nome, prontuario: p.prontuario, setor: p.setor });
+                                        setForm({ ...form, paciente: p.nome, prontuario: p.prontuario, setor: p.setor || "" });
                                         setPacienteOpen(false);
                                       }}
                                     >
                                       <Check className={cn("mr-2 h-3 w-3", form.paciente === p.nome ? "opacity-100" : "opacity-0")} />
                                       <div>
                                         <p className="text-xs font-medium">{p.nome}</p>
-                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario || "—"} • {p.setor || "—"}</p>
+                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario} • {p.setor || "—"}{p.leito ? ` • Leito: ${p.leito}` : ""}</p>
                                       </div>
                                     </CommandItem>
                                   ))}
