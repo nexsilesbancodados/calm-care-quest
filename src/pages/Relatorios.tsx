@@ -444,7 +444,7 @@ const Relatorios = () => {
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
-                  <Tooltip /><Bar dataKey="value" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
+                  <Tooltip /><Bar dataKey="value" fill="hsl(205, 85%, 55%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             )}
