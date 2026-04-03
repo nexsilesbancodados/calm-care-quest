@@ -778,7 +778,7 @@ const Relatorios = () => {
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 10 }} />
                   <Tooltip />
-                  <Bar dataKey="total" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Movimentações" />
+                  <Bar dataKey="total" fill="hsl(205, 85%, 55%)" radius={[0, 4, 4, 0]} barSize={16} name="Movimentações" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
