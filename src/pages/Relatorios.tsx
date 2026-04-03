@@ -18,7 +18,15 @@ import { useUserProductivity } from "@/hooks/useAdvancedKpis";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
-const COLORS = ["#1e3a5f", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#6b7280"];
+const COLORS = [
+  "hsl(205, 60%, 24%)",
+  "hsl(205, 85%, 55%)",
+  "hsl(152, 56%, 40%)",
+  "hsl(40, 96%, 50%)",
+  "hsl(4, 76%, 50%)",
+  "hsl(239, 84%, 67%)",
+  "hsl(215, 8%, 50%)",
+];
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("pt-BR");
