@@ -207,10 +207,7 @@ const Dispensacao = () => {
     await supabase.from("movimentacoes").insert(movData);
     await log({ acao: "Dispensação", tabela: "movimentacoes", dados_novos: form });
 
-    // 1b: Save paciente recorrente
-    if (form.paciente.trim()) {
-      savePacienteRecorrente({ nome: form.paciente, prontuario: form.prontuario, setor: form.setor });
-    }
+    // No more localStorage — pacientes come from DB
 
     toast.success("Dispensação registrada com sucesso!");
 
