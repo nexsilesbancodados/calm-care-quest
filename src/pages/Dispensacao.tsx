@@ -97,6 +97,7 @@ const Dispensacao = () => {
     setHistory(histData || []);
     setPrescricoes((prescData as Prescricao[]) || []);
     setDevHistory(devHistData || []);
+    setPacientesDB((pacData as PacienteDB[]) || []);
 
     const medId = searchParams.get("medicamento_id");
     if (medId && medsWithLotes.find((m: any) => m.id === medId)) {
