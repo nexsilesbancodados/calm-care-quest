@@ -142,7 +142,7 @@ export const AppSidebar = memo(function AppSidebar() {
                 "h-[18px] w-[18px] shrink-0 transition-colors duration-200",
                 active
                   ? "text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground"
               )} strokeWidth={active ? 2.2 : 1.8} />
               {collapsed && count > 0 && (
                 <div className="absolute -top-1 -right-1.5 h-2.5 w-2.5 rounded-full bg-destructive ring-2 ring-sidebar-background animate-pulse" />
