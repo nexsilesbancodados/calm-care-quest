@@ -300,7 +300,7 @@ const Relatorios = () => {
                 <BarChart data={topStock} margin={{ left: 10, right: 20 }}>
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
-                  <Tooltip /><Bar dataKey="qty" fill="hsl(214, 60%, 35%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
+                  <Tooltip /><Bar dataKey="qty" fill="hsl(205, 85%, 55%)" radius={[0, 4, 4, 0]} barSize={16} name="Unidades" />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
