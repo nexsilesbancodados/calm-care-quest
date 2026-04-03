@@ -201,7 +201,7 @@ export const AppSidebar = memo(function AppSidebar() {
       <Collapsible key={label} defaultOpen={defaultOpen || hasActiveItem} className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex items-center w-full text-[11px] uppercase tracking-[0.14em] text-sidebar-foreground/50 px-3 mb-1.5 mt-2 font-extrabold hover:text-sidebar-foreground/80 transition-colors cursor-pointer">
+            <CollapsibleTrigger className="flex items-center w-full text-[11px] uppercase tracking-[0.14em] text-sidebar-foreground/70 px-3 mb-1.5 mt-2 font-extrabold hover:text-sidebar-foreground transition-colors cursor-pointer">
               <span className="flex-1 text-left">{label}</span>
               <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-50" />
             </CollapsibleTrigger>
