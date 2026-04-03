@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun, Camera, Loader2 } from "lucide-react";
+import { User, Mail, Shield, Calendar, Save, Check, Key, Bell, Moon, Sun, Camera, Loader2, Building2 } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { ROLE_LABELS, ROLE_PERMISSIONS } from "@/types/database";
 
