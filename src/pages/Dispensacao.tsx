@@ -81,12 +81,13 @@ const Dispensacao = () => {
   const [devHistory, setDevHistory] = useState<any[]>([]);
 
   const loadData = async () => {
-    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }, { data: devHistData }] = await Promise.all([
+    const [{ data: medsData }, { data: lotesData }, { data: histData }, { data: prescData }, { data: devHistData }, { data: pacData }] = await Promise.all([
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
       supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "dispensacao").order("created_at", { ascending: false }).limit(100),
       supabase.from("prescricoes").select("*").in("status", ["ativa", "parcialmente_dispensada"]).order("created_at", { ascending: false }),
       supabase.from("movimentacoes").select("*, medicamentos(nome, concentracao)").eq("tipo", "devolucao" as any).order("created_at", { ascending: false }).limit(50),
+      supabase.from("pacientes").select("id, nome, prontuario, setor, leito").eq("ativo", true).order("nome"),
     ]);
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
