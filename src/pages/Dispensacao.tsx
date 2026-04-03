@@ -59,9 +59,9 @@ const Dispensacao = () => {
   // 1a: Auto FEFO state
   const [autoFefoLoteId, setAutoFefoLoteId] = useState<string>("");
 
-  // 1b: Paciente recorrente combobox
+  // 1b: Paciente combobox (from DB)
   const [pacienteOpen, setPacienteOpen] = useState(false);
-  const pacientesRecorrentes = useMemo(() => getPacientesRecorrentes(), [history]);
+  const [pacientesDB, setPacientesDB] = useState<PacienteDB[]>([]);
 
   // 1c: Quantidade incomum alert
   const [qtyAlertOpen, setQtyAlertOpen] = useState(false);
