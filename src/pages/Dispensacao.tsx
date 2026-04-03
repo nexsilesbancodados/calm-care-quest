@@ -36,17 +36,8 @@ const MOTIVOS_DEVOLUCAO = [
   "Outro",
 ] as const;
 
-// --- Paciente recorrente helpers ---
-interface PacienteRecorrente { nome: string; prontuario: string; setor: string; }
-const PACIENTES_KEY = "dispensacao_pacientes";
-function getPacientesRecorrentes(): PacienteRecorrente[] {
-  try { return JSON.parse(localStorage.getItem(PACIENTES_KEY) || "[]"); } catch { return []; }
-}
-function savePacienteRecorrente(p: PacienteRecorrente) {
-  const list = getPacientesRecorrentes().filter(x => x.nome !== p.nome || x.prontuario !== p.prontuario);
-  list.unshift(p);
-  localStorage.setItem(PACIENTES_KEY, JSON.stringify(list.slice(0, 10)));
-}
+// --- Paciente helpers (from DB) ---
+interface PacienteDB { id: string; nome: string; prontuario: string; setor: string | null; leito: string | null; }
 
 const Dispensacao = () => {
   const { log } = useAudit();
