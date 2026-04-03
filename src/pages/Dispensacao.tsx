@@ -493,23 +493,23 @@ const Dispensacao = () => {
                             />
                             <CommandList>
                               <CommandEmpty>
-                                <span className="text-xs">Nenhum paciente recente. Digite o nome.</span>
+                                <span className="text-xs">Nenhum paciente encontrado. Digite o nome.</span>
                               </CommandEmpty>
                               {filteredPacientes.length > 0 && (
-                                <CommandGroup heading="Pacientes recentes">
-                                  {filteredPacientes.map((p, i) => (
+                                <CommandGroup heading="Pacientes cadastrados">
+                                  {filteredPacientes.slice(0, 20).map((p) => (
                                     <CommandItem
-                                      key={`${p.nome}-${i}`}
+                                      key={p.id}
                                       value={p.nome}
                                       onSelect={() => {
-                                        setForm({ ...form, paciente: p.nome, prontuario: p.prontuario, setor: p.setor });
+                                        setForm({ ...form, paciente: p.nome, prontuario: p.prontuario, setor: p.setor || "" });
                                         setPacienteOpen(false);
                                       }}
                                     >
                                       <Check className={cn("mr-2 h-3 w-3", form.paciente === p.nome ? "opacity-100" : "opacity-0")} />
                                       <div>
                                         <p className="text-xs font-medium">{p.nome}</p>
-                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario || "—"} • {p.setor || "—"}</p>
+                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario} • {p.setor || "—"}{p.leito ? ` • Leito: ${p.leito}` : ""}</p>
                                       </div>
                                     </CommandItem>
                                   ))}
