@@ -154,10 +154,10 @@ const Relatorios = () => {
 
   // Stock status breakdown
   const stockStatus = [
-    { name: "Normal", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "normal").length, color: "#10b981" },
-    { name: "Baixo", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "baixo").length, color: "#f59e0b" },
-    { name: "Crítico", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "critico").length, color: "#ef4444" },
-    { name: "Esgotado", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "esgotado").length, color: "#6b7280" },
+    { name: "Normal", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "normal").length, color: "hsl(152, 56%, 40%)" },
+    { name: "Baixo", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "baixo").length, color: "hsl(40, 96%, 50%)" },
+    { name: "Crítico", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "critico").length, color: "hsl(4, 76%, 50%)" },
+    { name: "Esgotado", value: filteredMeds.filter((m) => getEstoqueStatus(getEstoqueTotal(m.lotes), m.estoque_minimo) === "esgotado").length, color: "hsl(215, 8%, 50%)" },
   ];
 
   const topStock = [...filteredMeds].map((m) => ({ name: m.nome.length > 20 ? m.nome.slice(0, 20) + "…" : m.nome, qty: getEstoqueTotal(m.lotes) })).sort((a, b) => b.qty - a.qty).slice(0, 8);
