@@ -294,12 +294,12 @@ const Dispensacao = () => {
     return matchSearch && matchFrom && matchTo;
   });
 
-  // Filter pacientes for combobox
+  // Filter pacientes for combobox (from DB)
   const filteredPacientes = useMemo(() => {
-    if (!form.paciente) return pacientesRecorrentes;
+    if (!form.paciente) return pacientesDB;
     const s = form.paciente.toLowerCase();
-    return pacientesRecorrentes.filter(p => p.nome.toLowerCase().includes(s));
-  }, [form.paciente, pacientesRecorrentes]);
+    return pacientesDB.filter(p => p.nome.toLowerCase().includes(s) || p.prontuario.toLowerCase().includes(s));
+  }, [form.paciente, pacientesDB]);
 
   if (loading) return (
     <AppLayout title="Dispensação">
