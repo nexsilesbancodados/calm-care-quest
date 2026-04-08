@@ -393,7 +393,37 @@ const Pacientes = () => {
                   {/* Internação */}
                   <div>
                     <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Internação</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Data de Entrada</Label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal h-10",
+                                !form.data_entrada && "text-muted-foreground"
+                              )}
+                            >
+                              <Calendar className="mr-2 h-4 w-4 shrink-0" />
+                              {form.data_entrada
+                                ? format(parse(form.data_entrada, "yyyy-MM-dd", new Date()), "dd/MM/yyyy")
+                                : "dd/mm/aaaa"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarWidget
+                              mode="single"
+                              selected={form.data_entrada ? parse(form.data_entrada, "yyyy-MM-dd", new Date()) : undefined}
+                              onSelect={(date) => setForm({ ...form, data_entrada: date ? format(date, "yyyy-MM-dd") : null })}
+                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                              initialFocus
+                              locale={ptBR}
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Leito</Label>
                         <Input value={form.leito || ""} onChange={e => setForm({ ...form, leito: e.target.value || null })} placeholder="Ex: 12-A" />
