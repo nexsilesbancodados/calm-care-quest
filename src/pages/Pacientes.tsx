@@ -33,6 +33,7 @@ interface Paciente {
   cpf: string | null;
   prontuario: string;
   data_nascimento: string | null;
+  data_entrada: string | null;
   sexo: string | null;
   leito: string | null;
   setor: string | null;
