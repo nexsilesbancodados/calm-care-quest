@@ -345,8 +345,8 @@ const Dispensacao = () => {
           </TabsList>
 
           <TabsContent value="dispensar">
-            <div className="grid lg:grid-cols-5 gap-6">
-              <div className="lg:col-span-2">
+            <div className="space-y-6">
+              <div>
                 <Card className="p-6 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <Syringe className="h-4 w-4 text-primary" />
@@ -567,7 +567,7 @@ const Dispensacao = () => {
               </div>
 
               {/* Quick recent */}
-              <div className="lg:col-span-3">
+              <div>
                 <Card className="shadow-sm overflow-hidden">
                   <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
                     <History className="h-4 w-4 text-primary" />
@@ -618,8 +618,8 @@ const Dispensacao = () => {
 
           {/* Devolução Tab */}
           <TabsContent value="devolucao">
-            <div className="grid lg:grid-cols-5 gap-6">
-              <div className="lg:col-span-2">
+            <div className="space-y-6">
+              <div>
                 <Card className="p-6 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <RotateCcw className="h-4 w-4 text-accent-foreground" />
@@ -708,7 +708,7 @@ const Dispensacao = () => {
               </div>
 
               {/* Devoluções recentes */}
-              <div className="lg:col-span-3">
+              <div>
                 <Card className="shadow-sm overflow-hidden">
                   <div className="flex items-center gap-2 p-4 border-b bg-muted/30">
                     <RotateCcw className="h-4 w-4 text-accent-foreground" />

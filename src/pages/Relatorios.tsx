@@ -293,7 +293,7 @@ const Relatorios = () => {
             ))}
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
             <Card className="p-5 shadow-card">
               <h3 className="text-sm font-semibold mb-4">Maiores Estoques</h3>
               <ResponsiveContainer width="100%" height={280}>
