@@ -659,6 +659,122 @@ const Pacientes = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Patient Detail / Prontuário Dialog */}
+      <Dialog open={!!detailPatient} onOpenChange={open => !open && setDetailPatient(null)}>
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Prontuário — {detailPatient?.nome}
+            </DialogTitle>
+          </DialogHeader>
+
+          {detailPatient && (
+            <div className="space-y-4">
+              {/* Patient Info Summary */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Prontuário</p>
+                  <p className="font-mono font-semibold">{detailPatient.prontuario}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">CPF</p>
+                  <p className="font-medium">{detailPatient.cpf || "—"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Sexo</p>
+                  <p className="font-medium">{detailPatient.sexo === "M" ? "Masculino" : detailPatient.sexo === "F" ? "Feminino" : detailPatient.sexo || "—"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Data de Nascimento</p>
+                  <p className="font-medium">
+                    {detailPatient.data_nascimento
+                      ? `${format(parse(detailPatient.data_nascimento, "yyyy-MM-dd", new Date()), "dd/MM/yyyy")} (${calcAge(detailPatient.data_nascimento)})`
+                      : "—"}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Data de Entrada</p>
+                  <p className="font-medium">
+                    {detailPatient.data_entrada
+                      ? format(parse(detailPatient.data_entrada, "yyyy-MM-dd", new Date()), "dd/MM/yyyy")
+                      : "—"}
+                  </p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Diagnóstico (CID)</p>
+                  <p className="font-medium">{detailPatient.diagnostico_cid || "—"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Leito</p>
+                  <p className="font-medium">{detailPatient.leito || "—"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Setor</p>
+                  <p className="font-medium">{detailPatient.setor || "—"}</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-muted-foreground">Responsável</p>
+                  <p className="font-medium">
+                    {detailPatient.responsavel_nome || "—"}
+                    {detailPatient.responsavel_telefone && (
+                      <span className="text-muted-foreground ml-1">({detailPatient.responsavel_telefone})</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Medications dispensed */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <Pill className="h-3.5 w-3.5" /> Medicações Dispensadas
+                  </p>
+                  <Badge variant="outline" className="text-[10px]">{detailMeds.length} registros</Badge>
+                </div>
+
+                {detailLoading ? (
+                  <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg" />)}</div>
+                ) : detailMeds.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Pill className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Nenhuma medicação dispensada</p>
+                  </div>
+                ) : (
+                  <ScrollArea className="max-h-[40vh] pr-2">
+                    <div className="space-y-2">
+                      {detailMeds.map(t => (
+                        <div key={t.id} className="rounded-lg border bg-card p-3 hover:shadow-sm transition-shadow">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <Pill className="h-3.5 w-3.5 text-primary shrink-0" />
+                              <span className="text-sm font-medium">{t.medicamento_nome}</span>
+                              {t.medicamento_concentracao && <span className="text-xs text-muted-foreground">{t.medicamento_concentracao}</span>}
+                            </div>
+                            <Badge variant="outline" className="text-[10px] shrink-0">{t.quantidade} un.</Badge>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(t.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                            {t.setor && <span>• {t.setor}</span>}
+                            <Badge variant="secondary" className="text-[9px] h-4">{t.tipo}</Badge>
+                          </div>
+                          {t.observacao && <p className="text-[11px] text-muted-foreground mt-1 italic">{t.observacao}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
