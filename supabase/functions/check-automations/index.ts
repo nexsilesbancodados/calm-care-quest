@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     // 4. Auto-expire prescriptions past their validity
     const { data: expiredPrescs, error: prescErr } = await supabase
       .from("prescricoes")
-      .select("id, paciente, data_prescricao, validade_dias")
+      .select("id, paciente, data_prescricao, validade_dias, filial_id")
       .in("status", ["ativa", "parcialmente_dispensada"]);
 
     if (!prescErr && expiredPrescs) {
@@ -50,6 +50,7 @@ Deno.serve(async (req) => {
             severidade: "alto",
             prescricao_id: p.id,
             link: "/prescricoes",
+            filial_id: p.filial_id,
           });
           expiredCount++;
         }
