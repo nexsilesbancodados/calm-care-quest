@@ -38,12 +38,12 @@
     --radius: 0.875rem;
 
     --sidebar-background: 210 20% 97%;
-    --sidebar-foreground: 215 20% 22%;
+    --sidebar-foreground: 215 25% 18%;
     --sidebar-primary: 205 85% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 18% 91%;
-    --sidebar-accent-foreground: 215 25% 12%;
-    --sidebar-border: 210 14% 90%;
+    --sidebar-accent-foreground: 215 30% 10%;
+    --sidebar-border: 210 14% 88%;
     --sidebar-ring: 205 85% 55%;
     --sidebar-muted: 210 15% 95%;
 
