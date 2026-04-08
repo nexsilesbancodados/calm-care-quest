@@ -46,9 +46,9 @@ interface Props {
 export default memo(function DashboardCharts({ consumoData, topStocked, catData, period, setPeriod, totalAlerts, stats: s, navigate }: Props) {
   return (
     <>
-      <div className="grid lg:grid-cols-5 gap-2 sm:gap-4 mb-4 sm:mb-7">
+      <div className="space-y-4 sm:space-y-6 mb-4 sm:mb-7">
         {/* Consumo */}
-        <div className="lg:col-span-3">
+        <div>
             <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div className="flex items-center gap-3">
@@ -98,7 +98,7 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
         </div>
 
         {/* Categories */}
-        <div className="lg:col-span-2">
+        <div>
             <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="flex items-center gap-3 mb-5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/6 ring-1 ring-accent/10">
@@ -140,7 +140,7 @@ export default memo(function DashboardCharts({ consumoData, topStocked, catData,
       </div>
 
       {/* ── TOP STOCK + ALERTS ── */}
-      <div className="grid lg:grid-cols-2 gap-2 sm:gap-4">
+      <div className="space-y-4 sm:space-y-6">
         <Card className="p-3 sm:p-6 h-full border-border/40 rounded-xl sm:rounded-2xl" style={{ boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">

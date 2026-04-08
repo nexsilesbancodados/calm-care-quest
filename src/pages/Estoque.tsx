@@ -753,7 +753,7 @@ const Estoque = () => {
             </TabsList>
 
             <TabsContent value="estoque">
-              <div className="grid lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 <div className="rounded-xl border bg-card p-5 shadow-sm">
                   <h3 className="text-sm font-semibold mb-4">Top 10 — Maior Estoque</h3>
                   <ResponsiveContainer width="100%" height={320}>
