@@ -1,0 +1,1 @@
+ALTER TABLE public.pacientes ADD COLUMN data_entrada date NULL;
