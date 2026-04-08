@@ -611,6 +611,7 @@ export type Database = {
           ativo: boolean | null
           cpf: string | null
           created_at: string | null
+          data_entrada: string | null
           data_nascimento: string | null
           diagnostico_cid: string | null
           filial_id: string | null
@@ -628,6 +629,7 @@ export type Database = {
           ativo?: boolean | null
           cpf?: string | null
           created_at?: string | null
+          data_entrada?: string | null
           data_nascimento?: string | null
           diagnostico_cid?: string | null
           filial_id?: string | null
@@ -645,6 +647,7 @@ export type Database = {
           ativo?: boolean | null
           cpf?: string | null
           created_at?: string | null
+          data_entrada?: string | null
           data_nascimento?: string | null
           diagnostico_cid?: string | null
           filial_id?: string | null
