@@ -1,4 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
+import { format, parse } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarWidget } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudit } from "@/contexts/AuditContext";
@@ -335,7 +339,33 @@ const Pacientes = () => {
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Data de Nascimento</Label>
-                        <Input type="date" value={form.data_nascimento || ""} onChange={e => setForm({ ...form, data_nascimento: e.target.value || null })} />
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal h-10",
+                                !form.data_nascimento && "text-muted-foreground"
+                              )}
+                            >
+                              <Calendar className="mr-2 h-4 w-4 shrink-0" />
+                              {form.data_nascimento
+                                ? format(parse(form.data_nascimento, "yyyy-MM-dd", new Date()), "dd/MM/yyyy")
+                                : "dd/mm/aaaa"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarWidget
+                              mode="single"
+                              selected={form.data_nascimento ? parse(form.data_nascimento, "yyyy-MM-dd", new Date()) : undefined}
+                              onSelect={(date) => setForm({ ...form, data_nascimento: date ? format(date, "yyyy-MM-dd") : null })}
+                              disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                              initialFocus
+                              locale={ptBR}
+                              className={cn("p-3 pointer-events-auto")}
+                            />
+                          </PopoverContent>
+                        </Popover>
                         {form.data_nascimento && (
                           <p className="text-[10px] text-muted-foreground">{calcAge(form.data_nascimento)}</p>
                         )}
