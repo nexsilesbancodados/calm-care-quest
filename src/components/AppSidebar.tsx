@@ -201,7 +201,7 @@ export const AppSidebar = memo(function AppSidebar() {
       <Collapsible key={label} defaultOpen={defaultOpen || hasActiveItem} className="group/collapsible">
         <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex items-center w-full text-[11px] uppercase tracking-[0.14em] text-sidebar-foreground/70 px-3 mb-1.5 mt-2 font-extrabold hover:text-sidebar-foreground transition-colors cursor-pointer">
+            <CollapsibleTrigger className="flex items-center w-full text-[11px] uppercase tracking-[0.14em] text-sidebar-foreground/80 px-3 mb-1.5 mt-2 font-extrabold hover:text-sidebar-foreground transition-colors cursor-pointer">
               <span className="flex-1 text-left">{label}</span>
               <ChevronRight className="h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 opacity-50" />
             </CollapsibleTrigger>
@@ -270,11 +270,11 @@ export const AppSidebar = memo(function AppSidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[12px] font-bold text-sidebar-accent-foreground truncate leading-tight">{displayName}</p>
-                <p className="text-[10px] text-sidebar-foreground/40 font-medium truncate">{displayRole}</p>
+                <p className="text-[10px] text-sidebar-foreground/60 font-medium truncate">{displayRole}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-sidebar-foreground/30 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-sidebar-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
                 title="Sair"
               >
                 <LogOut className="h-3.5 w-3.5" />
