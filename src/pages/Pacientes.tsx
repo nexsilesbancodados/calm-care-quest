@@ -154,12 +154,21 @@ const Pacientes = () => {
     if (!form.prontuario.trim()) { toast.error("Prontuário é obrigatório"); return; }
     setSaving(true);
     if (editId) {
-      const { error } = await supabase.from("pacientes").update({ ...form } as Record<string, unknown>).eq("id", editId);
+      const { error } = await supabase.from("pacientes").update({
+        nome: form.nome, cpf: form.cpf, prontuario: form.prontuario, data_nascimento: form.data_nascimento,
+        sexo: form.sexo, leito: form.leito, setor: form.setor, diagnostico_cid: form.diagnostico_cid,
+        responsavel_nome: form.responsavel_nome, responsavel_telefone: form.responsavel_telefone,
+      }).eq("id", editId);
       if (error) { toast.error("Erro ao salvar"); setSaving(false); return; }
       await log({ acao: "Edição de paciente", tabela: "pacientes", registro_id: editId, dados_novos: form });
       toast.success("Paciente atualizado!");
     } else {
-      const { error } = await supabase.from("pacientes").insert({ ...form, filial_id: profile?.filial_id } as Record<string, unknown>);
+      const { error } = await supabase.from("pacientes").insert({
+        nome: form.nome, cpf: form.cpf, prontuario: form.prontuario, data_nascimento: form.data_nascimento,
+        sexo: form.sexo, leito: form.leito, setor: form.setor, diagnostico_cid: form.diagnostico_cid,
+        responsavel_nome: form.responsavel_nome, responsavel_telefone: form.responsavel_telefone,
+        filial_id: profile?.filial_id,
+      });
       if (error) {
         if (error.code === "23505") toast.error("Prontuário já cadastrado nesta filial");
         else toast.error("Erro ao cadastrar");
