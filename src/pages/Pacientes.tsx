@@ -66,7 +66,7 @@ interface PatientMovement {
 }
 
 const EMPTY_FORM: Omit<Paciente, "id" | "created_at" | "filial_id" | "ativo"> = {
-  nome: "", cpf: null, prontuario: "", data_nascimento: null, sexo: null,
+  nome: "", cpf: null, prontuario: "", data_nascimento: null, data_entrada: null, sexo: null,
   leito: null, setor: null, diagnostico_cid: null, responsavel_nome: null, responsavel_telefone: null,
 };
 
