@@ -210,6 +210,26 @@ const Pacientes = () => {
     setForm(EMPTY_FORM);
   };
 
+  const openDetail = async (p: Paciente) => {
+    setDetailPatient(p);
+    setDetailLoading(true);
+    const { data } = await supabase
+      .from("movimentacoes")
+      .select("id, tipo, quantidade, created_at, setor, observacao, prescricao_id, medicamentos(nome, concentracao)")
+      .or(`paciente.eq.${p.nome},prontuario.eq.${p.prontuario}`)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    setDetailMeds((data || []).map((m: Record<string, unknown>) => ({
+      id: m.id as string, tipo: m.tipo as string, quantidade: m.quantidade as number,
+      created_at: m.created_at as string, setor: m.setor as string | null,
+      observacao: m.observacao as string, prescricao_id: m.prescricao_id as string | null,
+      medicamento_nome: (m.medicamentos as Record<string, string>)?.nome || "—",
+      medicamento_concentracao: (m.medicamentos as Record<string, string>)?.concentracao || "",
+    })));
+    setDetailLoading(false);
+  };
+
   const openTimeline = async (patient: PatientSummary) => {
     setSelectedPatient(patient);
     setTimelineLoading(true);
