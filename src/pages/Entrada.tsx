@@ -346,9 +346,9 @@ const Entrada = () => {
           </TabsList>
 
           <TabsContent value="entrada">
-            <div className="grid lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="space-y-4 sm:space-y-5">
               {/* Left - Forms */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="space-y-4">
                 {/* NF Card */}
                 <Card className="p-4 sm:p-5 shadow-sm">
                   <div className="flex items-center gap-2 text-sm font-semibold mb-4">
