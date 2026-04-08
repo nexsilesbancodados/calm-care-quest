@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Search, User, FileText, Calendar, Pill, Clock, Download, ClipboardList,
-  Plus, Edit2, BedDouble, Activity, X, Users, Heart, AlertTriangle, Phone
+  Plus, Edit2, BedDouble, Activity, X, Users, Heart, AlertTriangle, Phone, Eye
 } from "lucide-react";
 
 interface Paciente {
