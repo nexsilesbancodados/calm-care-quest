@@ -114,6 +114,9 @@ const Pacientes = () => {
   const [selectedPatient, setSelectedPatient] = useState<PatientSummary | null>(null);
   const [timeline, setTimeline] = useState<PatientMovement[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
+  const [detailPatient, setDetailPatient] = useState<Paciente | null>(null);
+  const [detailMeds, setDetailMeds] = useState<PatientMovement[]>([]);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const loadCadastro = async () => {
     const { data } = await supabase.from("pacientes").select("*").order("nome");
