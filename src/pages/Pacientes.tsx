@@ -193,8 +193,9 @@ const Pacientes = () => {
     setEditId(p.id);
     setForm({
       nome: p.nome, cpf: p.cpf, prontuario: p.prontuario, data_nascimento: p.data_nascimento,
-      sexo: p.sexo, leito: p.leito, setor: p.setor, diagnostico_cid: p.diagnostico_cid,
-      responsavel_nome: p.responsavel_nome, responsavel_telefone: p.responsavel_telefone,
+      data_entrada: p.data_entrada, sexo: p.sexo, leito: p.leito, setor: p.setor,
+      diagnostico_cid: p.diagnostico_cid, responsavel_nome: p.responsavel_nome,
+      responsavel_telefone: p.responsavel_telefone,
     });
     setShowForm(true);
   };
