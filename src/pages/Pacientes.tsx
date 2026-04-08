@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudit } from "@/contexts/AuditContext";
@@ -15,11 +15,12 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Search, User, FileText, Calendar, Pill, Clock, Download, ClipboardList,
-  Plus, Edit2, BedDouble, Activity
+  Plus, Edit2, BedDouble, Activity, X, Users, Heart, AlertTriangle, Phone
 } from "lucide-react";
 
 interface Paciente {
@@ -64,6 +65,30 @@ const EMPTY_FORM: Omit<Paciente, "id" | "created_at" | "filial_id" | "ativo"> = 
   leito: null, setor: null, diagnostico_cid: null, responsavel_nome: null, responsavel_telefone: null,
 };
 
+function formatCPF(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function calcAge(dateStr: string | null): string | null {
+  if (!dateStr) return null;
+  const birth = new Date(dateStr);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age--;
+  return `${age} anos`;
+}
+
 const Pacientes = () => {
   const { profile } = useAuth();
   const { log } = useAudit();
@@ -73,7 +98,7 @@ const Pacientes = () => {
   // Cadastro state
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loadingCadastro, setLoadingCadastro] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
@@ -104,17 +129,17 @@ const Pacientes = () => {
     const map = new Map<string, PatientSummary>();
     const medSets = new Map<string, Set<string>>();
 
-    data.forEach((m: any) => {
-      const key = m.paciente?.trim();
+    data.forEach((m: Record<string, unknown>) => {
+      const key = (m.paciente as string)?.trim();
       if (!key) return;
       if (!map.has(key)) {
-        map.set(key, { paciente: key, prontuario: m.prontuario, total_dispensacoes: 0, ultima_dispensacao: m.created_at, medicamentos_distintos: 0 });
+        map.set(key, { paciente: key, prontuario: m.prontuario as string | null, total_dispensacoes: 0, ultima_dispensacao: m.created_at as string, medicamentos_distintos: 0 });
         medSets.set(key, new Set());
       }
       const p = map.get(key)!;
       p.total_dispensacoes++;
-      if (m.medicamento_id) medSets.get(key)!.add(m.medicamento_id);
-      if (m.created_at > p.ultima_dispensacao) p.ultima_dispensacao = m.created_at;
+      if (m.medicamento_id) medSets.get(key)!.add(m.medicamento_id as string);
+      if ((m.created_at as string) > p.ultima_dispensacao) p.ultima_dispensacao = m.created_at as string;
     });
 
     medSets.forEach((set, key) => { const p = map.get(key); if (p) p.medicamentos_distintos = set.size; });
@@ -125,15 +150,25 @@ const Pacientes = () => {
   useEffect(() => { loadCadastro(); loadHistorico(); }, [profile?.filial_id]);
 
   const handleSave = async () => {
-    if (!form.nome.trim() || !form.prontuario.trim()) { toast.error("Nome e prontuário são obrigatórios"); return; }
+    if (!form.nome.trim()) { toast.error("Nome é obrigatório"); return; }
+    if (!form.prontuario.trim()) { toast.error("Prontuário é obrigatório"); return; }
     setSaving(true);
     if (editId) {
-      const { error } = await supabase.from("pacientes").update({ ...form } as any).eq("id", editId);
+      const { error } = await supabase.from("pacientes").update({
+        nome: form.nome, cpf: form.cpf, prontuario: form.prontuario, data_nascimento: form.data_nascimento,
+        sexo: form.sexo, leito: form.leito, setor: form.setor, diagnostico_cid: form.diagnostico_cid,
+        responsavel_nome: form.responsavel_nome, responsavel_telefone: form.responsavel_telefone,
+      }).eq("id", editId);
       if (error) { toast.error("Erro ao salvar"); setSaving(false); return; }
       await log({ acao: "Edição de paciente", tabela: "pacientes", registro_id: editId, dados_novos: form });
       toast.success("Paciente atualizado!");
     } else {
-      const { error } = await supabase.from("pacientes").insert({ ...form, filial_id: profile?.filial_id } as any);
+      const { error } = await supabase.from("pacientes").insert({
+        nome: form.nome, cpf: form.cpf, prontuario: form.prontuario, data_nascimento: form.data_nascimento,
+        sexo: form.sexo, leito: form.leito, setor: form.setor, diagnostico_cid: form.diagnostico_cid,
+        responsavel_nome: form.responsavel_nome, responsavel_telefone: form.responsavel_telefone,
+        filial_id: profile?.filial_id,
+      });
       if (error) {
         if (error.code === "23505") toast.error("Prontuário já cadastrado nesta filial");
         else toast.error("Erro ao cadastrar");
@@ -143,7 +178,7 @@ const Pacientes = () => {
       toast.success("Paciente cadastrado!");
     }
     setSaving(false);
-    setDialogOpen(false);
+    setShowForm(false);
     setEditId(null);
     setForm(EMPTY_FORM);
     loadCadastro();
@@ -156,7 +191,13 @@ const Pacientes = () => {
       sexo: p.sexo, leito: p.leito, setor: p.setor, diagnostico_cid: p.diagnostico_cid,
       responsavel_nome: p.responsavel_nome, responsavel_telefone: p.responsavel_telefone,
     });
-    setDialogOpen(true);
+    setShowForm(true);
+  };
+
+  const cancelForm = () => {
+    setShowForm(false);
+    setEditId(null);
+    setForm(EMPTY_FORM);
   };
 
   const openTimeline = async (patient: PatientSummary) => {
@@ -168,10 +209,11 @@ const Pacientes = () => {
       .eq("paciente", patient.paciente)
       .order("created_at", { ascending: false }).limit(200);
 
-    setTimeline((data || []).map((m: any) => ({
-      id: m.id, tipo: m.tipo, quantidade: m.quantidade, created_at: m.created_at,
-      setor: m.setor, observacao: m.observacao, prescricao_id: m.prescricao_id,
-      medicamento_nome: m.medicamentos?.nome || "—", medicamento_concentracao: m.medicamentos?.concentracao || "",
+    setTimeline((data || []).map((m: Record<string, unknown>) => ({
+      id: m.id as string, tipo: m.tipo as string, quantidade: m.quantidade as number, created_at: m.created_at as string,
+      setor: m.setor as string | null, observacao: m.observacao as string, prescricao_id: m.prescricao_id as string | null,
+      medicamento_nome: (m.medicamentos as Record<string, string>)?.nome || "—",
+      medicamento_concentracao: (m.medicamentos as Record<string, string>)?.concentracao || "",
     })));
     setTimelineLoading(false);
   };
@@ -191,21 +233,49 @@ const Pacientes = () => {
     a.click();
   };
 
-  const filteredCadastro = pacientes.filter(p => {
+  const filteredCadastro = useMemo(() => pacientes.filter(p => {
     if (!search) return true;
     const s = search.toLowerCase();
     return p.nome.toLowerCase().includes(s) || p.prontuario.toLowerCase().includes(s) || p.cpf?.includes(s);
-  });
+  }), [pacientes, search]);
 
-  const filteredHist = patients.filter(p => {
+  const filteredHist = useMemo(() => patients.filter(p => {
     if (!search) return true;
     const s = search.toLowerCase();
     return p.paciente.toLowerCase().includes(s) || p.prontuario?.toLowerCase().includes(s);
-  });
+  }), [patients, search]);
+
+  // KPIs
+  const totalAtivos = pacientes.filter(p => p.ativo).length;
+  const totalInternados = pacientes.filter(p => p.ativo && p.leito).length;
+  const setores = new Set(pacientes.filter(p => p.setor).map(p => p.setor));
 
   return (
-    <AppLayout title="Pacientes" subtitle="Cadastro e histórico de pacientes">
-      <div className="relative max-w-md mb-6">
+    <AppLayout title="Pacientes" subtitle="Cadastro e histórico clínico">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
+        {[
+          { label: "Total Pacientes", value: pacientes.length, icon: Users, color: "text-primary", bg: "bg-primary/10" },
+          { label: "Ativos", value: totalAtivos, icon: Heart, color: "text-success", bg: "bg-success/10" },
+          { label: "Internados (c/ Leito)", value: totalInternados, icon: BedDouble, color: "text-info", bg: "bg-info/10" },
+          { label: "Setores", value: setores.size, icon: Activity, color: "text-muted-foreground", bg: "bg-muted" },
+        ].map(kpi => (
+          <div key={kpi.label} className="rounded-xl border bg-card p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={cn("flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl shrink-0", kpi.bg)}>
+                <kpi.icon className={cn("h-4 w-4 sm:h-[18px] sm:w-[18px]", kpi.color)} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-[11px] text-muted-foreground truncate">{kpi.label}</p>
+                <p className="text-base sm:text-lg font-bold leading-tight">{kpi.value}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Buscar por nome, prontuário ou CPF..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
       </div>
@@ -213,61 +283,201 @@ const Pacientes = () => {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="cadastro" className="gap-1.5"><User className="h-3.5 w-3.5" /> Cadastro</TabsTrigger>
-          <TabsTrigger value="historico" className="gap-1.5"><Activity className="h-3.5 w-3.5" /> Histórico de Dispensações</TabsTrigger>
+          <TabsTrigger value="historico" className="gap-1.5"><Activity className="h-3.5 w-3.5" /> Histórico</TabsTrigger>
         </TabsList>
 
         {/* Cadastro Tab */}
         <TabsContent value="cadastro">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-muted-foreground">{filteredCadastro.length} paciente(s)</p>
-            <Button size="sm" className="gap-1.5" onClick={() => { setEditId(null); setForm(EMPTY_FORM); setDialogOpen(true); }}>
-              <Plus className="h-3.5 w-3.5" /> Novo Paciente
-            </Button>
-          </div>
+          <div className="space-y-5">
+            {/* Botão novo / formulário inline */}
+            {!showForm ? (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">{filteredCadastro.length} paciente(s)</p>
+                <Button size="sm" className="gap-1.5" onClick={() => { setEditId(null); setForm(EMPTY_FORM); setShowForm(true); }}>
+                  <Plus className="h-3.5 w-3.5" /> Novo Paciente
+                </Button>
+              </div>
+            ) : (
+              <Card className="p-5 shadow-sm border-primary/20">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10">
+                      <User className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    {editId ? "Editar Paciente" : "Novo Paciente"}
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={cancelForm} className="text-xs gap-1 text-muted-foreground">
+                    <X className="h-3 w-3" /> Cancelar
+                  </Button>
+                </div>
 
-          {loadingCadastro ? (
-            <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
-          ) : filteredCadastro.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <User className="h-10 w-10 text-muted-foreground/30 mb-3" />
-              <p className="text-sm font-medium text-muted-foreground">Nenhum paciente cadastrado</p>
-            </div>
-          ) : (
-            <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="text-xs font-semibold">Nome</TableHead>
-                    <TableHead className="text-xs font-semibold">Prontuário</TableHead>
-                    <TableHead className="text-xs font-semibold">CPF</TableHead>
-                    <TableHead className="text-xs font-semibold">Leito</TableHead>
-                    <TableHead className="text-xs font-semibold">Setor</TableHead>
-                    <TableHead className="text-xs font-semibold">CID</TableHead>
-                    <TableHead className="text-xs font-semibold text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCadastro.map(p => (
-                    <TableRow key={p.id} className="hover:bg-accent/30">
-                      <TableCell className="font-medium text-sm">{p.nome}</TableCell>
-                      <TableCell className="text-xs font-mono">{p.prontuario}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{p.cpf || "—"}</TableCell>
-                      <TableCell>
-                        {p.leito ? <Badge variant="outline" className="text-[10px] gap-0.5"><BedDouble className="h-2.5 w-2.5" />{p.leito}</Badge> : "—"}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{p.setor || "—"}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{p.diagnostico_cid || "—"}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(p)}>
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </TableCell>
+                {/* Dados pessoais */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Dados Pessoais</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+                        <Label className="text-xs">Nome Completo *</Label>
+                        <Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} placeholder="Nome do paciente" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Prontuário *</Label>
+                        <Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} className="font-mono" placeholder="0000000" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">CPF</Label>
+                        <Input
+                          value={form.cpf || ""}
+                          onChange={e => setForm({ ...form, cpf: formatCPF(e.target.value) || null })}
+                          placeholder="000.000.000-00"
+                          maxLength={14}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Data de Nascimento</Label>
+                        <Input type="date" value={form.data_nascimento || ""} onChange={e => setForm({ ...form, data_nascimento: e.target.value || null })} />
+                        {form.data_nascimento && (
+                          <p className="text-[10px] text-muted-foreground">{calcAge(form.data_nascimento)}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Sexo</Label>
+                        <Select value={form.sexo || "none"} onValueChange={v => setForm({ ...form, sexo: v === "none" ? null : v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">—</SelectItem>
+                            <SelectItem value="M">Masculino</SelectItem>
+                            <SelectItem value="F">Feminino</SelectItem>
+                            <SelectItem value="outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Internação */}
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Internação</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Leito</Label>
+                        <Input value={form.leito || ""} onChange={e => setForm({ ...form, leito: e.target.value || null })} placeholder="Ex: 12-A" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Setor</Label>
+                        <Input value={form.setor || ""} onChange={e => setForm({ ...form, setor: e.target.value || null })} placeholder="Ala A, UTI..." />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">CID (Diagnóstico)</Label>
+                        <Input value={form.diagnostico_cid || ""} onChange={e => setForm({ ...form, diagnostico_cid: e.target.value || null })} placeholder="F20.0" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Responsável */}
+                  <div>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Responsável Legal</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Nome do Responsável</Label>
+                        <Input value={form.responsavel_nome || ""} onChange={e => setForm({ ...form, responsavel_nome: e.target.value || null })} placeholder="Nome completo" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Telefone do Responsável</Label>
+                        <Input
+                          value={form.responsavel_telefone || ""}
+                          onChange={e => setForm({ ...form, responsavel_telefone: formatPhone(e.target.value) || null })}
+                          placeholder="(00) 00000-0000"
+                          maxLength={15}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t">
+                    <Button variant="outline" onClick={cancelForm}>Cancelar</Button>
+                    <Button onClick={handleSave} disabled={saving} className="gap-1.5">
+                      {saving ? <div className="h-4 w-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" /> :
+                        editId ? "Salvar Alterações" : <><Plus className="h-3.5 w-3.5" /> Cadastrar</>}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Tabela de pacientes */}
+            {loadingCadastro ? (
+              <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)}</div>
+            ) : filteredCadastro.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <User className="h-10 w-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm font-medium text-muted-foreground">Nenhum paciente cadastrado</p>
+                <p className="text-xs text-muted-foreground mt-1">Clique em "Novo Paciente" para começar</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border bg-card shadow-sm overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="text-xs font-semibold">Nome</TableHead>
+                      <TableHead className="text-xs font-semibold">Prontuário</TableHead>
+                      <TableHead className="text-xs font-semibold hidden sm:table-cell">CPF</TableHead>
+                      <TableHead className="text-xs font-semibold hidden md:table-cell">Idade</TableHead>
+                      <TableHead className="text-xs font-semibold">Leito</TableHead>
+                      <TableHead className="text-xs font-semibold">Setor</TableHead>
+                      <TableHead className="text-xs font-semibold hidden lg:table-cell">CID</TableHead>
+                      <TableHead className="text-xs font-semibold hidden lg:table-cell">Responsável</TableHead>
+                      <TableHead className="text-xs font-semibold text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCadastro.map(p => (
+                      <TableRow key={p.id} className="hover:bg-accent/30">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                              <User className="h-3.5 w-3.5 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{p.nome}</p>
+                              {p.sexo && <p className="text-[10px] text-muted-foreground">{p.sexo === "M" ? "Masculino" : p.sexo === "F" ? "Feminino" : p.sexo}</p>}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs font-mono">{p.prontuario}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{p.cpf || "—"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{calcAge(p.data_nascimento) || "—"}</TableCell>
+                        <TableCell>
+                          {p.leito ? <Badge variant="outline" className="text-[10px] gap-0.5"><BedDouble className="h-2.5 w-2.5" />{p.leito}</Badge> : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{p.setor || "—"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">{p.diagnostico_cid || "—"}</TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {p.responsavel_nome ? (
+                            <div className="text-xs text-muted-foreground">
+                              <p>{p.responsavel_nome}</p>
+                              {p.responsavel_telefone && (
+                                <p className="flex items-center gap-1 text-[10px]"><Phone className="h-2.5 w-2.5" />{p.responsavel_telefone}</p>
+                              )}
+                            </div>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(p)}>
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* Histórico Tab */}
@@ -280,10 +490,10 @@ const Pacientes = () => {
               <p className="text-sm font-medium text-muted-foreground">Nenhum paciente encontrado</p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-3">
               {filteredHist.map(p => (
                 <Card key={p.paciente} className="p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => openTimeline(p)}>
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-4">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
                       <User className="h-5 w-5 text-primary" />
                     </div>
@@ -291,14 +501,13 @@ const Pacientes = () => {
                       <p className="text-sm font-semibold truncate">{p.paciente}</p>
                       {p.prontuario && <p className="text-[11px] text-muted-foreground flex items-center gap-1"><FileText className="h-3 w-3" /> {p.prontuario}</p>}
                     </div>
-                  </div>
-                  <Separator className="my-3" />
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div><p className="text-lg font-bold text-primary">{p.total_dispensacoes}</p><p className="text-[10px] text-muted-foreground">Dispensações</p></div>
-                    <div><p className="text-lg font-bold">{p.medicamentos_distintos}</p><p className="text-[10px] text-muted-foreground">Medicamentos</p></div>
-                    <div>
-                      <p className="text-[11px] font-medium text-muted-foreground">{new Date(p.ultima_dispensacao).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</p>
-                      <p className="text-[10px] text-muted-foreground">Última</p>
+                    <div className="flex items-center gap-4 sm:gap-6 text-center shrink-0">
+                      <div><p className="text-lg font-bold text-primary">{p.total_dispensacoes}</p><p className="text-[10px] text-muted-foreground">Dispensações</p></div>
+                      <div><p className="text-lg font-bold">{p.medicamentos_distintos}</p><p className="text-[10px] text-muted-foreground">Medicamentos</p></div>
+                      <div className="hidden sm:block">
+                        <p className="text-[11px] font-medium text-muted-foreground">{new Date(p.ultima_dispensacao).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</p>
+                        <p className="text-[10px] text-muted-foreground">Última</p>
+                      </div>
                     </div>
                   </div>
                 </Card>
@@ -307,73 +516,6 @@ const Pacientes = () => {
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Create/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[520px]">
-          <DialogHeader>
-            <DialogTitle>{editId ? "Editar Paciente" : "Novo Paciente"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs">Nome *</Label>
-                <Input value={form.nome} onChange={e => setForm({ ...form, nome: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Prontuário *</Label>
-                <Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} className="font-mono" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">CPF</Label>
-                <Input value={form.cpf || ""} onChange={e => setForm({ ...form, cpf: e.target.value || null })} placeholder="000.000.000-00" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Data de Nascimento</Label>
-                <Input type="date" value={form.data_nascimento || ""} onChange={e => setForm({ ...form, data_nascimento: e.target.value || null })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Sexo</Label>
-                <Select value={form.sexo || "none"} onValueChange={v => setForm({ ...form, sexo: v === "none" ? null : v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">—</SelectItem>
-                    <SelectItem value="M">Masculino</SelectItem>
-                    <SelectItem value="F">Feminino</SelectItem>
-                    <SelectItem value="outro">Outro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Leito</Label>
-                <Input value={form.leito || ""} onChange={e => setForm({ ...form, leito: e.target.value || null })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Setor</Label>
-                <Input value={form.setor || ""} onChange={e => setForm({ ...form, setor: e.target.value || null })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">CID (diagnóstico)</Label>
-                <Input value={form.diagnostico_cid || ""} onChange={e => setForm({ ...form, diagnostico_cid: e.target.value || null })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Responsável</Label>
-                <Input value={form.responsavel_nome || ""} onChange={e => setForm({ ...form, responsavel_nome: e.target.value || null })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Tel. Responsável</Label>
-                <Input value={form.responsavel_telefone || ""} onChange={e => setForm({ ...form, responsavel_telefone: e.target.value || null })} />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Salvando..." : editId ? "Salvar" : "Cadastrar"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Timeline Dialog */}
       <Dialog open={!!selectedPatient} onOpenChange={open => !open && setSelectedPatient(null)}>
