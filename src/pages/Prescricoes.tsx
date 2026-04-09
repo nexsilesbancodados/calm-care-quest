@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
@@ -16,7 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap } from "lucide-react";
+import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap, User } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Prescricao, ItemPrescricao, Medicamento, Lote, StatusPrescricao } from "@/types/database";
 import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
 
@@ -30,6 +32,11 @@ const Prescricoes = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  // Pacientes cadastrados
+  const [pacientesCadastrados, setPacientesCadastrados] = useState<{ id: string; nome: string; prontuario: string; setor: string | null }[]>([]);
+  const [pacienteSearchOpen, setPacienteSearchOpen] = useState(false);
+  const [pacienteSearchTerm, setPacienteSearchTerm] = useState("");
 
   // Dialog states
   const [newDialogOpen, setNewDialogOpen] = useState(false);
@@ -45,12 +52,14 @@ const Prescricoes = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: prescData }, { data: itensData }, { data: medsData }, { data: lotesData }] = await Promise.all([
+    const [{ data: prescData }, { data: itensData }, { data: medsData }, { data: lotesData }, { data: pacData }] = await Promise.all([
       supabase.from("prescricoes").select("*").order("created_at", { ascending: false }),
       supabase.from("itens_prescricao").select("*, medicamentos(nome, concentracao, forma_farmaceutica)").order("created_at"),
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
+      supabase.from("pacientes").select("id, nome, prontuario, setor").eq("ativo", true).order("nome"),
     ]);
+    setPacientesCadastrados((pacData || []).map((p: any) => ({ id: p.id, nome: p.nome, prontuario: p.prontuario, setor: p.setor })));
 
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
@@ -332,8 +341,40 @@ const Prescricoes = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label className="text-xs">Nº Receita *</Label><Input value={form.numero_receita} onChange={e => setForm({ ...form, numero_receita: e.target.value })} className="font-mono" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Data *</Label><Input type="date" value={form.data_prescricao} onChange={e => setForm({ ...form, data_prescricao: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Paciente *</Label><Input value={form.paciente} onChange={e => setForm({ ...form, paciente: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Prontuário</Label><Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} /></div>
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs">Paciente * <span className="text-muted-foreground font-normal">(busque pelo cadastro)</span></Label>
+                <Popover open={pacienteSearchOpen} onOpenChange={setPacienteSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10", !form.paciente && "text-muted-foreground")}>
+                      <User className="mr-2 h-4 w-4 shrink-0" />
+                      {form.paciente ? `${form.paciente}${form.prontuario ? ` — Pront: ${form.prontuario}` : ""}` : "Selecionar paciente..."}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar por nome ou prontuário..." value={pacienteSearchTerm} onValueChange={setPacienteSearchTerm} />
+                      <CommandList>
+                        <CommandEmpty>Nenhum paciente encontrado</CommandEmpty>
+                        <CommandGroup heading="Pacientes cadastrados">
+                          {pacientesCadastrados.map(p => (
+                            <CommandItem key={p.id} value={`${p.nome} ${p.prontuario}`} onSelect={() => {
+                              setForm(prev => ({ ...prev, paciente: p.nome, prontuario: p.prontuario, setor: p.setor || prev.setor }));
+                              setPacienteSearchOpen(false);
+                              setPacienteSearchTerm("");
+                            }}>
+                              <User className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{p.nome}</p>
+                                <p className="text-[11px] text-muted-foreground">Pront: {p.prontuario}{p.setor ? ` • ${p.setor}` : ""}</p>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div className="space-y-1.5"><Label className="text-xs">Médico *</Label><Input value={form.medico} onChange={e => setForm({ ...form, medico: e.target.value })} /></div>
               <div className="space-y-1.5"><Label className="text-xs">CRM</Label><Input value={form.crm} onChange={e => setForm({ ...form, crm: e.target.value })} /></div>
               <div className="space-y-1.5"><Label className="text-xs">Setor</Label><Input value={form.setor} onChange={e => setForm({ ...form, setor: e.target.value })} /></div>
