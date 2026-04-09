@@ -21,6 +21,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Prescricao, ItemPrescricao, Medicamento, Lote, StatusPrescricao } from "@/types/database";
 import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
+import { ChecklistMedicacao } from "@/components/ChecklistMedicacao";
 
 const Prescricoes = () => {
   const { log } = useAudit();
