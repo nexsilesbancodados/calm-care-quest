@@ -11,7 +11,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   Drawer, DrawerContent, DrawerTrigger, DrawerClose,
 } from "@/components/ui/drawer";
-import { Separator } from "@/components/ui/separator";
 
 const mainTabs = [
   { title: "Início", url: "/", icon: LayoutDashboard },
@@ -23,7 +22,6 @@ const mainTabs = [
 const moreGroups = [
   {
     label: "Farmácia",
-    icon: Pill,
     items: [
       { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"] },
       { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"] },
@@ -32,7 +30,6 @@ const moreGroups = [
   },
   {
     label: "Clínico",
-    icon: Heart,
     items: [
       { title: "Pacientes", url: "/pacientes", icon: User, roles: null },
       { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"] },
@@ -41,7 +38,6 @@ const moreGroups = [
   },
   {
     label: "Logística",
-    icon: Truck,
     items: [
       { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"] },
       { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"] },
@@ -50,7 +46,6 @@ const moreGroups = [
   },
   {
     label: "Ferramentas",
-    icon: Wrench,
     items: [
       { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null },
       { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"] },
@@ -59,7 +54,6 @@ const moreGroups = [
   },
   {
     label: "Administração",
-    icon: Shield,
     items: [
       { title: "Usuários", url: "/usuarios", icon: Users, roles: ["admin"] },
       { title: "Admin", url: "/admin", icon: Shield, roles: ["admin"] },
@@ -80,7 +74,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const isMoreActive = allMoreUrls.some((u) => isActive(u));
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl pb-safe">
       <div className="flex items-stretch justify-around h-14">
         {mainTabs.map((tab) => {
           const active = isActive(tab.url);
@@ -89,15 +83,12 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               key={tab.url}
               onClick={() => navigate(tab.url)}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors relative",
+                "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              {active && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-b-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
-              )}
-              <tab.icon className={cn("h-5 w-5", active && "drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]")} strokeWidth={active ? 2.2 : 1.6} />
-              <span className={cn("text-[10px]", active ? "font-bold" : "font-medium")}>{tab.title}</span>
+              <tab.icon className="h-5 w-5" strokeWidth={active ? 2.2 : 1.6} />
+              <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>{tab.title}</span>
             </button>
           );
         })}
@@ -106,20 +97,17 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
           <DrawerTrigger asChild>
             <button
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors relative",
+                "flex flex-1 flex-col items-center justify-center gap-0.5 transition-colors",
                 isMoreActive ? "text-primary" : "text-muted-foreground"
               )}
             >
-              {isMoreActive && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-b-full bg-primary" />
-              )}
               <MoreHorizontal className="h-5 w-5" strokeWidth={1.6} />
               <span className="text-[10px] font-medium">Mais</span>
             </button>
           </DrawerTrigger>
-          <DrawerContent className="pb-safe max-h-[75dvh]">
+          <DrawerContent className="pb-safe max-h-[72dvh]">
             <div className="p-4 pt-2 overflow-y-auto">
-              <div className="w-10 h-1 rounded-full bg-muted mx-auto mb-4" />
+              <div className="w-8 h-1 rounded-full bg-muted mx-auto mb-4" />
 
               {moreGroups.map((group, gi) => {
                 const filtered = group.items.filter(
@@ -128,15 +116,11 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
                 if (filtered.length === 0) return null;
 
                 return (
-                  <div key={group.label}>
-                    {gi > 0 && <Separator className="my-2 bg-border/30" />}
-                    <div className="flex items-center gap-1.5 px-1 mb-2 mt-1">
-                      <group.icon className="h-3 w-3 text-muted-foreground/40" />
-                      <span className="text-[10px] uppercase tracking-[0.1em] font-bold text-muted-foreground/50">
-                        {group.label}
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-1.5">
+                  <div key={group.label} className={cn(gi > 0 && "mt-4")}>
+                    <span className="text-[11px] uppercase tracking-widest font-semibold text-muted-foreground/50 px-1 mb-2 block">
+                      {group.label}
+                    </span>
+                    <div className="grid grid-cols-4 gap-1">
                       {filtered.map((item) => {
                         const active = isActive(item.url);
                         return (
@@ -144,14 +128,14 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
                             <button
                               onClick={() => navigate(item.url)}
                               className={cn(
-                                "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all",
+                                "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-colors",
                                 active
                                   ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                                  : "text-muted-foreground hover:bg-muted/50"
                               )}
                             >
                               <item.icon className="h-5 w-5" strokeWidth={active ? 2 : 1.6} />
-                              <span className={cn("text-[10px] leading-tight text-center", active ? "font-bold" : "font-medium")}>
+                              <span className={cn("text-[10px] leading-tight text-center", active ? "font-semibold" : "font-medium")}>
                                 {item.title}
                               </span>
                             </button>
