@@ -52,12 +52,14 @@ const Prescricoes = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: prescData }, { data: itensData }, { data: medsData }, { data: lotesData }] = await Promise.all([
+    const [{ data: prescData }, { data: itensData }, { data: medsData }, { data: lotesData }, { data: pacData }] = await Promise.all([
       supabase.from("prescricoes").select("*").order("created_at", { ascending: false }),
       supabase.from("itens_prescricao").select("*, medicamentos(nome, concentracao, forma_farmaceutica)").order("created_at"),
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
+      supabase.from("pacientes").select("id, nome, prontuario, setor").eq("ativo", true).order("nome"),
     ]);
+    setPacientesCadastrados((pacData || []).map((p: any) => ({ id: p.id, nome: p.nome, prontuario: p.prontuario, setor: p.setor })));
 
     const medsWithLotes = (medsData || []).map((m: any) => ({
       ...m,
