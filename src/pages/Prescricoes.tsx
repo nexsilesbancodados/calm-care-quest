@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
@@ -16,7 +16,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap } from "lucide-react";
+import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap, User } from "lucide-react";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Prescricao, ItemPrescricao, Medicamento, Lote, StatusPrescricao } from "@/types/database";
 import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
 
