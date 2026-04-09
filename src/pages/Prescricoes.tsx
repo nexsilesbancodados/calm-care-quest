@@ -124,6 +124,7 @@ const Prescricoes = () => {
 
   // Dispensar prescription
   const [dispensing, setDispensing] = useState(false);
+  const [checklistPrescricao, setChecklistPrescricao] = useState<(Prescricao & { itens?: (ItemPrescricao & { medicamento?: Medicamento })[] }) | null>(null);
 
   const handleDispensar = async () => {
     if (!selectedPrescricao) return;
@@ -283,6 +284,9 @@ const Prescricoes = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                        <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => setChecklistPrescricao(p)}>
+                          <ClipboardCheck className="h-3 w-3" /> MAP
+                        </Button>
                         <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setSelectedPrescricao(p); setItemDialogOpen(true); }}>
                           <Plus className="h-3 w-3 mr-1" /> Item
                         </Button>
