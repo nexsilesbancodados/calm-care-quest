@@ -227,6 +227,13 @@ const Prescricoes = () => {
         </Button>
       </div>
 
+      {/* Checklist MAP View */}
+      {checklistPrescricao && (
+        <div className="mb-5 rounded-xl border bg-card p-4 sm:p-5 shadow-sm">
+          <ChecklistMedicacao prescricao={checklistPrescricao} onClose={() => setChecklistPrescricao(null)} />
+        </div>
+      )}
+
       <div className="rounded-xl border bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader>
