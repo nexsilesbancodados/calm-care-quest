@@ -1,15 +1,17 @@
 import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Pill, Package, AlertTriangle, BarChart3, MoreHorizontal,
+  LayoutDashboard, Pill, Package, AlertTriangle, MoreHorizontal,
   ArrowDownCircle, ArrowUpCircle, ClipboardList, ArrowLeftRight, ScanLine,
   Barcode, ClipboardCheck, FileText, Users, Factory, User, Settings, Shield,
+  MessageSquareText, BarChart3, Heart, Truck, Wrench,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Drawer, DrawerContent, DrawerTrigger, DrawerClose,
 } from "@/components/ui/drawer";
+import { Separator } from "@/components/ui/separator";
 
 const mainTabs = [
   { title: "Início", url: "/", icon: LayoutDashboard },
@@ -18,22 +20,55 @@ const mainTabs = [
   { title: "Alertas", url: "/alertas", icon: AlertTriangle },
 ];
 
-const moreItems = [
-  { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"] },
-  { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"] },
-  { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null },
-  { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"] },
-  { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"] },
-  { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null },
-  { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"] },
-  { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"] },
-  { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null },
-  { title: "Pacientes", url: "/pacientes", icon: User, roles: null },
-  { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"] },
-  { title: "Usuários", url: "/usuarios", icon: Users, roles: ["admin"] },
-  { title: "Admin", url: "/admin", icon: Shield, roles: ["admin"] },
-  { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"] },
+const moreGroups = [
+  {
+    label: "Farmácia",
+    icon: Pill,
+    items: [
+      { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"] },
+      { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"] },
+      { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null },
+    ],
+  },
+  {
+    label: "Clínico",
+    icon: Heart,
+    items: [
+      { title: "Pacientes", url: "/pacientes", icon: User, roles: null },
+      { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"] },
+      { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"] },
+    ],
+  },
+  {
+    label: "Logística",
+    icon: Truck,
+    items: [
+      { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"] },
+      { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"] },
+      { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"] },
+    ],
+  },
+  {
+    label: "Ferramentas",
+    icon: Wrench,
+    items: [
+      { title: "Leitor", url: "/leitor", icon: ScanLine, roles: null },
+      { title: "Etiquetas", url: "/etiquetas", icon: Barcode, roles: ["admin", "farmaceutico"] },
+      { title: "Relatórios", url: "/relatorios", icon: BarChart3, roles: null },
+    ],
+  },
+  {
+    label: "Administração",
+    icon: Shield,
+    items: [
+      { title: "Usuários", url: "/usuarios", icon: Users, roles: ["admin"] },
+      { title: "Admin", url: "/admin", icon: Shield, roles: ["admin"] },
+      { title: "Configurações", url: "/configuracoes", icon: Settings, roles: ["admin"] },
+    ],
+  },
 ];
+
+const allMoreUrls = moreGroups.flatMap((g) => g.items.map((i) => i.url));
 
 export const MobileBottomNav = memo(function MobileBottomNav() {
   const location = useLocation();
@@ -42,11 +77,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
   const role = profile?.role;
 
   const isActive = (path: string) => location.pathname === path;
-  const isMoreActive = moreItems.some((i) => isActive(i.url));
-
-  const filteredMore = moreItems.filter(
-    (item) => !item.roles || (role && item.roles.includes(role))
-  );
+  const isMoreActive = allMoreUrls.some((u) => isActive(u));
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 sm:hidden border-t border-border/60 bg-background/95 backdrop-blur-xl pb-safe">
@@ -86,33 +117,51 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               <span className="text-[10px] font-medium">Mais</span>
             </button>
           </DrawerTrigger>
-          <DrawerContent className="pb-safe">
-            <div className="p-4 pt-2">
+          <DrawerContent className="pb-safe max-h-[75dvh]">
+            <div className="p-4 pt-2 overflow-y-auto">
               <div className="w-10 h-1 rounded-full bg-muted mx-auto mb-4" />
-              <h3 className="text-sm font-bold text-foreground mb-3 px-1">Mais opções</h3>
-              <div className="grid grid-cols-4 gap-2">
-                {filteredMore.map((item) => {
-                  const active = isActive(item.url);
-                  return (
-                    <DrawerClose key={item.url} asChild>
-                      <button
-                        onClick={() => navigate(item.url)}
-                        className={cn(
-                          "flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all",
-                          active
-                            ? "bg-primary/10 text-primary"
-                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" strokeWidth={active ? 2 : 1.6} />
-                        <span className={cn("text-[10px] leading-tight text-center", active ? "font-bold" : "font-medium")}>
-                          {item.title}
-                        </span>
-                      </button>
-                    </DrawerClose>
-                  );
-                })}
-              </div>
+
+              {moreGroups.map((group, gi) => {
+                const filtered = group.items.filter(
+                  (item) => !item.roles || (role && item.roles.includes(role))
+                );
+                if (filtered.length === 0) return null;
+
+                return (
+                  <div key={group.label}>
+                    {gi > 0 && <Separator className="my-2 bg-border/30" />}
+                    <div className="flex items-center gap-1.5 px-1 mb-2 mt-1">
+                      <group.icon className="h-3 w-3 text-muted-foreground/40" />
+                      <span className="text-[10px] uppercase tracking-[0.1em] font-bold text-muted-foreground/50">
+                        {group.label}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {filtered.map((item) => {
+                        const active = isActive(item.url);
+                        return (
+                          <DrawerClose key={item.url} asChild>
+                            <button
+                              onClick={() => navigate(item.url)}
+                              className={cn(
+                                "flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all",
+                                active
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                              )}
+                            >
+                              <item.icon className="h-5 w-5" strokeWidth={active ? 2 : 1.6} />
+                              <span className={cn("text-[10px] leading-tight text-center", active ? "font-bold" : "font-medium")}>
+                                {item.title}
+                              </span>
+                            </button>
+                          </DrawerClose>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </DrawerContent>
         </Drawer>
