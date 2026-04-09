@@ -95,6 +95,60 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_medicacao: {
+        Row: {
+          administrado: boolean
+          created_at: string
+          data: string
+          enfermeiro_id: string | null
+          id: string
+          item_prescricao_id: string
+          observacao: string | null
+          prescricao_id: string
+          turno: string
+          updated_at: string
+        }
+        Insert: {
+          administrado?: boolean
+          created_at?: string
+          data?: string
+          enfermeiro_id?: string | null
+          id?: string
+          item_prescricao_id: string
+          observacao?: string | null
+          prescricao_id: string
+          turno: string
+          updated_at?: string
+        }
+        Update: {
+          administrado?: boolean
+          created_at?: string
+          data?: string
+          enfermeiro_id?: string | null
+          id?: string
+          item_prescricao_id?: string
+          observacao?: string | null
+          prescricao_id?: string
+          turno?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_medicacao_item_prescricao_id_fkey"
+            columns: ["item_prescricao_id"]
+            isOneToOne: false
+            referencedRelation: "itens_prescricao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_medicacao_prescricao_id_fkey"
+            columns: ["prescricao_id"]
+            isOneToOne: false
+            referencedRelation: "prescricoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinicas_parceiras: {
         Row: {
           ativo: boolean

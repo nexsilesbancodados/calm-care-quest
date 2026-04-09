@@ -16,11 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap, User } from "lucide-react";
+import { Search, Plus, FileText, Pill, ChevronDown, ChevronRight, Syringe, Zap, User, ClipboardCheck } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { Prescricao, ItemPrescricao, Medicamento, Lote, StatusPrescricao } from "@/types/database";
 import { PRESCRICAO_STATUS_CONFIG } from "@/types/database";
+import { ChecklistMedicacao } from "@/components/ChecklistMedicacao";
 
 const Prescricoes = () => {
   const { log } = useAudit();
@@ -123,6 +124,7 @@ const Prescricoes = () => {
 
   // Dispensar prescription
   const [dispensing, setDispensing] = useState(false);
+  const [checklistPrescricao, setChecklistPrescricao] = useState<(Prescricao & { itens?: (ItemPrescricao & { medicamento?: Medicamento })[] }) | null>(null);
 
   const handleDispensar = async () => {
     if (!selectedPrescricao) return;
@@ -225,6 +227,13 @@ const Prescricoes = () => {
         </Button>
       </div>
 
+      {/* Checklist MAP View */}
+      {checklistPrescricao && (
+        <div className="mb-5 rounded-xl border bg-card p-4 sm:p-5 shadow-sm">
+          <ChecklistMedicacao prescricao={checklistPrescricao} onClose={() => setChecklistPrescricao(null)} />
+        </div>
+      )}
+
       <div className="rounded-xl border bg-card shadow-card overflow-hidden">
         <Table>
           <TableHeader>
@@ -282,6 +291,9 @@ const Prescricoes = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-1" onClick={e => e.stopPropagation()}>
+                        <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => setChecklistPrescricao(p)}>
+                          <ClipboardCheck className="h-3 w-3" /> MAP
+                        </Button>
                         <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => { setSelectedPrescricao(p); setItemDialogOpen(true); }}>
                           <Plus className="h-3 w-3 mr-1" /> Item
                         </Button>
