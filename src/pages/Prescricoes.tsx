@@ -33,6 +33,11 @@ const Prescricoes = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
+  // Pacientes cadastrados
+  const [pacientesCadastrados, setPacientesCadastrados] = useState<{ id: string; nome: string; prontuario: string; setor: string | null }[]>([]);
+  const [pacienteSearchOpen, setPacienteSearchOpen] = useState(false);
+  const [pacienteSearchTerm, setPacienteSearchTerm] = useState("");
+
   // Dialog states
   const [newDialogOpen, setNewDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
