@@ -341,8 +341,40 @@ const Prescricoes = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label className="text-xs">Nº Receita *</Label><Input value={form.numero_receita} onChange={e => setForm({ ...form, numero_receita: e.target.value })} className="font-mono" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Data *</Label><Input type="date" value={form.data_prescricao} onChange={e => setForm({ ...form, data_prescricao: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Paciente *</Label><Input value={form.paciente} onChange={e => setForm({ ...form, paciente: e.target.value })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Prontuário</Label><Input value={form.prontuario} onChange={e => setForm({ ...form, prontuario: e.target.value })} /></div>
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs">Paciente * <span className="text-muted-foreground font-normal">(busque pelo cadastro)</span></Label>
+                <Popover open={pacienteSearchOpen} onOpenChange={setPacienteSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10", !form.paciente && "text-muted-foreground")}>
+                      <User className="mr-2 h-4 w-4 shrink-0" />
+                      {form.paciente ? `${form.paciente}${form.prontuario ? ` — Pront: ${form.prontuario}` : ""}` : "Selecionar paciente..."}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar por nome ou prontuário..." value={pacienteSearchTerm} onValueChange={setPacienteSearchTerm} />
+                      <CommandList>
+                        <CommandEmpty>Nenhum paciente encontrado</CommandEmpty>
+                        <CommandGroup heading="Pacientes cadastrados">
+                          {pacientesCadastrados.map(p => (
+                            <CommandItem key={p.id} value={`${p.nome} ${p.prontuario}`} onSelect={() => {
+                              setForm(prev => ({ ...prev, paciente: p.nome, prontuario: p.prontuario, setor: p.setor || prev.setor }));
+                              setPacienteSearchOpen(false);
+                              setPacienteSearchTerm("");
+                            }}>
+                              <User className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{p.nome}</p>
+                                <p className="text-[11px] text-muted-foreground">Pront: {p.prontuario}{p.setor ? ` • ${p.setor}` : ""}</p>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div className="space-y-1.5"><Label className="text-xs">Médico *</Label><Input value={form.medico} onChange={e => setForm({ ...form, medico: e.target.value })} /></div>
               <div className="space-y-1.5"><Label className="text-xs">CRM</Label><Input value={form.crm} onChange={e => setForm({ ...form, crm: e.target.value })} /></div>
               <div className="space-y-1.5"><Label className="text-xs">Setor</Label><Input value={form.setor} onChange={e => setForm({ ...form, setor: e.target.value })} /></div>
