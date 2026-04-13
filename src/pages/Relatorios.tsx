@@ -63,6 +63,9 @@ const Relatorios = () => {
   // Psicotrópicos filter
   const [psicoMonth, setPsicoMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
+  // CMM period filter (months)
+  const [cmmPeriod, setCmmPeriod] = useState("3");
+
   useEffect(() => {
     const fetchAll = async () => {
       const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: movData }, { data: transData }, { data: configData }] =
