@@ -15,7 +15,7 @@ import {
 const mainTabs = [
   { title: "Início", url: "/", icon: LayoutDashboard },
   { title: "Medicamentos", url: "/medicamentos", icon: Pill },
-  { title: "Estoque", url: "/estoque", icon: Package },
+  { title: "Estoque", url: "/medicamentos", icon: Package },
   { title: "Alertas", url: "/alertas", icon: AlertTriangle },
 ];
 

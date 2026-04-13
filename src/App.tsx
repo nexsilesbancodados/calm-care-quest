@@ -20,7 +20,7 @@ const Dashboard = lazy(pages["/"]);
 const Medicamentos = lazy(pages["/medicamentos"]);
 const Alertas = lazy(pages["/alertas"]);
 const Movimentacoes = lazy(pages["/movimentacoes"]);
-const Estoque = lazy(pages["/estoque"]);
+
 const Configuracoes = lazy(pages["/configuracoes"]);
 const Etiquetas = lazy(pages["/etiquetas"]);
 const Transferencias = lazy(pages["/transferencias"]);
