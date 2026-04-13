@@ -611,6 +611,7 @@ const Relatorios = () => {
                 ]
               );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-2">
