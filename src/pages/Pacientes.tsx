@@ -6,6 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudit } from "@/contexts/AuditContext";
 import { supabase } from "@/integrations/supabase/client";
+import { maskCpf } from "@/lib/security/pii";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -763,7 +764,7 @@ const Pacientes = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-xs font-mono">{p.prontuario}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">{p.cpf || "—"}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden sm:table-cell font-mono">{p.cpf ? maskCpf(p.cpf) : "—"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{calcAge(p.data_nascimento) || "—"}</TableCell>
                         <TableCell className="text-xs text-muted-foreground hidden md:table-cell">{formatDateBR(p.data_entrada)}</TableCell>
                         <TableCell>{p.leito ? <Badge variant="outline" className="text-[10px] gap-0.5"><BedDouble className="h-2.5 w-2.5" />{p.leito}</Badge> : <span className="text-xs text-muted-foreground">—</span>}</TableCell>

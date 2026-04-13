@@ -69,7 +69,8 @@ const Medicamentos = () => {
   const [form, setForm] = useState({
     nome: "", generico: "", principio_ativo: "", concentracao: "",
     forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "",
-    controlado: false, fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0,
+    controlado: false, lista_controlada: "" as string,
+    fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0,
     localizacao: "", preco_unitario: 0,
   });
 
@@ -177,20 +178,28 @@ const Medicamentos = () => {
 
   const openNew = () => {
     setEditMed(null);
-    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
+    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
     setDialogOpen(true);
   };
 
   const openEdit = (m: Medicamento) => {
     setEditMed(m);
-    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
     if (!form.nome) { toast.error("Nome é obrigatório"); return; }
+    if (form.controlado && !form.lista_controlada) {
+      toast.error("Medicamento controlado exige classificação (Portaria 344/98)");
+      return;
+    }
+    if (form.estoque_maximo > 0 && form.estoque_maximo < form.estoque_minimo) {
+      toast.error("Estoque máximo deve ser ≥ mínimo");
+      return;
+    }
     setSaving(true);
-    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
+    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, lista_controlada: form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
 
     if (editMed) {
       const { error } = await supabase.from("medicamentos").update(row).eq("id", editMed.id);
@@ -228,7 +237,7 @@ const Medicamentos = () => {
 
   const duplicateMed = (m: Medicamento) => {
     setEditMed(null);
-    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
     setDialogOpen(true);
   };
 
@@ -764,6 +773,24 @@ const Medicamentos = () => {
                       </Badge>
                     )}
                   </div>
+                  {form.controlado && (
+                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                      <Label className="text-xs">Lista 344/98 *</Label>
+                      <Select
+                        value={form.lista_controlada}
+                        onValueChange={(v) => setForm({ ...form, lista_controlada: v })}
+                      >
+                        <SelectTrigger className="mt-1 h-9">
+                          <SelectValue placeholder="Classificar (A1, B1, C1...)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["A1", "A2", "A3", "B1", "B2", "C1", "C2", "C3", "C4", "C5"].map((l) => (
+                            <SelectItem key={l} value={l}>{l}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

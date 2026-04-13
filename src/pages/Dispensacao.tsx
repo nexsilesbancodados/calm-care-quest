@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { verificarPrescricao, temBloqueio, type AlertaClinico } from "@/lib/clinical/interacoes";
 import { useAudit } from "@/contexts/AuditContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -191,6 +192,32 @@ const Dispensacao = () => {
     const { data: freshLote, error: loteErr } = await supabase.from("lotes").select("quantidade_atual").eq("id", form.lote_id).single();
     if (loteErr || !freshLote) { toast.error("Erro ao verificar estoque do lote"); setSubmitting(false); return; }
     if (freshLote.quantidade_atual < form.quantidade) { toast.error(`Estoque insuficiente! Disponível: ${freshLote.quantidade_atual} un.`); setSubmitting(false); return; }
+
+    // Verificação clínica: alergias + interações medicamentosas (bloqueia se grave/contraindicada/anafilática)
+    if (form.prontuario && selectedMed?.principio_ativo) {
+      try {
+        const { data: pac } = await (supabase as any)
+          .from("pacientes").select("id").eq("prontuario", form.prontuario).limit(1).maybeSingle();
+        if (pac?.id) {
+          const alertas: AlertaClinico[] = await verificarPrescricao({
+            paciente_id: pac.id,
+            principios_prescritos: [selectedMed.principio_ativo],
+          });
+          if (temBloqueio(alertas)) {
+            const msg = alertas.filter(a => a.bloqueante).map(a => a.mensagem).join(" | ");
+            toast.error(`Dispensação bloqueada: ${msg}`, { duration: 8000 });
+            setSubmitting(false);
+            return;
+          }
+          const avisos = alertas.filter(a => !a.bloqueante);
+          if (avisos.length > 0) {
+            toast.warning(avisos.map(a => a.mensagem).join(" | "), { duration: 6000 });
+          }
+        }
+      } catch {
+        // Falha silenciosa — não bloquear dispensação por erro de verificação
+      }
+    }
 
     await supabase.from("lotes").update({ quantidade_atual: freshLote.quantidade_atual - form.quantidade }).eq("id", form.lote_id);
     const movData: any = {

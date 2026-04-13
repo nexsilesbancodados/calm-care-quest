@@ -12,9 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users } from "lucide-react";
+import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserProductivity } from "@/hooks/useAdvancedKpis";
+import { RupturaTab } from "@/components/RupturaTab";
 import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
 import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
 
@@ -253,6 +254,7 @@ const Relatorios = () => {
           <TabsTrigger value="cmm" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> CMM</TabsTrigger>
           <TabsTrigger value="curvaABC" className="text-xs gap-1"><BarChart3 className="h-3.5 w-3.5" /> Curva ABC</TabsTrigger>
           <TabsTrigger value="produtividade" className="text-xs gap-1"><Users className="h-3.5 w-3.5" /> Produtividade</TabsTrigger>
+          <TabsTrigger value="ruptura" className="text-xs gap-1"><AlertCircle className="h-3.5 w-3.5" /> Previsão Ruptura</TabsTrigger>
         </TabsList>
 
         {/* TAB: Estoque Atual */}
@@ -810,6 +812,11 @@ const Relatorios = () => {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        {/* TAB: Previsão de Ruptura */}
+        <TabsContent value="ruptura" className="space-y-4">
+          <RupturaTab />
         </TabsContent>
       </Tabs>
     </AppLayout>
