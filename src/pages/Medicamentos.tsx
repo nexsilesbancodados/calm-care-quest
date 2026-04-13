@@ -72,6 +72,8 @@ const Medicamentos = () => {
     controlado: false, lista_controlada: "" as string,
     fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0,
     localizacao: "", preco_unitario: 0,
+    unidade_estoque: "unidade", unidade_entrada: "unidade",
+    fator_conversao: 1, ponto_pedido: 0,
   });
 
   const [page, setPage] = useState(0);
