@@ -552,3 +552,199 @@
   .print-area, .print-area * { visibility: visible; }
   .print-area { position: absolute; left: 0; top: 0; }
 }
+
+/* ==========================================================================
+   VISUAL POLISH — transversal (aplicado globalmente, sem tocar nas páginas)
+   ========================================================================== */
+
+/* Respeita usuários que pediram reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Números sempre em tabular — evita "saltos" em listas e tabelas */
+[class*="tabular"],
+td, th,
+.text-lg, .text-xl, .text-2xl, .text-3xl, .text-4xl,
+input[type="number"], input[type="date"], input[type="time"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Seleção de texto com cor de marca */
+::selection {
+  background: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
+}
+
+/* Foco acessível mais evidente (WCAG) */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.2);
+  border-radius: 8px;
+}
+
+/* Botões: leve lift no hover + tap feedback */
+button:not(:disabled):not([data-no-lift]):hover {
+  transform: translateY(-1px);
+}
+button:not(:disabled):active {
+  transform: translateY(0) scale(0.98);
+}
+button {
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.2s ease,
+              color 0.2s ease,
+              border-color 0.2s ease;
+}
+
+/* Inputs com anel sutil no focus */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="combobox"]:focus-visible {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.18);
+  outline: none;
+}
+
+/* Links: underline com offset */
+a:not([class]) {
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--primary) / 0.4);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s ease;
+}
+a:not([class]):hover {
+  text-decoration-color: hsl(var(--primary));
+}
+
+/* Scrollbar mais visível em dark, permanece fino */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.25);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.45);
+}
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Skeleton refinado — gradiente mais suave e pulso */
+.skeleton,
+[data-slot="skeleton"],
+[class*="Skeleton"] {
+  position: relative;
+  overflow: hidden;
+  background: hsl(var(--muted) / 0.5);
+}
+.skeleton::after,
+[data-slot="skeleton"]::after,
+[class*="Skeleton"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--foreground) / 0.04) 40%,
+    hsl(var(--foreground) / 0.08) 50%,
+    hsl(var(--foreground) / 0.04) 60%,
+    transparent 100%
+  );
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Dialogs / sheets / popovers: entrada suave */
+[role="dialog"],
+[data-state="open"][data-slot="dialog-content"],
+[data-state="open"][role="menu"] {
+  animation: dialog-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Toast / sonner: sombra mais rica */
+[data-sonner-toaster] [data-sonner-toast] {
+  box-shadow: var(--shadow-elevated);
+  border-radius: 14px !important;
+}
+
+/* Tabela: linhas zebra muito sutis para leitura longa */
+.data-table tbody tr:nth-child(even) {
+  background: hsl(var(--muted) / 0.08);
+}
+.data-table tbody tr:nth-child(even):hover {
+  background: hsl(var(--primary) / 0.05);
+}
+
+/* Badges: melhorar leitura em telas densas */
+[class*="badge"] {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+/* Imagens: evita layout shift e suaviza bordas */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Cards com selecionáveis: ring primary no focus dentro */
+[role="option"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="tab"]:focus-visible {
+  background: hsl(var(--primary) / 0.08);
+}
+
+/* Destaque para risco clínico alto — pulse lento e respirável */
+.clinical-alert-high {
+  animation: clinical-pulse 2.4s ease-in-out infinite;
+}
+@keyframes clinical-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.35); }
+  50%      { box-shadow: 0 0 0 8px hsl(var(--destructive) / 0); }
+}
+
+/* Tipografia: desabilita ligatures em valores numéricos críticos (doses/quantidades) */
+.dose-critical,
+.numeric-critical {
+  font-feature-settings: "tnum", "lnum";
+  font-variant-ligatures: none;
+}
+
+/* Gradiente de fundo sutil em páginas (respira melhor) */
+main[data-page-root],
+.app-main {
+  background:
+    radial-gradient(1200px 400px at 0% -10%, hsl(var(--primary) / 0.04), transparent 60%),
+    radial-gradient(800px 300px at 100% 0%, hsl(var(--accent) / 0.04), transparent 60%),
+    hsl(var(--background));
+}
+
+/* Microinteração: ícones lucide em hover de link/botão */
+button:hover svg:not([class*="animate-"]),
+a:hover svg:not([class*="animate-"]) {
+  transform: scale(1.04);
+  transition: transform 0.15s ease;
+}
+
+/* Altura mínima em campos para conforto motor (enfermagem/plantão) */
+@media (pointer: coarse) {
+  button, [role="button"], input, select, textarea, a[role="button"] {
+    min-height: 44px;
+  }
+}
+

@@ -2,8 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://mfuxmdivnwhuczapoxik.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdXhtZGl2bndodWN6YXBveGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDI3MzUsImV4cCI6MjA5MDAxODczNX0.hE62g-lpavBTdsAHuI0X7n9tWmYTmQiwabZzIZPOIYw";
+// Preferir env vars (Vercel). Mantém fallback constante para dev e Lovable preview.
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ?? "https://mfuxmdivnwhuczapoxik.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mdXhtZGl2bndodWN6YXBveGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDI3MzUsImV4cCI6MjA5MDAxODczNX0.hE62g-lpavBTdsAHuI0X7n9tWmYTmQiwabZzIZPOIYw";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
