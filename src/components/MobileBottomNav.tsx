@@ -34,6 +34,8 @@ const moreGroups = [
       { title: "Pacientes", url: "/pacientes", icon: User, roles: null },
       { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"] },
       { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"] },
+      { title: "Plantão", url: "/plantao", icon: ClipboardList, roles: ["admin", "enfermeiro"] },
+      { title: "Atrasos", url: "/atrasos", icon: AlertTriangle, roles: ["admin", "farmaceutico", "enfermeiro"] },
     ],
   },
   {
@@ -42,6 +44,7 @@ const moreGroups = [
       { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"] },
       { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"] },
       { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"] },
+      { title: "Kits", url: "/kits", icon: Package, roles: ["admin", "farmaceutico"] },
     ],
   },
   {

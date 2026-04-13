@@ -80,6 +80,8 @@ const menuGroups: MenuGroup[] = [
       { title: "Reconciliação", url: "/reconciliacao", icon: BarChart3, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "BMPO (Controlados)", url: "/bmpo", icon: BarChart3, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"], badgeKey: null },
+      { title: "Passagem de Plantão", url: "/plantao", icon: ClipboardList, roles: ["admin", "enfermeiro"], badgeKey: null },
+      { title: "Painel de Atrasos", url: "/atrasos", icon: Activity, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
     ],
   },
   {
@@ -90,6 +92,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"], badgeKey: "transfers" },
       { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"], badgeKey: null },
+      { title: "Kits de Procedimento", url: "/kits", icon: Package, roles: ["admin", "farmaceutico"], badgeKey: null },
     ],
   },
   {
