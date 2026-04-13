@@ -24,6 +24,7 @@ const Fornecedores = () => {
   const [suppliers, setSuppliers] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Fornecedor | null>(null);
   const [form, setForm] = useState({ nome: "", cnpj: "", contato: "", email: "", telefone: "", endereco: "" });
@@ -31,20 +32,36 @@ const Fornecedores = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [deactivateConfirm, setDeactivateConfirm] = useState<{ id: string; nome: string; medsCount: number; ativo: boolean } | null>(null);
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => { setDebouncedSearch(search); setPage(0); }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const fetchData = async () => {
     setLoading(true);
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    const { count } = await supabase.from("fornecedores").select("id", { count: "exact", head: true });
+
+    let countQuery = supabase.from("fornecedores").select("id", { count: "exact", head: true });
+    let dataQuery = supabase.from("fornecedores").select("*").order("nome");
+
+    if (debouncedSearch.trim()) {
+      const term = `%${debouncedSearch.trim()}%`;
+      countQuery = countQuery.or(`nome.ilike.${term},cnpj.ilike.${term},contato.ilike.${term}`);
+      dataQuery = dataQuery.or(`nome.ilike.${term},cnpj.ilike.${term},contato.ilike.${term}`);
+    }
+
+    const { count } = await countQuery;
     setTotalCount(count || 0);
-    const { data } = await supabase.from("fornecedores").select("*").order("nome").range(from, to);
+    const { data } = await dataQuery.range(from, to);
     setSuppliers(data as Fornecedor[] || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page, profile?.filial_id]);
+  useEffect(() => { fetchData(); }, [page, debouncedSearch, profile?.filial_id]);
 
-  const filtered = suppliers.filter(s => !search || s.nome.toLowerCase().includes(search.toLowerCase()) || s.cnpj.includes(search));
+  const filtered = suppliers;
   const activeCount = suppliers.filter(s => s.ativo).length;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
