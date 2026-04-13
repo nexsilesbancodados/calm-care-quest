@@ -12,7 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { Download, Printer, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users, AlertCircle } from "lucide-react";
+import { Download, FileDown, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users, AlertCircle } from "lucide-react";
+import { generatePdfReport, statusText, type ReportSection } from "@/lib/pdf/reportGenerator";
 import { cn } from "@/lib/utils";
 import { useUserProductivity } from "@/hooks/useAdvancedKpis";
 import { RupturaTab } from "@/components/RupturaTab";
@@ -42,32 +43,8 @@ function downloadCSV(headers: string[], rows: any[][], filename: string) {
   a.click();
 }
 
-function printReport(title: string, content: string, hospitalNome?: string, userName?: string) {
-  const pw = window.open("", "_blank");
-  if (!pw) return;
-  const header = hospitalNome
-    ? `<div style="text-align:center;margin-bottom:12px"><h1 style="margin:0;font-size:20px;color:#1e3a5f">${hospitalNome}</h1><p style="margin:2px 0 0;font-size:10px;color:#999">Sistema PsiRumoCerto — Farmácia Hospitalar</p></div><hr style="border:none;border-top:2px solid #1e3a5f;margin-bottom:12px">`
-    : "";
-  const footerUser = userName || "—";
-  const timestamp = new Date().toLocaleString("pt-BR");
-  pw.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
-    <style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
-    h1{font-size:18px;color:#1e3a5f;margin-bottom:4px}
-    h2{font-size:11px;color:#666;margin-bottom:16px}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;font-size:11px}
-    th{background:#f5f5f5;font-weight:600}
-    .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600}
-    .green{background:#dcfce7;color:#16a34a}.yellow{background:#fef3c7;color:#d97706}
-    .red{background:#fee2e2;color:#dc2626}.gray{background:#f3f4f6;color:#6b7280}
-    .footer{margin-top:24px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#888;display:flex;justify-content:space-between}
-    .nota{margin-top:12px;padding:8px;background:#f8f9fa;border-left:3px solid #1e3a5f;font-size:10px;color:#555}
-    @media print{@page{margin:12mm}}</style></head>
-    <body>${header}<h1>PsiRumoCerto — ${title}</h1><h2>Gerado em: ${timestamp}</h2>${content}
-    <div class="footer"><span>Usuário: ${footerUser}</span><span>${timestamp}</span></div>
-    <script>window.onload=function(){window.print()}<\/script></body></html>`);
-  pw.document.close();
-}
+
+
 
 const Relatorios = () => {
   const { profile } = useAuth();
@@ -272,14 +249,24 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = filteredMeds.map((m) => {
-                const t = getEstoqueTotal(m.lotes);
-                const st = getEstoqueStatus(t, m.estoque_minimo);
-                const cls = st === "normal" ? "green" : st === "baixo" ? "yellow" : st === "critico" ? "red" : "gray";
-                return `<tr><td>${m.nome}</td><td>${m.concentracao}</td><td style="text-align:center">${t}</td><td style="text-align:center">${m.estoque_minimo}</td><td><span class="badge ${cls}">${st}</span></td><td style="text-align:right">R$ ${(m.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0)).toFixed(2)}</td></tr>`;
-              }).join("");
-              printReport("Relatório de Estoque Atual", `<p><strong>${filteredMeds.length}</strong> itens | <strong>${totalUnits.toLocaleString("pt-BR")}</strong> unidades | Valor: <strong>R$ ${totalValue.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Estoque</th><th>Mínimo</th><th>Status</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              generatePdfReport(
+                { title: "Relatório de Estoque Atual", hospitalNome, userName },
+                [
+                  { type: "kpi", items: [
+                    { label: "Itens", value: filteredMeds.length },
+                    { label: "Unidades", value: totalUnits.toLocaleString("pt-BR") },
+                    { label: "Valor Total", value: `R$ ${totalValue.toFixed(2)}` },
+                  ]},
+                  { type: "table", headers: ["Medicamento", "Concentração", "Estoque", "Mínimo", "Status", "Valor (R$)"],
+                    rows: filteredMeds.map(m => {
+                      const t = getEstoqueTotal(m.lotes);
+                      return [m.nome, m.concentracao, t, m.estoque_minimo, statusText(getEstoqueStatus(t, m.estoque_minimo)), `R$ ${m.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0).toFixed(2)}`];
+                    }),
+                    columnStyles: { 2: { halign: "center" }, 3: { halign: "center" }, 5: { halign: "right" } },
+                  },
+                ]
+              );
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -337,9 +324,17 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = filteredMov.map((m) => `<tr><td>${formatDate(m.created_at)}</td><td>${m.tipo}</td><td>${m.medicamentos?.nome || "—"}</td><td style="text-align:center">${m.quantidade}</td><td>${m.paciente || m.setor || "—"}</td></tr>`).join("");
-              printReport(`Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredMov.length}</strong> registros no período</p><table><thead><tr><th>Data</th><th>Tipo</th><th>Medicamento</th><th>Qtd</th><th>Paciente/Setor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              generatePdfReport(
+                { title: `Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, hospitalNome, userName, orientation: "landscape" },
+                [
+                  { type: "text", content: `${filteredMov.length} registros no período`, bold: true },
+                  { type: "table", headers: ["Data", "Tipo", "Medicamento", "Qtd", "Paciente/Setor", "Observação"],
+                    rows: filteredMov.map(m => [formatDate(m.created_at), m.tipo, m.medicamentos?.nome || "—", m.quantidade, m.paciente || m.setor || "—", m.observacao || ""]),
+                    columnStyles: { 3: { halign: "center" } },
+                  },
+                ]
+              );
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredMov.length} movimentações no período</Badge>
           <Card className="shadow-card overflow-hidden">
@@ -390,12 +385,17 @@ const Relatorios = () => {
                 );
               }}><Download className="h-3.5 w-3.5" />CSV</Button>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-                const rows = expiring.map((e) => {
-                  const cls = e.days <= 15 ? "red" : e.days <= 30 ? "yellow" : "green";
-                  return `<tr><td>${e.med.nome}</td><td>${e.lote.numero_lote}</td><td>${formatDate(e.lote.validade)}</td><td style="text-align:center"><span class="badge ${cls}">${e.days}d</span></td><td style="text-align:center">${e.lote.quantidade_atual}</td></tr>`;
-                }).join("");
-                printReport(`Medicamentos a Vencer (${venDays} dias)`, `<p><strong>${expiring.length}</strong> lotes a vencer</p><table><thead><tr><th>Medicamento</th><th>Lote</th><th>Validade</th><th>Dias</th><th>Qtd</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-              }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+                generatePdfReport(
+                  { title: `Medicamentos a Vencer (${venDays} dias)`, hospitalNome, userName },
+                  [
+                    { type: "text", content: `${expiring.length} lotes a vencer`, bold: true },
+                    { type: "table", headers: ["Medicamento", "Lote", "Validade", "Dias Restantes", "Quantidade"],
+                      rows: expiring.map(e => [e.med.nome, e.lote.numero_lote, formatDate(e.lote.validade), e.days, e.lote.quantidade_atual]),
+                      columnStyles: { 3: { halign: "center" }, 4: { halign: "center" } },
+                    },
+                  ]
+                );
+              }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             </div>
           </div>
           <Badge variant="outline" className="text-xs">{expiring.length} lotes a vencer em {venDays} dias</Badge>
@@ -432,9 +432,11 @@ const Relatorios = () => {
               downloadCSV(["Setor/Paciente", "Quantidade"], consumoSetorData.map((c) => [c.name, c.value]), "consumo-setor");
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = consumoSetorData.map((c) => `<tr><td>${c.name}</td><td style="text-align:center">${c.value}</td></tr>`).join("");
-              printReport(`Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<table><thead><tr><th>Setor/Paciente</th><th>Quantidade</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              generatePdfReport(
+                { title: `Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, hospitalNome, userName },
+                [{ type: "table", headers: ["Setor/Paciente", "Quantidade"], rows: consumoSetorData.map(c => [c.name, c.value]), columnStyles: { 1: { halign: "center" } } }]
+              );
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Card className="p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-4">Top 10 — Consumo por Setor/Paciente</h3>
@@ -464,9 +466,17 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = filteredTrans.map((t) => `<tr><td>${formatDate(t.created_at)}</td><td>${t.medicamentos?.nome || "—"}</td><td>${t.clinica_destino?.nome || "—"}</td><td style="text-align:center">${t.quantidade}</td><td>${t.status}</td></tr>`).join("");
-              printReport(`Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredTrans.length}</strong> transferências no período</p><table><thead><tr><th>Data</th><th>Medicamento</th><th>Destino</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              generatePdfReport(
+                { title: `Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, hospitalNome, userName },
+                [
+                  { type: "text", content: `${filteredTrans.length} transferências no período`, bold: true },
+                  { type: "table", headers: ["Data", "Medicamento", "Destino", "Qtd", "Status"],
+                    rows: filteredTrans.map(t => [formatDate(t.created_at), t.medicamentos?.nome || "—", t.clinica_destino?.nome || "—", t.quantidade, t.status]),
+                    columnStyles: { 3: { halign: "center" } },
+                  },
+                ]
+              );
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredTrans.length} transferências no período</Badge>
           <Card className="shadow-card overflow-hidden">
@@ -507,15 +517,17 @@ const Relatorios = () => {
                 );
               }}><Download className="h-3.5 w-3.5" />CSV</Button>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-                const rows = psicoData.map(d => `<tr><td>${d.med.nome}</td><td>${d.med.concentracao}</td><td>${d.med.forma_farmaceutica}</td><td>${d.lote.numero_lote}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.saidas}</td><td style="text-align:center;font-weight:600">${d.saldo}</td><td>${formatDate(d.lote.validade)}</td></tr>`).join("");
-                printReport(
-                  `Mapa de Psicotrópicos — ${psicoMonth}`,
-                  `<div class="nota">Relatório para apresentação à ANVISA — Mapa de Psicotrópicos (Portaria SVS/MS nº 344/98)</div>
-                  <p style="margin-top:12px"><strong>${controlledMeds.length}</strong> medicamentos controlados | <strong>${psicoData.length}</strong> lotes</p>
-                  <table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Forma</th><th>Lote</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Validade</th></tr></thead><tbody>${rows}</tbody></table>`,
-                  hospitalNome, userName
+                generatePdfReport(
+                  { title: `Mapa de Psicotrópicos — ${psicoMonth}`, subtitle: "Portaria SVS/MS nº 344/98 — ANVISA", hospitalNome, userName, orientation: "landscape" },
+                  [
+                    { type: "kpi", items: [{ label: "Controlados", value: controlledMeds.length }, { label: "Lotes", value: psicoData.length }] },
+                    { type: "table", headers: ["Medicamento", "Concentração", "Forma", "Lote", "Entradas", "Saídas", "Saldo", "Validade"],
+                      rows: psicoData.map(d => [d.med.nome, d.med.concentracao, d.med.forma_farmaceutica, d.lote.numero_lote, d.entradas, d.saidas, d.saldo, formatDate(d.lote.validade)]),
+                      columnStyles: { 4: { halign: "center" }, 5: { halign: "center" }, 6: { halign: "center" } },
+                    },
+                  ]
                 );
-              }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             </div>
           </div>
 
@@ -569,13 +581,21 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = cmmData.map(d => {
-                const cs = getCoberturaStatus(d.cobertura);
-                const cls = d.cobertura > 30 ? "green" : d.cobertura >= 15 ? "yellow" : "red";
-                return `<tr><td>${d.med.nome}</td><td style="text-align:center">${d.cmm}</td><td style="text-align:center">${d.estoque}</td><td style="text-align:center"><span class="badge ${cls}">${cs.label}</span></td></tr>`;
-              }).join("");
-              printReport("CMM por Medicamento", `<p>Consumo Médio Mensal — Média dos últimos 3 meses</p><table><thead><tr><th>Medicamento</th><th>CMM (un/mês)</th><th>Estoque</th><th>Cobertura</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              generatePdfReport(
+                { title: "CMM por Medicamento", subtitle: "Consumo Médio Mensal — Média dos últimos 3 meses", hospitalNome, userName },
+                [
+                  { type: "kpi", items: [
+                    { label: "Medicamentos", value: cmmData.length },
+                    { label: "Cobertura <15d", value: cmmData.filter(d => d.cobertura < 15).length },
+                    { label: "Cobertura 15-30d", value: cmmData.filter(d => d.cobertura >= 15 && d.cobertura <= 30).length },
+                  ]},
+                  { type: "table", headers: ["Medicamento", "CMM (un/mês)", "Estoque Atual", "Cobertura"],
+                    rows: cmmData.map(d => [d.med.nome, d.cmm, d.estoque, d.cobertura >= 999 ? ">30d" : `${d.cobertura}d`]),
+                    columnStyles: { 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" } },
+                  },
+                ]
+              );
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-2">
@@ -670,12 +690,22 @@ const Relatorios = () => {
                     );
                   }}><Download className="h-3.5 w-3.5" />CSV</Button>
                   <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-                    const rows = classified.map(d => {
-                      const cls = d.classe === "A" ? "red" : d.classe === "B" ? "yellow" : "green";
-                      return `<tr><td>${d.med.nome}</td><td style="text-align:center"><span class="badge ${cls}">${d.classe}</span></td><td style="text-align:right">R$ ${d.valorConsumo.toFixed(2)}</td><td style="text-align:center">${d.qty}</td><td style="text-align:center">${d.pctAcum.toFixed(1)}%</td></tr>`;
-                    }).join("");
-                    printReport("Curva ABC — Análise de Consumo", `<div class="nota">Classificação baseada no valor de consumo dos últimos 90 dias. A: 80% do valor | B: 80-95% | C: 95-100%</div><p style="margin-top:12px"><span class="badge red">A: ${countA}</span> <span class="badge yellow">B: ${countB}</span> <span class="badge green">C: ${countC}</span> — Total: <strong>R$ ${totalValor.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Classe</th><th>Valor (R$)</th><th>Qtd</th><th>% Acum.</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-                  }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+                    generatePdfReport(
+                      { title: "Curva ABC — Análise de Consumo", subtitle: "Classificação baseada no valor de consumo dos últimos 90 dias", hospitalNome, userName },
+                      [
+                        { type: "kpi", items: [
+                          { label: "Classe A (80%)", value: countA },
+                          { label: "Classe B (15%)", value: countB },
+                          { label: "Classe C (5%)", value: countC },
+                          { label: "Valor Total", value: `R$ ${totalValor.toFixed(2)}` },
+                        ]},
+                        { type: "table", headers: ["Medicamento", "Classe", "Valor (R$)", "Qtd", "% Acum."],
+                          rows: classified.map(d => [d.med.nome, d.classe, `R$ ${d.valorConsumo.toFixed(2)}`, d.qty, `${d.pctAcum.toFixed(1)}%`]),
+                          columnStyles: { 1: { halign: "center" }, 2: { halign: "right" }, 3: { halign: "center" }, 4: { halign: "center" } },
+                        },
+                      ]
+                    );
+                  }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-2">
@@ -764,9 +794,17 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = productivityData.map((d: any) => `<tr><td>${d.usuario}</td><td style="text-align:center">${d.total_movimentacoes}</td><td style="text-align:center">${d.dispensacoes}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.devolucoes}</td><td style="text-align:center;font-weight:600">${d.total_unidades}</td></tr>`).join("");
-              printReport("Produtividade por Usuário (30 dias)", `<p><strong>${productivityData.length}</strong> usuários ativos no período</p><table><thead><tr><th>Usuário</th><th>Total Mov.</th><th>Dispensações</th><th>Entradas</th><th>Devoluções</th><th>Unidades</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              generatePdfReport(
+                { title: "Produtividade por Usuário (30 dias)", hospitalNome, userName },
+                [
+                  { type: "text", content: `${productivityData.length} usuários ativos no período`, bold: true },
+                  { type: "table", headers: ["Usuário", "Total Mov.", "Dispensações", "Entradas", "Devoluções", "Unidades"],
+                    rows: productivityData.map((d: any) => [d.usuario, d.total_movimentacoes, d.dispensacoes, d.entradas, d.devolucoes, d.total_unidades]),
+                    columnStyles: { 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" }, 4: { halign: "center" }, 5: { halign: "center" } },
+                  },
+                ]
+              );
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
           <Badge variant="outline" className="text-xs">{productivityData.length} usuários ativos (últimos 30 dias)</Badge>
