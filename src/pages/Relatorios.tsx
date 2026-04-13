@@ -63,6 +63,9 @@ const Relatorios = () => {
   // Psicotrópicos filter
   const [psicoMonth, setPsicoMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
+  // CMM period filter (months)
+  const [cmmPeriod, setCmmPeriod] = useState("3");
+
   useEffect(() => {
     const fetchAll = async () => {
       const [{ data: medsData }, { data: lotesData }, { data: catsData }, { data: movData }, { data: transData }, { data: configData }] =
@@ -174,18 +177,19 @@ const Relatorios = () => {
 
   // === CMM POR MEDICAMENTO ===
   const cmmData = useMemo(() => {
-    const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const months = parseInt(cmmPeriod) || 3;
+    const periodAgo = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString();
     return meds.map(med => {
       const dispensacoes = movements.filter(m =>
-        m.medicamento_id === med.id && ["saida", "dispensacao"].includes(m.tipo) && m.created_at >= threeMonthsAgo
+        m.medicamento_id === med.id && ["saida", "dispensacao"].includes(m.tipo) && m.created_at >= periodAgo
       );
       const totalDisp = dispensacoes.reduce((s: number, m: any) => s + m.quantidade, 0);
-      const cmmVal = Math.round(totalDisp / 3);
+      const cmmVal = Math.round(totalDisp / months);
       const estoqueAtual = getEstoqueTotal(med.lotes);
       const cobertura = cmmVal > 0 ? Math.round(estoqueAtual / (cmmVal / 30)) : estoqueAtual > 0 ? 999 : 0;
       return { med, cmm: cmmVal, estoque: estoqueAtual, cobertura };
     }).filter(d => d.cmm > 0 || d.estoque > 0).sort((a, b) => a.cobertura - b.cobertura);
-  }, [meds, movements]);
+  }, [meds, movements, cmmPeriod]);
 
   const getCoberturaStatus = (dias: number) => {
     if (dias >= 999) return { label: ">30d", cls: "bg-success/10 text-success border-success/20" };
@@ -572,7 +576,18 @@ const Relatorios = () => {
 
         {/* TAB: CMM por Medicamento */}
         <TabsContent value="cmm" className="space-y-4">
-          <div className="flex gap-2 justify-end">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Label className="text-xs">Período</Label>
+            <Select value={cmmPeriod} onValueChange={setCmmPeriod}>
+              <SelectTrigger className="h-8 text-xs w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 mês</SelectItem>
+                <SelectItem value="3">3 meses</SelectItem>
+                <SelectItem value="6">6 meses</SelectItem>
+                <SelectItem value="12">12 meses</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               downloadCSV(
                 ["Medicamento", "CMM (un/mês)", "Estoque Atual", "Cobertura (dias)", "Status"],
@@ -582,7 +597,7 @@ const Relatorios = () => {
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               generatePdfReport(
-                { title: "CMM por Medicamento", subtitle: "Consumo Médio Mensal — Média dos últimos 3 meses", hospitalNome, userName },
+                { title: "CMM por Medicamento", subtitle: `Consumo Médio Mensal — Média dos últimos ${cmmPeriod} meses`, hospitalNome, userName },
                 [
                   { type: "kpi", items: [
                     { label: "Medicamentos", value: cmmData.length },
@@ -596,6 +611,7 @@ const Relatorios = () => {
                 ]
               );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-2">
