@@ -490,8 +490,16 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = filteredTrans.map((t) => `<tr><td>${formatDate(t.created_at)}</td><td>${t.medicamentos?.nome || "—"}</td><td>${t.clinica_destino?.nome || "—"}</td><td style="text-align:center">${t.quantidade}</td><td>${t.status}</td></tr>`).join("");
-              printReport(`Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredTrans.length}</strong> transferências no período</p><table><thead><tr><th>Data</th><th>Medicamento</th><th>Destino</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+              generatePdfReport(
+                { title: `Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, hospitalNome, userName },
+                [
+                  { type: "text", content: `${filteredTrans.length} transferências no período`, bold: true },
+                  { type: "table", headers: ["Data", "Medicamento", "Destino", "Qtd", "Status"],
+                    rows: filteredTrans.map(t => [formatDate(t.created_at), t.medicamentos?.nome || "—", t.clinica_destino?.nome || "—", t.quantidade, t.status]),
+                    columnStyles: { 3: { halign: "center" } },
+                  },
+                ]
+              );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredTrans.length} transferências no período</Badge>
