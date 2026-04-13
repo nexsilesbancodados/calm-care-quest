@@ -167,7 +167,7 @@ export function CommandPalette() {
                     {p.nome}{" "}
                     <span className="text-muted-foreground text-xs">
                       #{p.prontuario}
-                      {p.leito ? ` · leito ${p.leito}` : ""}
+                      {p.leito ? ` · quarto ${p.leito}` : ""}
                     </span>
                   </span>
                 </CommandItem>
