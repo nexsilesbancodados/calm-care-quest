@@ -177,18 +177,19 @@ const Relatorios = () => {
 
   // === CMM POR MEDICAMENTO ===
   const cmmData = useMemo(() => {
-    const threeMonthsAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const months = parseInt(cmmPeriod) || 3;
+    const periodAgo = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000).toISOString();
     return meds.map(med => {
       const dispensacoes = movements.filter(m =>
-        m.medicamento_id === med.id && ["saida", "dispensacao"].includes(m.tipo) && m.created_at >= threeMonthsAgo
+        m.medicamento_id === med.id && ["saida", "dispensacao"].includes(m.tipo) && m.created_at >= periodAgo
       );
       const totalDisp = dispensacoes.reduce((s: number, m: any) => s + m.quantidade, 0);
-      const cmmVal = Math.round(totalDisp / 3);
+      const cmmVal = Math.round(totalDisp / months);
       const estoqueAtual = getEstoqueTotal(med.lotes);
       const cobertura = cmmVal > 0 ? Math.round(estoqueAtual / (cmmVal / 30)) : estoqueAtual > 0 ? 999 : 0;
       return { med, cmm: cmmVal, estoque: estoqueAtual, cobertura };
     }).filter(d => d.cmm > 0 || d.estoque > 0).sort((a, b) => a.cobertura - b.cobertura);
-  }, [meds, movements]);
+  }, [meds, movements, cmmPeriod]);
 
   const getCoberturaStatus = (dias: number) => {
     if (dias >= 999) return { label: ">30d", cls: "bg-success/10 text-success border-success/20" };
