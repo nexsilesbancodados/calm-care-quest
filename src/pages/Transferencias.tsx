@@ -60,11 +60,12 @@ const Transferencias = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: tData }, { data: mData }, { data: cData }, { data: lotesData }] = await Promise.all([
+    const [{ data: tData }, { data: mData }, { data: cData }, { data: lotesData }, { data: fData }] = await Promise.all([
       supabase.from("transferencias").select("*, medicamentos(nome, concentracao), clinica_origem:clinicas_parceiras!transferencias_clinica_origem_id_fkey(nome), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome), lotes(numero_lote, validade)").order("created_at", { ascending: false }),
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("clinicas_parceiras").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
+      supabase.from("filiais").select("id, nome").eq("ativo", true).order("nome"),
     ]);
     setTransfers(tData || []);
     setMeds((mData || []).map((m: any) => ({
@@ -72,6 +73,7 @@ const Transferencias = () => {
       lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id).sort((a: any, b: any) => new Date(a.validade).getTime() - new Date(b.validade).getTime()),
     })));
     setClinicas(cData as ClinicaParceira[] || []);
+    setFiliais((fData || []).filter(f => f.id !== profile?.filial_id));
     setLoading(false);
   };
 
