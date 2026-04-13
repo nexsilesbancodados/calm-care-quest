@@ -508,7 +508,7 @@ const Pacientes = () => {
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     <InfoField label="Data de Entrada" value={formatDateBR(detailPatient.data_entrada)} icon={Calendar} />
                     <InfoField label="Dias Internado" value={daysAdmitted !== null ? `${daysAdmitted} dias` : "—"} icon={Clock} />
-                    <InfoField label="Leito" value={detailPatient.leito || "—"} icon={BedDouble} />
+                    <InfoField label="Quarto" value={detailPatient.leito || "—"} icon={BedDouble} />
                     <InfoField label="Setor" value={detailPatient.setor || "—"} icon={MapPin} />
                     <InfoField label="Diagnóstico (CID)" value={detailPatient.diagnostico_cid || "—"} icon={Stethoscope} />
                   </div>
@@ -629,7 +629,7 @@ const Pacientes = () => {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-5">
         <KpiCard label="Total Pacientes" value={pacientes.length} icon={Users} color="text-primary" bg="bg-primary/10" />
         <KpiCard label="Ativos" value={totalAtivos} icon={Heart} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-500/10" />
-        <KpiCard label="Internados (c/ Leito)" value={totalInternados} icon={BedDouble} color="text-info" bg="bg-info/10" />
+        <KpiCard label="Internados (c/ Quarto)" value={totalInternados} icon={BedDouble} color="text-info" bg="bg-info/10" />
         <KpiCard label="Setores" value={setoresCount} icon={Activity} color="text-muted-foreground" bg="bg-muted" />
       </div>
 
@@ -704,7 +704,7 @@ const Pacientes = () => {
                         <Label className="text-xs">Data de Entrada</Label>
                         <DateMaskInput value={form.data_entrada} onChange={v => setForm({ ...form, data_entrada: v })} />
                       </div>
-                      <div className="space-y-1.5"><Label className="text-xs">Leito</Label><Input value={form.leito || ""} onChange={e => setForm({ ...form, leito: e.target.value || null })} placeholder="Ex: 12-A" /></div>
+                      <div className="space-y-1.5"><Label className="text-xs">Quarto</Label><Input value={form.leito || ""} onChange={e => setForm({ ...form, leito: e.target.value || null })} placeholder="Ex: 12-A" /></div>
                       <div className="space-y-1.5"><Label className="text-xs">Setor</Label><Input value={form.setor || ""} onChange={e => setForm({ ...form, setor: e.target.value || null })} placeholder="Ala A, UTI..." /></div>
                       <div className="space-y-1.5"><Label className="text-xs">CID (Diagnóstico)</Label><Input value={form.diagnostico_cid || ""} onChange={e => setForm({ ...form, diagnostico_cid: e.target.value || null })} placeholder="F20.0" /></div>
                     </div>
@@ -745,7 +745,7 @@ const Pacientes = () => {
                       <TableHead className="text-xs font-semibold hidden sm:table-cell">CPF</TableHead>
                       <TableHead className="text-xs font-semibold hidden md:table-cell">Idade</TableHead>
                       <TableHead className="text-xs font-semibold hidden md:table-cell">Entrada</TableHead>
-                      <TableHead className="text-xs font-semibold">Leito</TableHead>
+                      <TableHead className="text-xs font-semibold">Quarto</TableHead>
                       <TableHead className="text-xs font-semibold">Setor</TableHead>
                       <TableHead className="text-xs font-semibold hidden lg:table-cell">CID</TableHead>
                       <TableHead className="text-xs font-semibold text-right">Ações</TableHead>

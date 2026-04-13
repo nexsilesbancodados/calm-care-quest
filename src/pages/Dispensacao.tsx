@@ -548,7 +548,7 @@ const Dispensacao = () => {
                                       <Check className={cn("mr-2 h-3 w-3", form.paciente === p.nome ? "opacity-100" : "opacity-0")} />
                                       <div>
                                         <p className="text-xs font-medium">{p.nome}</p>
-                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario} • {p.setor || "—"}{p.leito ? ` • Leito: ${p.leito}` : ""}</p>
+                                        <p className="text-[10px] text-muted-foreground">Pront: {p.prontuario} • {p.setor || "—"}{p.leito ? ` • Quarto: ${p.leito}` : ""}</p>
                                       </div>
                                     </CommandItem>
                                   ))}

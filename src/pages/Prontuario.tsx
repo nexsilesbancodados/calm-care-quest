@@ -153,7 +153,7 @@ export default function Prontuario() {
       <div className="page-enter space-y-5 p-4 md:p-8">
         <PageHeader
           title={paciente.nome}
-          subtitle={`#${paciente.prontuario}${idade !== null ? ` · ${idade} anos` : ""}${paciente.sexo ? ` · ${paciente.sexo}` : ""}${paciente.leito ? ` · Leito ${paciente.leito}` : ""}`}
+          subtitle={`#${paciente.prontuario}${idade !== null ? ` · ${idade} anos` : ""}${paciente.sexo ? ` · ${paciente.sexo}` : ""}${paciente.leito ? ` · Quarto ${paciente.leito}` : ""}`}
           icon={UserCircle2}
           variant="clinical"
           actions={
