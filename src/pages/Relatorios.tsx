@@ -456,8 +456,10 @@ const Relatorios = () => {
               downloadCSV(["Setor/Paciente", "Quantidade"], consumoSetorData.map((c) => [c.name, c.value]), "consumo-setor");
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = consumoSetorData.map((c) => `<tr><td>${c.name}</td><td style="text-align:center">${c.value}</td></tr>`).join("");
-              printReport(`Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<table><thead><tr><th>Setor/Paciente</th><th>Quantidade</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+              generatePdfReport(
+                { title: `Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, hospitalNome, userName },
+                [{ type: "table", headers: ["Setor/Paciente", "Quantidade"], rows: consumoSetorData.map(c => [c.name, c.value]), columnStyles: { 1: { halign: "center" } } }]
+              );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Card className="p-5 shadow-card">
