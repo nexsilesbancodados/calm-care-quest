@@ -541,13 +541,15 @@ const Relatorios = () => {
                 );
               }}><Download className="h-3.5 w-3.5" />CSV</Button>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-                const rows = psicoData.map(d => `<tr><td>${d.med.nome}</td><td>${d.med.concentracao}</td><td>${d.med.forma_farmaceutica}</td><td>${d.lote.numero_lote}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.saidas}</td><td style="text-align:center;font-weight:600">${d.saldo}</td><td>${formatDate(d.lote.validade)}</td></tr>`).join("");
-                printReport(
-                  `Mapa de Psicotrópicos — ${psicoMonth}`,
-                  `<div class="nota">Relatório para apresentação à ANVISA — Mapa de Psicotrópicos (Portaria SVS/MS nº 344/98)</div>
-                  <p style="margin-top:12px"><strong>${controlledMeds.length}</strong> medicamentos controlados | <strong>${psicoData.length}</strong> lotes</p>
-                  <table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Forma</th><th>Lote</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Validade</th></tr></thead><tbody>${rows}</tbody></table>`,
-                  hospitalNome, userName
+                generatePdfReport(
+                  { title: `Mapa de Psicotrópicos — ${psicoMonth}`, subtitle: "Portaria SVS/MS nº 344/98 — ANVISA", hospitalNome, userName, orientation: "landscape" },
+                  [
+                    { type: "kpi", items: [{ label: "Controlados", value: controlledMeds.length }, { label: "Lotes", value: psicoData.length }] },
+                    { type: "table", headers: ["Medicamento", "Concentração", "Forma", "Lote", "Entradas", "Saídas", "Saldo", "Validade"],
+                      rows: psicoData.map(d => [d.med.nome, d.med.concentracao, d.med.forma_farmaceutica, d.lote.numero_lote, d.entradas, d.saidas, d.saldo, formatDate(d.lote.validade)]),
+                      columnStyles: { 4: { halign: "center" }, 5: { halign: "center" }, 6: { halign: "center" } },
+                    },
+                  ]
                 );
               }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             </div>
