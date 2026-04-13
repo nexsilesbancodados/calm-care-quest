@@ -43,32 +43,8 @@ function downloadCSV(headers: string[], rows: any[][], filename: string) {
   a.click();
 }
 
-function printReport(title: string, content: string, hospitalNome?: string, userName?: string) {
-  const pw = window.open("", "_blank");
-  if (!pw) return;
-  const header = hospitalNome
-    ? `<div style="text-align:center;margin-bottom:12px"><h1 style="margin:0;font-size:20px;color:#1e3a5f">${hospitalNome}</h1><p style="margin:2px 0 0;font-size:10px;color:#999">Sistema PsiRumoCerto — Farmácia Hospitalar</p></div><hr style="border:none;border-top:2px solid #1e3a5f;margin-bottom:12px">`
-    : "";
-  const footerUser = userName || "—";
-  const timestamp = new Date().toLocaleString("pt-BR");
-  pw.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
-    <style>body{font-family:Arial,sans-serif;padding:20px;font-size:12px}
-    h1{font-size:18px;color:#1e3a5f;margin-bottom:4px}
-    h2{font-size:11px;color:#666;margin-bottom:16px}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;font-size:11px}
-    th{background:#f5f5f5;font-weight:600}
-    .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600}
-    .green{background:#dcfce7;color:#16a34a}.yellow{background:#fef3c7;color:#d97706}
-    .red{background:#fee2e2;color:#dc2626}.gray{background:#f3f4f6;color:#6b7280}
-    .footer{margin-top:24px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#888;display:flex;justify-content:space-between}
-    .nota{margin-top:12px;padding:8px;background:#f8f9fa;border-left:3px solid #1e3a5f;font-size:10px;color:#555}
-    @media print{@page{margin:12mm}}</style></head>
-    <body>${header}<h1>PsiRumoCerto — ${title}</h1><h2>Gerado em: ${timestamp}</h2>${content}
-    <div class="footer"><span>Usuário: ${footerUser}</span><span>${timestamp}</span></div>
-    <script>window.onload=function(){window.print()}<\/script></body></html>`);
-  pw.document.close();
-}
+
+
 
 const Relatorios = () => {
   const { profile } = useAuth();
