@@ -49,7 +49,37 @@ const Prescricoes = () => {
   const [form, setForm] = useState({ numero_receita: "", paciente: "", prontuario: "", medico: "", crm: "", setor: "", data_prescricao: new Date().toISOString().slice(0, 10), validade_dias: 30, observacao: "" });
 
   // Add item form
-  const [itemForm, setItemForm] = useState({ medicamento_id: "", quantidade_prescrita: 0, posologia: "" });
+  const [itemForm, setItemForm] = useState({
+    medicamento_id: "", quantidade_prescrita: 0, posologia: "",
+    via: "oral", dose: "", frequencia_horas: 0, duracao_dias: 0,
+    instrucoes_preparo: "", fracionamento: false,
+    dose_fracionada: 0, apresentacao_total: 0,
+    sobra_reaproveitavel: false, estabilidade_horas: 0,
+  });
+
+  // Instruções de preparo por via
+  const instrucoesPreparoPorVia: Record<string, string> = {
+    oral: "Administrar por via oral com água. Verificar se o paciente pode deglutir.",
+    IV: "Diluir conforme protocolo. Verificar acesso venoso. Infundir na velocidade prescrita. Monitorar sinais de flebite.",
+    IM: "Aspirar antes de injetar. Aplicar no músculo deltóide, vasto lateral ou glúteo. Não ultrapassar 5ml por aplicação.",
+    SC: "Aplicar em ângulo de 45-90°. Alternar locais de aplicação (abdômen, coxa, braço).",
+    sublingual: "Colocar sob a língua. Não engolir até dissolução completa. Não comer/beber por 5 min.",
+    retal: "Lubrificar supositório. Inserir ~2cm no reto. Manter posição lateral por 5 min.",
+    topica: "Limpar a área antes. Aplicar camada fina. Não cobrir salvo orientação médica.",
+    inalatoria: "Agitar o dispositivo. Expirar completamente. Inspirar lentamente e profundamente. Segurar 10s.",
+    outra: "",
+  };
+
+  const viaLabels: Record<string, string> = {
+    oral: "Oral", IV: "Intravenosa (IV)", IM: "Intramuscular (IM)", SC: "Subcutânea (SC)",
+    sublingual: "Sublingual", retal: "Retal", topica: "Tópica", inalatoria: "Inalatória", outra: "Outra",
+  };
+
+  const sobraCalculada = useMemo(() => {
+    if (!itemForm.fracionamento || !itemForm.apresentacao_total || !itemForm.dose_fracionada) return null;
+    const sobra = itemForm.apresentacao_total - itemForm.dose_fracionada;
+    return sobra > 0 ? sobra : null;
+  }, [itemForm.fracionamento, itemForm.apresentacao_total, itemForm.dose_fracionada]);
 
   const fetchData = async () => {
     setLoading(true);
