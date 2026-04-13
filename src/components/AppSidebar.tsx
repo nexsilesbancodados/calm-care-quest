@@ -55,8 +55,7 @@ const menuGroups: MenuGroup[] = [
     icon: Pill,
     defaultOpen: true,
     items: [
-      { title: "Medicamentos", url: "/medicamentos", icon: Pill, roles: null, badgeKey: null },
-      { title: "Estoque", url: "/estoque", icon: Package, roles: null, badgeKey: null },
+      { title: "Medicamentos", url: "/medicamentos", icon: Package, roles: null, badgeKey: null },
       { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"], badgeKey: null },
       { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "Kits Procedimento", url: "/kits", icon: ClipboardList, roles: ["admin", "farmaceutico"], badgeKey: null },
