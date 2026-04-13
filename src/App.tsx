@@ -10,6 +10,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageLoader } from "@/components/PageLoader";
 import { CommandPalette } from "@/components/CommandPalette";
+import { GlobalHotkeys } from "@/components/GlobalHotkeys";
+import { IdleLockOverlay } from "@/components/IdleLockOverlay";
 import { lazy, Suspense } from "react";
 import { pages } from "@/lib/lazyPages";
 
@@ -73,6 +75,8 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <CommandPalette />
+                <GlobalHotkeys />
+                <IdleLockOverlay />
                 <Routes>
                   <Route path="/login" element={<S><Login /></S>} />
                   <Route path="/reset-password" element={<S><ResetPassword /></S>} />
