@@ -178,13 +178,14 @@ const Medicamentos = () => {
 
   const openNew = () => {
     setEditMed(null);
-    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
+    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0, unidade_estoque: "unidade", unidade_entrada: "unidade", fator_conversao: 1, ponto_pedido: 0 });
     setDialogOpen(true);
   };
 
   const openEdit = (m: Medicamento) => {
     setEditMed(m);
-    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    const mAny = m as any;
+    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
     setDialogOpen(true);
   };
 
@@ -199,7 +200,7 @@ const Medicamentos = () => {
       return;
     }
     setSaving(true);
-    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, lista_controlada: form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
+    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, lista_controlada: form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, unidade_estoque: form.unidade_estoque, unidade_entrada: form.unidade_entrada, fator_conversao: form.fator_conversao, ponto_pedido: form.ponto_pedido, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
 
     if (editMed) {
       const { error } = await supabase.from("medicamentos").update(row).eq("id", editMed.id);
@@ -237,7 +238,8 @@ const Medicamentos = () => {
 
   const duplicateMed = (m: Medicamento) => {
     setEditMed(null);
-    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    const mAny = m as any;
+    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
     setDialogOpen(true);
   };
 

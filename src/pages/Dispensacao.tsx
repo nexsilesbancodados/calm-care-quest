@@ -189,6 +189,18 @@ const Dispensacao = () => {
     setConfirmOpen(false);
     setSubmitting(true);
 
+    // FEFO validation: impedir saída de lote mais novo se há lote com vencimento mais próximo
+    const { data: fefoCheck } = await supabase.rpc("validar_fefo", {
+      _medicamento_id: form.medicamento_id,
+      _lote_id: form.lote_id,
+      _filial_id: profile?.filial_id || null,
+    });
+    if (fefoCheck && !(fefoCheck as any).valido) {
+      toast.error((fefoCheck as any).mensagem, { duration: 8000 });
+      setSubmitting(false);
+      return;
+    }
+
     const { data: freshLote, error: loteErr } = await supabase.from("lotes").select("quantidade_atual").eq("id", form.lote_id).single();
     if (loteErr || !freshLote) { toast.error("Erro ao verificar estoque do lote"); setSubmitting(false); return; }
     if (freshLote.quantidade_atual < form.quantidade) { toast.error(`Estoque insuficiente! Disponível: ${freshLote.quantidade_atual} un.`); setSubmitting(false); return; }
