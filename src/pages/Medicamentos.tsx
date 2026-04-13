@@ -20,7 +20,7 @@ import {
   Search, Plus, Pill, ChevronLeft, ChevronRight, ChevronDown,
   Package, AlertTriangle, XCircle, CheckCircle, ShieldCheck,
   MapPin, Barcode, Edit2, Trash2, Eye, Calendar, TrendingDown,
-  ArrowUpDown, Filter, RefreshCw, Copy,
+  ArrowUpDown, Filter, RefreshCw, Copy, ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -72,6 +72,8 @@ const Medicamentos = () => {
     controlado: false, lista_controlada: "" as string,
     fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0,
     localizacao: "", preco_unitario: 0,
+    unidade_estoque: "unidade", unidade_entrada: "unidade",
+    fator_conversao: 1, ponto_pedido: 0,
   });
 
   const [page, setPage] = useState(0);
@@ -178,13 +180,14 @@ const Medicamentos = () => {
 
   const openNew = () => {
     setEditMed(null);
-    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0 });
+    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0, unidade_estoque: "unidade", unidade_entrada: "unidade", fator_conversao: 1, ponto_pedido: 0 });
     setDialogOpen(true);
   };
 
   const openEdit = (m: Medicamento) => {
     setEditMed(m);
-    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    const mAny = m as any;
+    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
     setDialogOpen(true);
   };
 
@@ -199,7 +202,7 @@ const Medicamentos = () => {
       return;
     }
     setSaving(true);
-    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, lista_controlada: form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
+    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, lista_controlada: form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, unidade_estoque: form.unidade_estoque, unidade_entrada: form.unidade_entrada, fator_conversao: form.fator_conversao, ponto_pedido: form.ponto_pedido, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
 
     if (editMed) {
       const { error } = await supabase.from("medicamentos").update(row).eq("id", editMed.id);
@@ -237,7 +240,8 @@ const Medicamentos = () => {
 
   const duplicateMed = (m: Medicamento) => {
     setEditMed(null);
-    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario });
+    const mAny = m as any;
+    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
     setDialogOpen(true);
   };
 
@@ -806,50 +810,66 @@ const Medicamentos = () => {
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80">Estoque Mínimo</Label>
                   <div className="relative">
-                    <Input
-                      type="number"
-                      value={form.estoque_minimo}
-                      onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })}
-                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">UN</span>
+                    <Input type="number" value={form.estoque_minimo} onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">{form.unidade_estoque.toUpperCase().slice(0,3)}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80">Estoque Máximo</Label>
                   <div className="relative">
-                    <Input
-                      type="number"
-                      value={form.estoque_maximo}
-                      onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })}
-                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">UN</span>
+                    <Input type="number" value={form.estoque_maximo} onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">{form.unidade_estoque.toUpperCase().slice(0,3)}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
-                    <MapPin className="h-3 w-3 text-muted-foreground" /> Localização
-                  </Label>
-                  <Input
-                    value={form.localizacao}
-                    onChange={e => setForm({ ...form, localizacao: e.target.value })}
-                    placeholder="A-01-03"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono tracking-wider placeholder:text-muted-foreground/40"
-                  />
+                  <Label className="text-xs font-semibold text-foreground/80">Ponto de Pedido</Label>
+                  <div className="relative">
+                    <Input type="number" value={form.ponto_pedido} onChange={e => setForm({ ...form, ponto_pedido: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-16" placeholder="0" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" /> {form.unidade_estoque.toUpperCase().slice(0,3)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Nível para gerar alerta de compra</p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80">Preço Unitário</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-semibold">R$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.preco_unitario}
-                      onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })}
-                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pl-10"
-                    />
+                    <Input type="number" step="0.01" value={form.preco_unitario} onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pl-10" />
                   </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
+                    <MapPin className="h-3 w-3 text-muted-foreground" /> Localização
+                  </Label>
+                  <Input value={form.localizacao} onChange={e => setForm({ ...form, localizacao: e.target.value })} placeholder="A-01-03" className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono tracking-wider placeholder:text-muted-foreground/40" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Unidade de Estoque</Label>
+                  <Select value={form.unidade_estoque} onValueChange={v => setForm({ ...form, unidade_estoque: v })}>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["unidade", "comprimido", "ampola", "frasco", "ml", "mg", "gota", "sachê", "adesivo", "supositório"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Unidade de Entrada</Label>
+                  <Select value={form.unidade_entrada} onValueChange={v => setForm({ ...form, unidade_entrada: v })}>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["unidade", "caixa", "frasco", "blister", "cartela", "litro", "pacote"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Fator de Conversão</Label>
+                  <Input type="number" min={1} value={form.fator_conversao} onChange={e => setForm({ ...form, fator_conversao: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono" />
+                  {form.fator_conversao > 1 && (
+                    <p className="text-[10px] text-primary font-medium">1 {form.unidade_entrada} = {form.fator_conversao} {form.unidade_estoque}(s)</p>
+                  )}
                 </div>
               </div>
             </div>

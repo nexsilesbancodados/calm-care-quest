@@ -382,6 +382,83 @@ export type Database = {
           },
         ]
       }
+      kits_procedimento: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          filial_id: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          filial_id?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          filial_id?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kits_procedimento_filial_id_fkey"
+            columns: ["filial_id"]
+            isOneToOne: false
+            referencedRelation: "filiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kits_procedimento_itens: {
+        Row: {
+          created_at: string
+          id: string
+          kit_id: string
+          medicamento_id: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kit_id: string
+          medicamento_id: string
+          quantidade?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kit_id?: string
+          medicamento_id?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kits_procedimento_itens_kit_id_fkey"
+            columns: ["kit_id"]
+            isOneToOne: false
+            referencedRelation: "kits_procedimento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kits_procedimento_itens_medicamento_id_fkey"
+            columns: ["medicamento_id"]
+            isOneToOne: false
+            referencedRelation: "medicamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lotes: {
         Row: {
           ativo: boolean
@@ -443,6 +520,7 @@ export type Database = {
           created_at: string
           estoque_maximo: number
           estoque_minimo: number
+          fator_conversao: number
           filial_id: string | null
           forma_farmaceutica: string
           fornecedor_id: string | null
@@ -450,8 +528,11 @@ export type Database = {
           id: string
           localizacao: string
           nome: string
+          ponto_pedido: number
           preco_unitario: number
           principio_ativo: string
+          unidade_entrada: string
+          unidade_estoque: string
           updated_at: string
         }
         Insert: {
@@ -463,6 +544,7 @@ export type Database = {
           created_at?: string
           estoque_maximo?: number
           estoque_minimo?: number
+          fator_conversao?: number
           filial_id?: string | null
           forma_farmaceutica?: string
           fornecedor_id?: string | null
@@ -470,8 +552,11 @@ export type Database = {
           id?: string
           localizacao?: string
           nome: string
+          ponto_pedido?: number
           preco_unitario?: number
           principio_ativo?: string
+          unidade_entrada?: string
+          unidade_estoque?: string
           updated_at?: string
         }
         Update: {
@@ -483,6 +568,7 @@ export type Database = {
           created_at?: string
           estoque_maximo?: number
           estoque_minimo?: number
+          fator_conversao?: number
           filial_id?: string | null
           forma_farmaceutica?: string
           fornecedor_id?: string | null
@@ -490,8 +576,11 @@ export type Database = {
           id?: string
           localizacao?: string
           nome?: string
+          ponto_pedido?: number
           preco_unitario?: number
           principio_ativo?: string
+          unidade_entrada?: string
+          unidade_estoque?: string
           updated_at?: string
         }
         Relationships: [
@@ -1053,6 +1142,10 @@ export type Database = {
         }
         Returns: Json
       }
+      baixa_kit_procedimento: {
+        Args: { _kit_id: string; _usuario_id: string }
+        Returns: Json
+      }
       check_estoque_baixo: { Args: never; Returns: number }
       check_vencimento_lotes: { Args: never; Returns: number }
       dispensar_prescricao: {
@@ -1082,6 +1175,10 @@ export type Database = {
       promote_to_admin: { Args: { _email: string }; Returns: undefined }
       quarantine_expired_lotes: { Args: never; Returns: number }
       set_active_filial: { Args: { _filial_id: string }; Returns: undefined }
+      validar_fefo: {
+        Args: { _filial_id: string; _lote_id: string; _medicamento_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:

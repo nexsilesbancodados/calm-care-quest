@@ -59,6 +59,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Estoque", url: "/estoque", icon: Package, roles: null, badgeKey: null },
       { title: "Entrada", url: "/entrada", icon: ArrowDownCircle, roles: ["admin", "farmaceutico", "auxiliar_farmacia"], badgeKey: null },
       { title: "Dispensação", url: "/dispensacao", icon: ArrowUpCircle, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
+      { title: "Kits Procedimento", url: "/kits", icon: ClipboardList, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "Movimentações", url: "/movimentacoes", icon: ClipboardList, roles: null, badgeKey: null },
     ],
   },
