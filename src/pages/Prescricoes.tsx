@@ -466,20 +466,116 @@ const Prescricoes = () => {
 
       {/* Add Item Dialog */}
       <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
-        <DialogContent className="sm:max-w-[440px]">
+        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Adicionar Item — #{selectedPrescricao?.numero_receita}</DialogTitle></DialogHeader>
           <div className="space-y-4 mt-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Medicamento *</Label>
               <Select value={itemForm.medicamento_id} onValueChange={v => setItemForm({ ...itemForm, medicamento_id: v })}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
-                <SelectContent>{meds.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao}</SelectItem>)}</SelectContent>
+                <SelectContent>{meds.map(m => <SelectItem key={m.id} value={m.id}>{m.nome} {m.concentracao} — {m.forma_farmaceutica}</SelectItem>)}</SelectContent>
               </Select>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5"><Label className="text-xs">Quantidade *</Label><Input type="number" min={1} value={itemForm.quantidade_prescrita || ""} onChange={e => setItemForm({ ...itemForm, quantidade_prescrita: Number(e.target.value) })} /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Posologia</Label><Input value={itemForm.posologia} onChange={e => setItemForm({ ...itemForm, posologia: e.target.value })} placeholder="1x/dia" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Dose unitária</Label><Input value={itemForm.dose} onChange={e => setItemForm({ ...itemForm, dose: e.target.value })} placeholder="500mg, 10ml..." /></div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">Posologia</Label><Input value={itemForm.posologia} onChange={e => setItemForm({ ...itemForm, posologia: e.target.value })} placeholder="1x/dia, 8/8h..." /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Via de Administração *</Label>
+                <Select value={itemForm.via} onValueChange={v => setItemForm({ ...itemForm, via: v, instrucoes_preparo: instrucoesPreparoPorVia[v] || "" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(viaLabels).map(([k, label]) => (
+                      <SelectItem key={k} value={k}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5"><Label className="text-xs">Frequência (horas)</Label><Input type="number" min={1} max={48} value={itemForm.frequencia_horas || ""} onChange={e => setItemForm({ ...itemForm, frequencia_horas: Number(e.target.value) })} placeholder="8" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Duração (dias)</Label><Input type="number" min={1} max={365} value={itemForm.duracao_dias || ""} onChange={e => setItemForm({ ...itemForm, duracao_dias: Number(e.target.value) })} placeholder="7" /></div>
+            </div>
+
+            {/* Instruções de preparo por via */}
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1.5">
+                <Syringe className="h-3 w-3 text-primary" />
+                Instruções de Preparo ({viaLabels[itemForm.via] || itemForm.via})
+              </Label>
+              <Textarea
+                value={itemForm.instrucoes_preparo}
+                onChange={e => setItemForm({ ...itemForm, instrucoes_preparo: e.target.value })}
+                rows={2}
+                className="text-xs"
+                placeholder="Instruções específicas de preparo..."
+              />
+              {itemForm.via !== "outra" && (
+                <p className="text-[10px] text-muted-foreground">💡 Instruções pré-preenchidas para via {viaLabels[itemForm.via]}. Edite conforme necessário.</p>
+              )}
+            </div>
+
+            {/* Fracionamento */}
+            <div className="rounded-lg border p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="fracionamento"
+                  checked={itemForm.fracionamento}
+                  onChange={e => setItemForm({ ...itemForm, fracionamento: e.target.checked })}
+                  className="rounded border-border"
+                />
+                <Label htmlFor="fracionamento" className="text-xs font-medium cursor-pointer">
+                  Dose fracionada (não utiliza ampola/frasco inteiro)
+                </Label>
+              </div>
+
+              {itemForm.fracionamento && (
+                <div className="space-y-3 pl-1">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Apresentação total (ml/mg)</Label>
+                      <Input type="number" min={0} step={0.1} value={itemForm.apresentacao_total || ""} onChange={e => setItemForm({ ...itemForm, apresentacao_total: Number(e.target.value) })} placeholder="10" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">Dose utilizada (ml/mg)</Label>
+                      <Input type="number" min={0} step={0.1} value={itemForm.dose_fracionada || ""} onChange={e => setItemForm({ ...itemForm, dose_fracionada: Number(e.target.value) })} placeholder="3" />
+                    </div>
+                  </div>
+
+                  {sobraCalculada !== null && (
+                    <div className="rounded-md bg-warning/10 border border-warning/20 p-2.5 text-xs space-y-2">
+                      <p className="font-medium text-warning">⚠️ Sobra: {sobraCalculada.toFixed(1)} ml/mg por administração</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="sobra_reaproveitavel"
+                          checked={itemForm.sobra_reaproveitavel}
+                          onChange={e => setItemForm({ ...itemForm, sobra_reaproveitavel: e.target.checked })}
+                          className="rounded border-border"
+                        />
+                        <Label htmlFor="sobra_reaproveitavel" className="text-[11px] cursor-pointer">Sobra pode ser reaproveitada</Label>
+                      </div>
+                      {itemForm.sobra_reaproveitavel && (
+                        <div className="space-y-1">
+                          <Label className="text-[11px] text-muted-foreground">Estabilidade após abertura (horas)</Label>
+                          <Input type="number" min={1} max={720} value={itemForm.estabilidade_horas || ""} onChange={e => setItemForm({ ...itemForm, estabilidade_horas: Number(e.target.value) })} placeholder="24" className="h-8 text-xs" />
+                        </div>
+                      )}
+                      {!itemForm.sobra_reaproveitavel && (
+                        <p className="text-[10px] text-destructive">❌ Sobra será descartada após cada administração.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={() => setItemDialogOpen(false)}>Cancelar</Button>
               <Button onClick={handleAddItem} className="gradient-primary text-primary-foreground">Adicionar</Button>
