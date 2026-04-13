@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 // Lazy load heavy components
 const DashboardCharts = lazy(() => import("@/components/DashboardCharts"));
 const AdvancedKpisPanel = lazy(() => import("@/components/AdvancedKpisPanel"));
+const PainelAtrasos = lazy(() => import("@/components/PainelAtrasos"));
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
@@ -192,6 +193,13 @@ const Dashboard = () => {
       <Suspense fallback={<Skeleton className="h-28 rounded-2xl" />}>
         <AdvancedKpisPanel />
       </Suspense>
+
+      {/* ── PAINEL DE ATRASOS MAR ── */}
+      <div className="my-4 sm:my-7">
+        <Suspense fallback={<Skeleton className="h-48 rounded-2xl" />}>
+          <PainelAtrasos />
+        </Suspense>
+      </div>
 
       {/* ── CHARTS (lazy loaded) ── */}
       <Suspense fallback={<Skeleton className="h-64 rounded-2xl" />}>
