@@ -73,6 +73,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Administração MAR", url: "/mar", icon: ClipboardCheck, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "Avaliação C-SSRS", url: "/cssrs", icon: Heart, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "Consentimento LGPD", url: "/consentimento", icon: Shield, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
+      { title: "Contenção", url: "/contencao", icon: Wrench, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "BMPO (Controlados)", url: "/bmpo", icon: BarChart3, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"], badgeKey: null },
     ],

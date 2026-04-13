@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { toastWithUndo } from "@/lib/ui/toastWithUndo";
 
 type Paciente = { id: string; nome: string; prontuario: string };
 type Alergia = {
@@ -86,10 +87,21 @@ export default function Alergias() {
     void reload();
   }
 
-  async function remover(id: string) {
-    const { error } = await db.from("alergias_paciente").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    void reload();
+  function remover(id: string) {
+    const removida = lista.find((a) => a.id === id);
+    // Remove otimisticamente da UI; commit real acontece depois de 5s
+    setLista((prev) => prev.filter((a) => a.id !== id));
+    toastWithUndo({
+      message: `Alergia "${removida?.agente ?? ""}" será removida`,
+      commit: async () => {
+        const { error } = await db.from("alergias_paciente").delete().eq("id", id);
+        if (error) throw new Error(error.message);
+        toast.success("Alergia removida");
+      },
+      onUndo: () => {
+        if (removida) setLista((prev) => [...prev, removida]);
+      },
+    });
   }
 
   return (

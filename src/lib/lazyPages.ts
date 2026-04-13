@@ -28,6 +28,7 @@ const pages = {
   "/consentimento": () => import("@/pages/Consentimento"),
   "/alergias": () => import("@/pages/Alergias"),
   "/seguranca": () => import("@/pages/SegurancaConta"),
+  "/contencao": () => import("@/pages/Contencao"),
 } as Record<string, () => Promise<any>>;
 
 const prefetched = new Set<string>();

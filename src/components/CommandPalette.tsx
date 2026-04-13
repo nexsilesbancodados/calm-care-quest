@@ -13,7 +13,8 @@ import {
 import {
   LayoutDashboard, Pill, ArrowDownCircle, ArrowUpCircle, ClipboardList,
   Package, ArrowLeftRight, ScanLine, Barcode, AlertTriangle, BarChart3,
-  Factory, Users, Settings, Search,
+  Factory, Users, Settings, Search, HeartPulse, ClipboardCheck, Shield,
+  Lock, FileText, User as UserIcon,
 } from "lucide-react";
 
 const pages = [
@@ -31,6 +32,15 @@ const pages = [
   { title: "Fornecedores", icon: Factory, path: "/fornecedores" },
   { title: "Usuários", icon: Users, path: "/usuarios" },
   { title: "Configurações", icon: Settings, path: "/configuracoes" },
+  { title: "Pacientes", icon: UserIcon, path: "/pacientes" },
+  { title: "Prescrições", icon: FileText, path: "/prescricoes" },
+  { title: "Avaliação C-SSRS", icon: HeartPulse, path: "/cssrs" },
+  { title: "Administração MAR", icon: ClipboardCheck, path: "/mar" },
+  { title: "BMPO — Controlados", icon: BarChart3, path: "/bmpo" },
+  { title: "Alergias", icon: AlertTriangle, path: "/alergias" },
+  { title: "Consentimento LGPD", icon: Shield, path: "/consentimento" },
+  { title: "Segurança da Conta", icon: Lock, path: "/seguranca" },
+  { title: "Contenção", icon: Lock, path: "/contencao" },
 ];
 
 export function CommandPalette() {

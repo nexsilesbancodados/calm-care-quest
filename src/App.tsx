@@ -44,6 +44,7 @@ const Bmpo = lazy(pages["/bmpo"]);
 const Consentimento = lazy(pages["/consentimento"]);
 const Alergias = lazy(pages["/alergias"]);
 const SegurancaConta = lazy(pages["/seguranca"]);
+const Contencao = lazy(pages["/contencao"]);
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -106,6 +107,7 @@ const App = () => (
                   <Route path="/consentimento" element={<P><S><Consentimento /></S></P>} />
                   <Route path="/alergias" element={<P><S><Alergias /></S></P>} />
                   <Route path="/seguranca" element={<P><S><SegurancaConta /></S></P>} />
+                  <Route path="/contencao" element={<P><S><Contencao /></S></P>} />
                   <Route path="*" element={<S><NotFound /></S>} />
                 </Routes>
               </BrowserRouter>
