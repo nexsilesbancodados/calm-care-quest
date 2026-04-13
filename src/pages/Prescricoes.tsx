@@ -376,7 +376,14 @@ const Prescricoes = () => {
                       </div>
                     </TableCell>
                   </TableRow>
-                  {expanded && itens.map(item => (
+                  {expanded && itens.map(item => {
+                    const itemAny = item as any;
+                    const via = itemAny.via || "oral";
+                    const viaLabel = viaLabels[via] || via;
+                    const hasFrac = itemAny.fracionamento;
+                    const sobra = hasFrac && itemAny.apresentacao_total && itemAny.dose_fracionada
+                      ? itemAny.apresentacao_total - itemAny.dose_fracionada : null;
+                    return (
                     <TableRow key={item.id} className="bg-muted/20 hover:bg-muted/30">
                       <TableCell></TableCell>
                       <TableCell colSpan={2} className="pl-8">
@@ -384,7 +391,15 @@ const Prescricoes = () => {
                           <Pill className="h-3.5 w-3.5 text-primary" />
                           <span className="text-sm font-medium">{item.medicamento?.nome || "—"}</span>
                           <span className="text-xs text-muted-foreground">{item.medicamento?.concentracao}</span>
+                          <Badge variant="outline" className="text-[9px] ml-1">{viaLabel}</Badge>
+                          {hasFrac && <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/20">Fracionado</Badge>}
                         </div>
+                        {itemAny.dose && <p className="text-[11px] text-muted-foreground mt-0.5 pl-5">Dose: {itemAny.dose}{itemAny.frequencia_horas ? ` • a cada ${itemAny.frequencia_horas}h` : ""}{itemAny.duracao_dias ? ` • ${itemAny.duracao_dias} dias` : ""}</p>}
+                        {sobra !== null && sobra > 0 && (
+                          <p className="text-[10px] mt-0.5 pl-5 text-warning">
+                            Sobra: {sobra.toFixed(1)} ml/mg {itemAny.sobra_reaproveitavel ? `(reaproveitável — ${itemAny.estabilidade_horas || "?"}h estabilidade)` : "(descarte)"}
+                          </p>
+                        )}
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">{item.posologia || "—"}</TableCell>
                       <TableCell className="text-sm">
@@ -400,7 +415,8 @@ const Prescricoes = () => {
                         </Badge>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </React.Fragment>
               );
             })}
