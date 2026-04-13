@@ -54,6 +54,7 @@
     --info: 205 85% 55%;
     --info-foreground: 0 0% 100%;
 
+    --app-base-font-size: 16px;
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -120,6 +121,9 @@
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    font-size: var(--app-base-font-size, 16px);
   }
   body {
     @apply bg-background text-foreground antialiased;

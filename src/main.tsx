@@ -6,6 +6,14 @@ import { initObservability } from "@/lib/observability/sentry";
 
 initObservability();
 
+// Aplica tamanho de fonte persistido antes do React render (evita flash)
+try {
+  const raw = localStorage.getItem("app-font-size");
+  const size = raw ? JSON.parse(raw) : "padrao";
+  const px = { compacto: 14, padrao: 16, grande: 18 }[size as "compacto" | "padrao" | "grande"] ?? 16;
+  document.documentElement.style.setProperty("--app-base-font-size", `${px}px`);
+} catch { /* noop */ }
+
 // Guard: only register SW outside iframe/preview
 const isInIframe = (() => {
   try { return window.self !== window.top; } catch { return true; }

@@ -45,11 +45,13 @@ const pages = [
   { title: "Evolução Enfermagem", icon: ClipboardCheck, path: "/evolucao" },
   { title: "Plano de Segurança", icon: HeartPulse, path: "/plano-seguranca" },
   { title: "Reconciliação Medicamentosa", icon: ArrowLeftRight, path: "/reconciliacao" },
+  { title: "Passagem de Plantão", icon: ClipboardList, path: "/plantao" },
 ];
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [meds, setMeds] = useState<{ id: string; nome: string; concentracao: string }[]>([]);
+  const [pacs, setPacs] = useState<{ id: string; nome: string; prontuario: string; leito: string | null }[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,6 +74,15 @@ export function CommandPalette() {
         .order("nome")
         .limit(100)
         .then(({ data }) => setMeds(data || []));
+    }
+    if (open && pacs.length === 0) {
+      supabase
+        .from("pacientes")
+        .select("id, nome, prontuario, leito")
+        .eq("ativo", true)
+        .order("nome")
+        .limit(100)
+        .then(({ data }) => setPacs(data || []));
     }
   }, [open]);
 
@@ -126,12 +137,38 @@ export function CommandPalette() {
               {meds.map((m) => (
                 <CommandItem
                   key={m.id}
+                  value={`med-${m.nome}-${m.concentracao}`}
                   onSelect={() => go("/medicamentos")}
                   className="gap-3 cursor-pointer"
                 >
                   <Pill className="h-4 w-4 text-muted-foreground" />
                   <span>
                     {m.nome} <span className="text-muted-foreground text-xs">{m.concentracao}</span>
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {pacs.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Pacientes">
+              {pacs.map((p) => (
+                <CommandItem
+                  key={p.id}
+                  value={`pac-${p.nome}-${p.prontuario}-${p.leito ?? ""}`}
+                  onSelect={() => go(`/prontuario/${p.id}`)}
+                  className="gap-3 cursor-pointer"
+                >
+                  <UserIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="flex-1">
+                    {p.nome}{" "}
+                    <span className="text-muted-foreground text-xs">
+                      #{p.prontuario}
+                      {p.leito ? ` · leito ${p.leito}` : ""}
+                    </span>
                   </span>
                 </CommandItem>
               ))}
