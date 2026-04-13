@@ -72,6 +72,17 @@ export function ChecklistMedicacao({ prescricao, onClose }: ChecklistMedicacaoPr
 
   useEffect(() => { fetchRecords(); }, [fetchRecords]);
 
+  // Realtime: sync with other users' changes
+  useEffect(() => {
+    const channel = supabase
+      .channel(`checklist-rt-${prescricao.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "checklist_medicacao", filter: `prescricao_id=eq.${prescricao.id}` }, () => {
+        fetchRecords();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [prescricao.id, fetchRecords]);
+
   // Get record for a specific item/day/turno
   const getRecord = useCallback((itemId: string, date: Date, turno: string) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -87,14 +98,30 @@ export function ChecklistMedicacao({ prescricao, onClose }: ChecklistMedicacaoPr
     const existing = getRecord(itemId, date, turno);
 
     if (existing) {
-      // Toggle
+      const newAdm = !existing.administrado;
       const { error } = await supabase
         .from("checklist_medicacao")
-        .update({ administrado: !existing.administrado, enfermeiro_id: user?.id })
+        .update({ administrado: newAdm, enfermeiro_id: user?.id })
         .eq("id", existing.id);
       if (error) { toast.error("Erro ao atualizar"); setSaving(null); return; }
+
+      // Baixa automática ao marcar como administrado
+      if (newAdm) {
+        const { data: resultado } = await supabase.rpc("baixa_estoque_checklist", {
+          _item_prescricao_id: itemId,
+          _prescricao_id: prescricao.id,
+          _usuario_id: user?.id,
+        });
+        if (resultado && typeof resultado === "object" && "success" in (resultado as Record<string, unknown>)) {
+          const res = resultado as { success: boolean; medicamento?: string; lote?: string; estoque_restante?: number; error?: string };
+          if (res.success) {
+            toast.success(`Baixa automática: ${res.medicamento} — Lote ${res.lote} (restam ${res.estoque_restante})`);
+          } else {
+            toast.warning(res.error || "Sem estoque para baixa automática");
+          }
+        }
+      }
     } else {
-      // Insert new
       const { error } = await supabase
         .from("checklist_medicacao")
         .insert({
@@ -106,6 +133,21 @@ export function ChecklistMedicacao({ prescricao, onClose }: ChecklistMedicacaoPr
           enfermeiro_id: user?.id,
         });
       if (error) { toast.error("Erro ao registrar"); setSaving(null); return; }
+
+      // Baixa automática ao inserir como administrado
+      const { data: resultado } = await supabase.rpc("baixa_estoque_checklist", {
+        _item_prescricao_id: itemId,
+        _prescricao_id: prescricao.id,
+        _usuario_id: user?.id,
+      });
+      if (resultado && typeof resultado === "object" && "success" in (resultado as Record<string, unknown>)) {
+        const res = resultado as { success: boolean; medicamento?: string; lote?: string; estoque_restante?: number; error?: string };
+        if (res.success) {
+          toast.success(`Baixa automática: ${res.medicamento} — Lote ${res.lote} (restam ${res.estoque_restante})`);
+        } else {
+          toast.warning(res.error || "Sem estoque para baixa automática");
+        }
+      }
     }
 
     await fetchRecords();

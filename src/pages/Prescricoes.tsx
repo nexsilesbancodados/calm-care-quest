@@ -81,6 +81,20 @@ const Prescricoes = () => {
 
   useEffect(() => { fetchData(); }, [profile?.filial_id]);
 
+  // Realtime: sincronização PEP — atualiza automaticamente quando prescrições mudam
+  useEffect(() => {
+    const channel = supabase
+      .channel("prescricoes-realtime-pep")
+      .on("postgres_changes", { event: "*", schema: "public", table: "prescricoes" }, () => {
+        fetchData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "itens_prescricao" }, () => {
+        fetchData();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [profile?.filial_id]);
+
   const toggleExpand = (id: string) => setExpandedIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   const filtered = prescricoes.filter(p => {
