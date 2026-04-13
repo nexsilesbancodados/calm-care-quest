@@ -273,13 +273,23 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = filteredMeds.map((m) => {
-                const t = getEstoqueTotal(m.lotes);
-                const st = getEstoqueStatus(t, m.estoque_minimo);
-                const cls = st === "normal" ? "green" : st === "baixo" ? "yellow" : st === "critico" ? "red" : "gray";
-                return `<tr><td>${m.nome}</td><td>${m.concentracao}</td><td style="text-align:center">${t}</td><td style="text-align:center">${m.estoque_minimo}</td><td><span class="badge ${cls}">${st}</span></td><td style="text-align:right">R$ ${(m.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0)).toFixed(2)}</td></tr>`;
-              }).join("");
-              printReport("Relatório de Estoque Atual", `<p><strong>${filteredMeds.length}</strong> itens | <strong>${totalUnits.toLocaleString("pt-BR")}</strong> unidades | Valor: <strong>R$ ${totalValue.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Estoque</th><th>Mínimo</th><th>Status</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+              generatePdfReport(
+                { title: "Relatório de Estoque Atual", hospitalNome, userName },
+                [
+                  { type: "kpi", items: [
+                    { label: "Itens", value: filteredMeds.length },
+                    { label: "Unidades", value: totalUnits.toLocaleString("pt-BR") },
+                    { label: "Valor Total", value: `R$ ${totalValue.toFixed(2)}` },
+                  ]},
+                  { type: "table", headers: ["Medicamento", "Concentração", "Estoque", "Mínimo", "Status", "Valor (R$)"],
+                    rows: filteredMeds.map(m => {
+                      const t = getEstoqueTotal(m.lotes);
+                      return [m.nome, m.concentracao, t, m.estoque_minimo, statusText(getEstoqueStatus(t, m.estoque_minimo)), `R$ ${m.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0).toFixed(2)}`];
+                    }),
+                    columnStyles: { 2: { halign: "center" }, 3: { halign: "center" }, 5: { halign: "right" } },
+                  },
+                ]
+              );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
