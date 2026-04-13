@@ -11,7 +11,7 @@ export const pacienteSchema = z.object({
   ),
   sexo: z.enum(["M", "F", "outro"]),
   setor: textoSeguroSchema(1, 100),
-  quarto: textoSeguroSchema(0, 20).optional().default(""),
+  leito: textoSeguroSchema(0, 20).optional().default(""),
   diagnostico_cid10: z
     .string()
     .trim()
