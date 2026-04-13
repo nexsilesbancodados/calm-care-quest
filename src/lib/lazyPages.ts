@@ -4,7 +4,7 @@ const pages = {
   "/medicamentos": () => import("@/pages/Medicamentos"),
   "/alertas": () => import("@/pages/Alertas"),
   "/movimentacoes": () => import("@/pages/Movimentacoes"),
-  "/estoque": () => import("@/pages/Estoque"),
+  
   "/configuracoes": () => import("@/pages/Configuracoes"),
   "/etiquetas": () => import("@/pages/Etiquetas"),
   "/transferencias": () => import("@/pages/Transferencias"),
