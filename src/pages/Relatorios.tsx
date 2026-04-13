@@ -576,7 +576,18 @@ const Relatorios = () => {
 
         {/* TAB: CMM por Medicamento */}
         <TabsContent value="cmm" className="space-y-4">
-          <div className="flex gap-2 justify-end">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Label className="text-xs">Período</Label>
+            <Select value={cmmPeriod} onValueChange={setCmmPeriod}>
+              <SelectTrigger className="h-8 text-xs w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 mês</SelectItem>
+                <SelectItem value="3">3 meses</SelectItem>
+                <SelectItem value="6">6 meses</SelectItem>
+                <SelectItem value="12">12 meses</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               downloadCSV(
                 ["Medicamento", "CMM (un/mês)", "Estoque Atual", "Cobertura (dias)", "Status"],
