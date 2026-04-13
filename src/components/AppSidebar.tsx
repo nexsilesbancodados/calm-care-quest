@@ -5,7 +5,7 @@ import {
   User, ClipboardCheck, ChevronDown, LogOut, MessageSquareText,
   Heart, Truck, Wrench, Activity, LucideIcon,
 } from "lucide-react";
-import logoImg from "@/assets/logo-new.png";
+import logoImg from "@/assets/logo.jpg";
 import { NavLink } from "@/components/NavLink";
 import { prefetchPage } from "@/lib/lazyPages";
 import { useLocation, useNavigate } from "react-router-dom";
