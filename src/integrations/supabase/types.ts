@@ -309,31 +309,61 @@ export type Database = {
       }
       itens_prescricao: {
         Row: {
+          apresentacao_total: number | null
           created_at: string | null
+          dose: string | null
+          dose_fracionada: number | null
+          duracao_dias: number | null
+          estabilidade_horas: number | null
+          fracionamento: boolean | null
+          frequencia_horas: number | null
           id: string
+          instrucoes_preparo: string | null
           medicamento_id: string
           posologia: string | null
           prescricao_id: string
           quantidade_dispensada: number
           quantidade_prescrita: number
+          sobra_reaproveitavel: boolean | null
+          via: string | null
         }
         Insert: {
+          apresentacao_total?: number | null
           created_at?: string | null
+          dose?: string | null
+          dose_fracionada?: number | null
+          duracao_dias?: number | null
+          estabilidade_horas?: number | null
+          fracionamento?: boolean | null
+          frequencia_horas?: number | null
           id?: string
+          instrucoes_preparo?: string | null
           medicamento_id: string
           posologia?: string | null
           prescricao_id: string
           quantidade_dispensada?: number
           quantidade_prescrita?: number
+          sobra_reaproveitavel?: boolean | null
+          via?: string | null
         }
         Update: {
+          apresentacao_total?: number | null
           created_at?: string | null
+          dose?: string | null
+          dose_fracionada?: number | null
+          duracao_dias?: number | null
+          estabilidade_horas?: number | null
+          fracionamento?: boolean | null
+          frequencia_horas?: number | null
           id?: string
+          instrucoes_preparo?: string | null
           medicamento_id?: string
           posologia?: string | null
           prescricao_id?: string
           quantidade_dispensada?: number
           quantidade_prescrita?: number
+          sobra_reaproveitavel?: boolean | null
+          via?: string | null
         }
         Relationships: [
           {
