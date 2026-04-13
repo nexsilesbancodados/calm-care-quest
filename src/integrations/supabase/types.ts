@@ -1015,6 +1015,14 @@ export type Database = {
       }
     }
     Functions: {
+      baixa_estoque_checklist: {
+        Args: {
+          _item_prescricao_id: string
+          _prescricao_id: string
+          _usuario_id: string
+        }
+        Returns: Json
+      }
       check_estoque_baixo: { Args: never; Returns: number }
       check_vencimento_lotes: { Args: never; Returns: number }
       dispensar_prescricao: {
