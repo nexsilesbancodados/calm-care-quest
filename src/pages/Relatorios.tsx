@@ -409,11 +409,16 @@ const Relatorios = () => {
                 );
               }}><Download className="h-3.5 w-3.5" />CSV</Button>
               <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-                const rows = expiring.map((e) => {
-                  const cls = e.days <= 15 ? "red" : e.days <= 30 ? "yellow" : "green";
-                  return `<tr><td>${e.med.nome}</td><td>${e.lote.numero_lote}</td><td>${formatDate(e.lote.validade)}</td><td style="text-align:center"><span class="badge ${cls}">${e.days}d</span></td><td style="text-align:center">${e.lote.quantidade_atual}</td></tr>`;
-                }).join("");
-                printReport(`Medicamentos a Vencer (${venDays} dias)`, `<p><strong>${expiring.length}</strong> lotes a vencer</p><table><thead><tr><th>Medicamento</th><th>Lote</th><th>Validade</th><th>Dias</th><th>Qtd</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+                generatePdfReport(
+                  { title: `Medicamentos a Vencer (${venDays} dias)`, hospitalNome, userName },
+                  [
+                    { type: "text", content: `${expiring.length} lotes a vencer`, bold: true },
+                    { type: "table", headers: ["Medicamento", "Lote", "Validade", "Dias Restantes", "Quantidade"],
+                      rows: expiring.map(e => [e.med.nome, e.lote.numero_lote, formatDate(e.lote.validade), e.days, e.lote.quantidade_atual]),
+                      columnStyles: { 3: { halign: "center" }, 4: { halign: "center" } },
+                    },
+                  ]
+                );
               }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             </div>
           </div>
