@@ -45,6 +45,10 @@ const Consentimento = lazy(pages["/consentimento"]);
 const Alergias = lazy(pages["/alergias"]);
 const SegurancaConta = lazy(pages["/seguranca"]);
 const Contencao = lazy(pages["/contencao"]);
+const Escalas = lazy(pages["/escalas"]);
+const EvolucaoEnfermagem = lazy(pages["/evolucao"]);
+const PlanoSeguranca = lazy(pages["/plano-seguranca"]);
+const Reconciliacao = lazy(pages["/reconciliacao"]);
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -108,6 +112,10 @@ const App = () => (
                   <Route path="/alergias" element={<P><S><Alergias /></S></P>} />
                   <Route path="/seguranca" element={<P><S><SegurancaConta /></S></P>} />
                   <Route path="/contencao" element={<P><S><Contencao /></S></P>} />
+                  <Route path="/escalas" element={<P><S><Escalas /></S></P>} />
+                  <Route path="/evolucao" element={<P><S><EvolucaoEnfermagem /></S></P>} />
+                  <Route path="/plano-seguranca" element={<P><S><PlanoSeguranca /></S></P>} />
+                  <Route path="/reconciliacao" element={<P><S><Reconciliacao /></S></P>} />
                   <Route path="*" element={<S><NotFound /></S>} />
                 </Routes>
               </BrowserRouter>

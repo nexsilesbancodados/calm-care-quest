@@ -41,6 +41,10 @@ const pages = [
   { title: "Consentimento LGPD", icon: Shield, path: "/consentimento" },
   { title: "Segurança da Conta", icon: Lock, path: "/seguranca" },
   { title: "Contenção", icon: Lock, path: "/contencao" },
+  { title: "Escalas Psiquiátricas", icon: BarChart3, path: "/escalas" },
+  { title: "Evolução Enfermagem", icon: ClipboardCheck, path: "/evolucao" },
+  { title: "Plano de Segurança", icon: HeartPulse, path: "/plano-seguranca" },
+  { title: "Reconciliação Medicamentosa", icon: ArrowLeftRight, path: "/reconciliacao" },
 ];
 
 export function CommandPalette() {

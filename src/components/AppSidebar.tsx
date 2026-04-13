@@ -3,7 +3,7 @@ import {
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Shield, FileText,
   User, ClipboardCheck, ChevronDown, LogOut, MessageSquareText,
-  Heart, Truck, Wrench, LucideIcon,
+  Heart, Truck, Wrench, Activity, LucideIcon,
 } from "lucide-react";
 import logoImg from "@/assets/logo-new.png";
 import { NavLink } from "@/components/NavLink";
@@ -74,6 +74,10 @@ const menuGroups: MenuGroup[] = [
       { title: "Avaliação C-SSRS", url: "/cssrs", icon: Heart, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "Consentimento LGPD", url: "/consentimento", icon: Shield, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "Contenção", url: "/contencao", icon: Wrench, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
+      { title: "Escalas", url: "/escalas", icon: Activity, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
+      { title: "Evolução Enfermagem", url: "/evolucao", icon: ClipboardCheck, roles: ["admin", "enfermeiro"], badgeKey: null },
+      { title: "Plano de Segurança", url: "/plano-seguranca", icon: Heart, roles: ["admin", "enfermeiro"], badgeKey: null },
+      { title: "Reconciliação", url: "/reconciliacao", icon: BarChart3, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "BMPO (Controlados)", url: "/bmpo", icon: BarChart3, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"], badgeKey: null },
     ],
