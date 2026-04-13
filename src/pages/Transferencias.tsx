@@ -37,6 +37,7 @@ const Transferencias = () => {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [clinicas, setClinicas] = useState<ClinicaParceira[]>([]);
+  const [filiais, setFiliais] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
