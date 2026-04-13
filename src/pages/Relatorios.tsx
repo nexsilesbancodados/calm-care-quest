@@ -605,12 +605,20 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = cmmData.map(d => {
-                const cs = getCoberturaStatus(d.cobertura);
-                const cls = d.cobertura > 30 ? "green" : d.cobertura >= 15 ? "yellow" : "red";
-                return `<tr><td>${d.med.nome}</td><td style="text-align:center">${d.cmm}</td><td style="text-align:center">${d.estoque}</td><td style="text-align:center"><span class="badge ${cls}">${cs.label}</span></td></tr>`;
-              }).join("");
-              printReport("CMM por Medicamento", `<p>Consumo Médio Mensal — Média dos últimos 3 meses</p><table><thead><tr><th>Medicamento</th><th>CMM (un/mês)</th><th>Estoque</th><th>Cobertura</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+              generatePdfReport(
+                { title: "CMM por Medicamento", subtitle: "Consumo Médio Mensal — Média dos últimos 3 meses", hospitalNome, userName },
+                [
+                  { type: "kpi", items: [
+                    { label: "Medicamentos", value: cmmData.length },
+                    { label: "Cobertura <15d", value: cmmData.filter(d => d.cobertura < 15).length },
+                    { label: "Cobertura 15-30d", value: cmmData.filter(d => d.cobertura >= 15 && d.cobertura <= 30).length },
+                  ]},
+                  { type: "table", headers: ["Medicamento", "CMM (un/mês)", "Estoque Atual", "Cobertura"],
+                    rows: cmmData.map(d => [d.med.nome, d.cmm, d.estoque, d.cobertura >= 999 ? ">30d" : `${d.cobertura}d`]),
+                    columnStyles: { 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" } },
+                  },
+                ]
+              );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
@@ -706,11 +714,21 @@ const Relatorios = () => {
                     );
                   }}><Download className="h-3.5 w-3.5" />CSV</Button>
                   <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-                    const rows = classified.map(d => {
-                      const cls = d.classe === "A" ? "red" : d.classe === "B" ? "yellow" : "green";
-                      return `<tr><td>${d.med.nome}</td><td style="text-align:center"><span class="badge ${cls}">${d.classe}</span></td><td style="text-align:right">R$ ${d.valorConsumo.toFixed(2)}</td><td style="text-align:center">${d.qty}</td><td style="text-align:center">${d.pctAcum.toFixed(1)}%</td></tr>`;
-                    }).join("");
-                    printReport("Curva ABC — Análise de Consumo", `<div class="nota">Classificação baseada no valor de consumo dos últimos 90 dias. A: 80% do valor | B: 80-95% | C: 95-100%</div><p style="margin-top:12px"><span class="badge red">A: ${countA}</span> <span class="badge yellow">B: ${countB}</span> <span class="badge green">C: ${countC}</span> — Total: <strong>R$ ${totalValor.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Classe</th><th>Valor (R$)</th><th>Qtd</th><th>% Acum.</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+                    generatePdfReport(
+                      { title: "Curva ABC — Análise de Consumo", subtitle: "Classificação baseada no valor de consumo dos últimos 90 dias", hospitalNome, userName },
+                      [
+                        { type: "kpi", items: [
+                          { label: "Classe A (80%)", value: countA },
+                          { label: "Classe B (15%)", value: countB },
+                          { label: "Classe C (5%)", value: countC },
+                          { label: "Valor Total", value: `R$ ${totalValor.toFixed(2)}` },
+                        ]},
+                        { type: "table", headers: ["Medicamento", "Classe", "Valor (R$)", "Qtd", "% Acum."],
+                          rows: classified.map(d => [d.med.nome, d.classe, `R$ ${d.valorConsumo.toFixed(2)}`, d.qty, `${d.pctAcum.toFixed(1)}%`]),
+                          columnStyles: { 1: { halign: "center" }, 2: { halign: "right" }, 3: { halign: "center" }, 4: { halign: "center" } },
+                        },
+                      ]
+                    );
                   }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
                 </div>
 
@@ -800,8 +818,16 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = productivityData.map((d: any) => `<tr><td>${d.usuario}</td><td style="text-align:center">${d.total_movimentacoes}</td><td style="text-align:center">${d.dispensacoes}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.devolucoes}</td><td style="text-align:center;font-weight:600">${d.total_unidades}</td></tr>`).join("");
-              printReport("Produtividade por Usuário (30 dias)", `<p><strong>${productivityData.length}</strong> usuários ativos no período</p><table><thead><tr><th>Usuário</th><th>Total Mov.</th><th>Dispensações</th><th>Entradas</th><th>Devoluções</th><th>Unidades</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+              generatePdfReport(
+                { title: "Produtividade por Usuário (30 dias)", hospitalNome, userName },
+                [
+                  { type: "text", content: `${productivityData.length} usuários ativos no período`, bold: true },
+                  { type: "table", headers: ["Usuário", "Total Mov.", "Dispensações", "Entradas", "Devoluções", "Unidades"],
+                    rows: productivityData.map((d: any) => [d.usuario, d.total_movimentacoes, d.dispensacoes, d.entradas, d.devolucoes, d.total_unidades]),
+                    columnStyles: { 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" }, 4: { halign: "center" }, 5: { halign: "center" } },
+                  },
+                ]
+              );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
