@@ -280,7 +280,7 @@ const Relatorios = () => {
                 return `<tr><td>${m.nome}</td><td>${m.concentracao}</td><td style="text-align:center">${t}</td><td style="text-align:center">${m.estoque_minimo}</td><td><span class="badge ${cls}">${st}</span></td><td style="text-align:right">R$ ${(m.lotes.reduce((s, l) => s + l.quantidade_atual * l.preco_unitario, 0)).toFixed(2)}</td></tr>`;
               }).join("");
               printReport("Relatório de Estoque Atual", `<p><strong>${filteredMeds.length}</strong> itens | <strong>${totalUnits.toLocaleString("pt-BR")}</strong> unidades | Valor: <strong>R$ ${totalValue.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Estoque</th><th>Mínimo</th><th>Status</th><th>Valor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-4">
@@ -340,7 +340,7 @@ const Relatorios = () => {
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = filteredMov.map((m) => `<tr><td>${formatDate(m.created_at)}</td><td>${m.tipo}</td><td>${m.medicamentos?.nome || "—"}</td><td style="text-align:center">${m.quantidade}</td><td>${m.paciente || m.setor || "—"}</td></tr>`).join("");
               printReport(`Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredMov.length}</strong> registros no período</p><table><thead><tr><th>Data</th><th>Tipo</th><th>Medicamento</th><th>Qtd</th><th>Paciente/Setor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredMov.length} movimentações no período</Badge>
           <Card className="shadow-card overflow-hidden">
@@ -396,7 +396,7 @@ const Relatorios = () => {
                   return `<tr><td>${e.med.nome}</td><td>${e.lote.numero_lote}</td><td>${formatDate(e.lote.validade)}</td><td style="text-align:center"><span class="badge ${cls}">${e.days}d</span></td><td style="text-align:center">${e.lote.quantidade_atual}</td></tr>`;
                 }).join("");
                 printReport(`Medicamentos a Vencer (${venDays} dias)`, `<p><strong>${expiring.length}</strong> lotes a vencer</p><table><thead><tr><th>Medicamento</th><th>Lote</th><th>Validade</th><th>Dias</th><th>Qtd</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-              }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             </div>
           </div>
           <Badge variant="outline" className="text-xs">{expiring.length} lotes a vencer em {venDays} dias</Badge>
@@ -435,7 +435,7 @@ const Relatorios = () => {
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = consumoSetorData.map((c) => `<tr><td>${c.name}</td><td style="text-align:center">${c.value}</td></tr>`).join("");
               printReport(`Consumo por Setor/Paciente (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<table><thead><tr><th>Setor/Paciente</th><th>Quantidade</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Card className="p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-4">Top 10 — Consumo por Setor/Paciente</h3>
@@ -467,7 +467,7 @@ const Relatorios = () => {
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = filteredTrans.map((t) => `<tr><td>${formatDate(t.created_at)}</td><td>${t.medicamentos?.nome || "—"}</td><td>${t.clinica_destino?.nome || "—"}</td><td style="text-align:center">${t.quantidade}</td><td>${t.status}</td></tr>`).join("");
               printReport(`Transferências (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredTrans.length}</strong> transferências no período</p><table><thead><tr><th>Data</th><th>Medicamento</th><th>Destino</th><th>Qtd</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredTrans.length} transferências no período</Badge>
           <Card className="shadow-card overflow-hidden">
@@ -516,7 +516,7 @@ const Relatorios = () => {
                   <table><thead><tr><th>Medicamento</th><th>Concentração</th><th>Forma</th><th>Lote</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Validade</th></tr></thead><tbody>${rows}</tbody></table>`,
                   hospitalNome, userName
                 );
-              }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+              }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
             </div>
           </div>
 
@@ -576,7 +576,7 @@ const Relatorios = () => {
                 return `<tr><td>${d.med.nome}</td><td style="text-align:center">${d.cmm}</td><td style="text-align:center">${d.estoque}</td><td style="text-align:center"><span class="badge ${cls}">${cs.label}</span></td></tr>`;
               }).join("");
               printReport("CMM por Medicamento", `<p>Consumo Médio Mensal — Média dos últimos 3 meses</p><table><thead><tr><th>Medicamento</th><th>CMM (un/mês)</th><th>Estoque</th><th>Cobertura</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
           <div className="grid grid-cols-3 gap-4 mb-2">
@@ -676,7 +676,7 @@ const Relatorios = () => {
                       return `<tr><td>${d.med.nome}</td><td style="text-align:center"><span class="badge ${cls}">${d.classe}</span></td><td style="text-align:right">R$ ${d.valorConsumo.toFixed(2)}</td><td style="text-align:center">${d.qty}</td><td style="text-align:center">${d.pctAcum.toFixed(1)}%</td></tr>`;
                     }).join("");
                     printReport("Curva ABC — Análise de Consumo", `<div class="nota">Classificação baseada no valor de consumo dos últimos 90 dias. A: 80% do valor | B: 80-95% | C: 95-100%</div><p style="margin-top:12px"><span class="badge red">A: ${countA}</span> <span class="badge yellow">B: ${countB}</span> <span class="badge green">C: ${countC}</span> — Total: <strong>R$ ${totalValor.toFixed(2)}</strong></p><table><thead><tr><th>Medicamento</th><th>Classe</th><th>Valor (R$)</th><th>Qtd</th><th>% Acum.</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-                  }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+                  }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4 mb-2">
@@ -767,7 +767,7 @@ const Relatorios = () => {
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               const rows = productivityData.map((d: any) => `<tr><td>${d.usuario}</td><td style="text-align:center">${d.total_movimentacoes}</td><td style="text-align:center">${d.dispensacoes}</td><td style="text-align:center">${d.entradas}</td><td style="text-align:center">${d.devolucoes}</td><td style="text-align:center;font-weight:600">${d.total_unidades}</td></tr>`).join("");
               printReport("Produtividade por Usuário (30 dias)", `<p><strong>${productivityData.length}</strong> usuários ativos no período</p><table><thead><tr><th>Usuário</th><th>Total Mov.</th><th>Dispensações</th><th>Entradas</th><th>Devoluções</th><th>Unidades</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
-            }}><Printer className="h-3.5 w-3.5" />PDF</Button>
+            }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
 
           <Badge variant="outline" className="text-xs">{productivityData.length} usuários ativos (últimos 30 dias)</Badge>
