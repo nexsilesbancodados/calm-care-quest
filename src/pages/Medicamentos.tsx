@@ -20,7 +20,7 @@ import {
   Search, Plus, Pill, ChevronLeft, ChevronRight, ChevronDown,
   Package, AlertTriangle, XCircle, CheckCircle, ShieldCheck,
   MapPin, Barcode, Edit2, Trash2, Eye, Calendar, TrendingDown,
-  ArrowUpDown, Filter, RefreshCw, Copy,
+  ArrowUpDown, Filter, RefreshCw, Copy, ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
