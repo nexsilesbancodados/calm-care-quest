@@ -375,10 +375,23 @@ const Transferencias = () => {
               )}
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Clínica Destino *</Label>
+                <Label className="text-xs">Destino *</Label>
                 <Select value={form.clinica_destino_id} onValueChange={v => setForm({ ...form, clinica_destino_id: v })}>
                   <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar destino" /></SelectTrigger>
-                  <SelectContent>{clinicas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {filiais.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unidades</div>
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                      </>
+                    )}
+                    {clinicas.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Clínicas Parceiras</div>
+                        {clinicas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                      </>
+                    )}
+                  </SelectContent>
                 </Select>
               </div>
 
