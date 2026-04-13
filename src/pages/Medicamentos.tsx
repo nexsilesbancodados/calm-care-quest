@@ -810,50 +810,66 @@ const Medicamentos = () => {
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80">Estoque Mínimo</Label>
                   <div className="relative">
-                    <Input
-                      type="number"
-                      value={form.estoque_minimo}
-                      onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })}
-                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">UN</span>
+                    <Input type="number" value={form.estoque_minimo} onChange={e => setForm({ ...form, estoque_minimo: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">{form.unidade_estoque.toUpperCase().slice(0,3)}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80">Estoque Máximo</Label>
                   <div className="relative">
-                    <Input
-                      type="number"
-                      value={form.estoque_maximo}
-                      onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })}
-                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">UN</span>
+                    <Input type="number" value={form.estoque_maximo} onChange={e => setForm({ ...form, estoque_maximo: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-10" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium">{form.unidade_estoque.toUpperCase().slice(0,3)}</span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
-                    <MapPin className="h-3 w-3 text-muted-foreground" /> Localização
-                  </Label>
-                  <Input
-                    value={form.localizacao}
-                    onChange={e => setForm({ ...form, localizacao: e.target.value })}
-                    placeholder="A-01-03"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono tracking-wider placeholder:text-muted-foreground/40"
-                  />
+                  <Label className="text-xs font-semibold text-foreground/80">Ponto de Pedido</Label>
+                  <div className="relative">
+                    <Input type="number" value={form.ponto_pedido} onChange={e => setForm({ ...form, ponto_pedido: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pr-16" placeholder="0" />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                      <ShoppingCart className="h-3 w-3" /> {form.unidade_estoque.toUpperCase().slice(0,3)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Nível para gerar alerta de compra</p>
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80">Preço Unitário</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground font-semibold">R$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.preco_unitario}
-                      onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })}
-                      className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pl-10"
-                    />
+                    <Input type="number" step="0.01" value={form.preco_unitario} onChange={e => setForm({ ...form, preco_unitario: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono pl-10" />
                   </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
+                    <MapPin className="h-3 w-3 text-muted-foreground" /> Localização
+                  </Label>
+                  <Input value={form.localizacao} onChange={e => setForm({ ...form, localizacao: e.target.value })} placeholder="A-01-03" className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono tracking-wider placeholder:text-muted-foreground/40" />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Unidade de Estoque</Label>
+                  <Select value={form.unidade_estoque} onValueChange={v => setForm({ ...form, unidade_estoque: v })}>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["unidade", "comprimido", "ampola", "frasco", "ml", "mg", "gota", "sachê", "adesivo", "supositório"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Unidade de Entrada</Label>
+                  <Select value={form.unidade_entrada} onValueChange={v => setForm({ ...form, unidade_entrada: v })}>
+                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["unidade", "caixa", "frasco", "blister", "cartela", "litro", "pacote"].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold text-foreground/80">Fator de Conversão</Label>
+                  <Input type="number" min={1} value={form.fator_conversao} onChange={e => setForm({ ...form, fator_conversao: Number(e.target.value) })} className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all font-mono" />
+                  {form.fator_conversao > 1 && (
+                    <p className="text-[10px] text-primary font-medium">1 {form.unidade_entrada} = {form.fator_conversao} {form.unidade_estoque}(s)</p>
+                  )}
                 </div>
               </div>
             </div>
