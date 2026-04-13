@@ -37,6 +37,7 @@ const Transferencias = () => {
   const [transfers, setTransfers] = useState<any[]>([]);
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [clinicas, setClinicas] = useState<ClinicaParceira[]>([]);
+  const [filiais, setFiliais] = useState<{ id: string; nome: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -59,11 +60,12 @@ const Transferencias = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: tData }, { data: mData }, { data: cData }, { data: lotesData }] = await Promise.all([
+    const [{ data: tData }, { data: mData }, { data: cData }, { data: lotesData }, { data: fData }] = await Promise.all([
       supabase.from("transferencias").select("*, medicamentos(nome, concentracao), clinica_origem:clinicas_parceiras!transferencias_clinica_origem_id_fkey(nome), clinica_destino:clinicas_parceiras!transferencias_clinica_destino_id_fkey(nome), lotes(numero_lote, validade)").order("created_at", { ascending: false }),
       supabase.from("medicamentos").select("*").eq("ativo", true).order("nome"),
       supabase.from("clinicas_parceiras").select("*").eq("ativo", true).order("nome"),
       supabase.from("lotes").select("*").eq("ativo", true).gt("quantidade_atual", 0),
+      supabase.from("filiais").select("id, nome").eq("ativo", true).order("nome"),
     ]);
     setTransfers(tData || []);
     setMeds((mData || []).map((m: any) => ({
@@ -71,6 +73,7 @@ const Transferencias = () => {
       lotes: (lotesData || []).filter((l: any) => l.medicamento_id === m.id).sort((a: any, b: any) => new Date(a.validade).getTime() - new Date(b.validade).getTime()),
     })));
     setClinicas(cData as ClinicaParceira[] || []);
+    setFiliais((fData || []).filter(f => f.id !== profile?.filial_id));
     setLoading(false);
   };
 
@@ -372,10 +375,23 @@ const Transferencias = () => {
               )}
 
               <div className="space-y-1.5">
-                <Label className="text-xs">Clínica Destino *</Label>
+                <Label className="text-xs">Destino *</Label>
                 <Select value={form.clinica_destino_id} onValueChange={v => setForm({ ...form, clinica_destino_id: v })}>
                   <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar destino" /></SelectTrigger>
-                  <SelectContent>{clinicas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {filiais.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Unidades</div>
+                        {filiais.map(f => <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>)}
+                      </>
+                    )}
+                    {clinicas.length > 0 && (
+                      <>
+                        <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Clínicas Parceiras</div>
+                        {clinicas.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
+                      </>
+                    )}
+                  </SelectContent>
                 </Select>
               </div>
 
