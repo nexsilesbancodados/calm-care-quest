@@ -150,19 +150,38 @@ const Prescricoes = () => {
     fetchData();
   };
 
+  const defaultItemForm = {
+    medicamento_id: "", quantidade_prescrita: 0, posologia: "",
+    via: "oral", dose: "", frequencia_horas: 0, duracao_dias: 0,
+    instrucoes_preparo: "", fracionamento: false,
+    dose_fracionada: 0, apresentacao_total: 0,
+    sobra_reaproveitavel: false, estabilidade_horas: 0,
+  };
+
   // Add item
   const handleAddItem = async () => {
     if (!selectedPrescricao || !itemForm.medicamento_id || !itemForm.quantidade_prescrita) { toast.error("Selecione medicamento e quantidade"); return; }
-    const { error } = await supabase.from("itens_prescricao").insert({
+    const insertData: Record<string, unknown> = {
       prescricao_id: selectedPrescricao.id,
       medicamento_id: itemForm.medicamento_id,
       quantidade_prescrita: itemForm.quantidade_prescrita,
       posologia: itemForm.posologia,
-    });
+      via: itemForm.via,
+      dose: itemForm.dose,
+      frequencia_horas: itemForm.frequencia_horas || null,
+      duracao_dias: itemForm.duracao_dias || null,
+      instrucoes_preparo: itemForm.instrucoes_preparo,
+      fracionamento: itemForm.fracionamento,
+      dose_fracionada: itemForm.fracionamento ? itemForm.dose_fracionada || null : null,
+      apresentacao_total: itemForm.fracionamento ? itemForm.apresentacao_total || null : null,
+      sobra_reaproveitavel: itemForm.fracionamento ? itemForm.sobra_reaproveitavel : false,
+      estabilidade_horas: itemForm.fracionamento && itemForm.sobra_reaproveitavel ? itemForm.estabilidade_horas || null : null,
+    };
+    const { error } = await supabase.from("itens_prescricao").insert(insertData as any);
     if (error) { toast.error("Erro ao adicionar item"); return; }
     toast.success("Item adicionado!");
     setItemDialogOpen(false);
-    setItemForm({ medicamento_id: "", quantidade_prescrita: 0, posologia: "" });
+    setItemForm(defaultItemForm);
     fetchData();
   };
 
