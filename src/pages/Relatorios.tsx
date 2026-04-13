@@ -348,8 +348,16 @@ const Relatorios = () => {
               );
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
-              const rows = filteredMov.map((m) => `<tr><td>${formatDate(m.created_at)}</td><td>${m.tipo}</td><td>${m.medicamentos?.nome || "—"}</td><td style="text-align:center">${m.quantidade}</td><td>${m.paciente || m.setor || "—"}</td></tr>`).join("");
-              printReport(`Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, `<p><strong>${filteredMov.length}</strong> registros no período</p><table><thead><tr><th>Data</th><th>Tipo</th><th>Medicamento</th><th>Qtd</th><th>Paciente/Setor</th></tr></thead><tbody>${rows}</tbody></table>`, hospitalNome, userName);
+              generatePdfReport(
+                { title: `Movimentações (${formatDate(dateFrom)} a ${formatDate(dateTo)})`, hospitalNome, userName, orientation: "landscape" },
+                [
+                  { type: "text", content: `${filteredMov.length} registros no período`, bold: true },
+                  { type: "table", headers: ["Data", "Tipo", "Medicamento", "Qtd", "Paciente/Setor", "Observação"],
+                    rows: filteredMov.map(m => [formatDate(m.created_at), m.tipo, m.medicamentos?.nome || "—", m.quantidade, m.paciente || m.setor || "—", m.observacao || ""]),
+                    columnStyles: { 3: { halign: "center" } },
+                  },
+                ]
+              );
             }}><FileDown className="h-3.5 w-3.5" />PDF</Button>
           </div>
           <Badge variant="outline" className="text-xs">{filteredMov.length} movimentações no período</Badge>
