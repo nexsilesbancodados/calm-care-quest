@@ -597,7 +597,7 @@ const Relatorios = () => {
             }}><Download className="h-3.5 w-3.5" />CSV</Button>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
               generatePdfReport(
-                { title: "CMM por Medicamento", subtitle: "Consumo Médio Mensal — Média dos últimos 3 meses", hospitalNome, userName },
+                { title: "CMM por Medicamento", subtitle: `Consumo Médio Mensal — Média dos últimos ${cmmPeriod} meses`, hospitalNome, userName },
                 [
                   { type: "kpi", items: [
                     { label: "Medicamentos", value: cmmData.length },
