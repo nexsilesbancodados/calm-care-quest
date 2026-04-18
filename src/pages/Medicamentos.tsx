@@ -24,8 +24,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Medicamento, Lote, Categoria, Fornecedor } from "@/types/database";
-import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
+import type { Medicamento, Lote, Categoria, Fornecedor, TipoItem } from "@/types/database";
+import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG, TIPO_ITEM_CONFIG } from "@/types/database";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PAGE_SIZE = 50;
 
@@ -46,6 +47,7 @@ const Medicamentos = () => {
   const [catFilter, setCatFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [formaFilter, setFormaFilter] = useState("all");
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
 
   // Debounce search
   useEffect(() => {
@@ -67,6 +69,7 @@ const Medicamentos = () => {
   const [sortKey, setSortKey] = useState<SortKey>("nome");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [form, setForm] = useState({
+    tipo_item: "medicamento" as TipoItem,
     nome: "", generico: "", principio_ativo: "", concentracao: "",
     forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "",
     controlado: false, lista_controlada: "" as string,
