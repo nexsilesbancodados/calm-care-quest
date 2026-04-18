@@ -24,8 +24,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Medicamento, Lote, Categoria, Fornecedor } from "@/types/database";
-import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
+import type { Medicamento, Lote, Categoria, Fornecedor, TipoItem } from "@/types/database";
+import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG, TIPO_ITEM_CONFIG } from "@/types/database";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PAGE_SIZE = 50;
 
@@ -46,6 +47,7 @@ const Medicamentos = () => {
   const [catFilter, setCatFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [formaFilter, setFormaFilter] = useState("all");
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
 
   // Debounce search
   useEffect(() => {
@@ -67,6 +69,7 @@ const Medicamentos = () => {
   const [sortKey, setSortKey] = useState<SortKey>("nome");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [form, setForm] = useState({
+    tipo_item: "medicamento" as TipoItem,
     nome: "", generico: "", principio_ativo: "", concentracao: "",
     forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "",
     controlado: false, lista_controlada: "" as string,
@@ -102,6 +105,12 @@ const Medicamentos = () => {
       medsQuery = medsQuery.eq("forma_farmaceutica", formaFilter);
     }
 
+    // Apply tipo_item filter at DB level
+    if (tipoFilter !== "all") {
+      countQuery = countQuery.eq("tipo_item", tipoFilter);
+      medsQuery = medsQuery.eq("tipo_item", tipoFilter);
+    }
+
     // Apply search filter at DB level
     if (debouncedSearch.trim()) {
       const term = `%${debouncedSearch.trim()}%`;
@@ -128,7 +137,7 @@ const Medicamentos = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, debouncedSearch, profile?.filial_id]);
+  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, tipoFilter, debouncedSearch, profile?.filial_id]);
 
   const now = new Date();
 
@@ -180,14 +189,14 @@ const Medicamentos = () => {
 
   const openNew = () => {
     setEditMed(null);
-    setForm({ nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0, unidade_estoque: "unidade", unidade_entrada: "unidade", fator_conversao: 1, ponto_pedido: 0 });
+    setForm({ tipo_item: "medicamento", nome: "", generico: "", principio_ativo: "", concentracao: "", forma_farmaceutica: "Comprimido", codigo_barras: "", categoria_id: "", controlado: false, lista_controlada: "", fornecedor_id: "", estoque_minimo: 0, estoque_maximo: 0, localizacao: "", preco_unitario: 0, unidade_estoque: "unidade", unidade_entrada: "unidade", fator_conversao: 1, ponto_pedido: 0 });
     setDialogOpen(true);
   };
 
   const openEdit = (m: Medicamento) => {
     setEditMed(m);
     const mAny = m as any;
-    setForm({ nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
+    setForm({ tipo_item: ((m as any).tipo_item ?? "medicamento") as TipoItem, nome: m.nome, generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: m.codigo_barras || "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
     setDialogOpen(true);
   };
 
@@ -202,7 +211,7 @@ const Medicamentos = () => {
       return;
     }
     setSaving(true);
-    const row = { nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.controlado, lista_controlada: form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, unidade_estoque: form.unidade_estoque, unidade_entrada: form.unidade_entrada, fator_conversao: form.fator_conversao, ponto_pedido: form.ponto_pedido, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
+    const row = { tipo_item: form.tipo_item, nome: form.nome, generico: form.generico, principio_ativo: form.principio_ativo, concentracao: form.concentracao, forma_farmaceutica: form.forma_farmaceutica, codigo_barras: form.codigo_barras || null, categoria_id: form.categoria_id || null, controlado: form.tipo_item === "medicamento" ? form.controlado : false, lista_controlada: form.tipo_item === "medicamento" && form.controlado ? form.lista_controlada : null, fornecedor_id: form.fornecedor_id || null, estoque_minimo: form.estoque_minimo, estoque_maximo: form.estoque_maximo, localizacao: form.localizacao, preco_unitario: form.preco_unitario, unidade_estoque: form.unidade_estoque, unidade_entrada: form.unidade_entrada, fator_conversao: form.fator_conversao, ponto_pedido: form.ponto_pedido, ...(editMed ? {} : { filial_id: profile?.filial_id }) };
 
     if (editMed) {
       const { error } = await supabase.from("medicamentos").update(row).eq("id", editMed.id);
@@ -241,7 +250,7 @@ const Medicamentos = () => {
   const duplicateMed = (m: Medicamento) => {
     setEditMed(null);
     const mAny = m as any;
-    setForm({ nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
+    setForm({ tipo_item: ((m as any).tipo_item ?? "medicamento") as TipoItem, nome: m.nome + " (cópia)", generico: m.generico, principio_ativo: m.principio_ativo, concentracao: m.concentracao, forma_farmaceutica: m.forma_farmaceutica, codigo_barras: "", categoria_id: m.categoria_id || "", controlado: m.controlado, lista_controlada: (m as unknown as { lista_controlada?: string }).lista_controlada ?? "", fornecedor_id: m.fornecedor_id || "", estoque_minimo: m.estoque_minimo, estoque_maximo: m.estoque_maximo, localizacao: m.localizacao, preco_unitario: m.preco_unitario, unidade_estoque: mAny.unidade_estoque || "unidade", unidade_entrada: mAny.unidade_entrada || "unidade", fator_conversao: mAny.fator_conversao || 1, ponto_pedido: mAny.ponto_pedido || 0 });
     setDialogOpen(true);
   };
 
@@ -268,7 +277,7 @@ const Medicamentos = () => {
 
   return (
     <AppLayout
-      title="Medicamentos"
+      title="Itens / Estoque"
       subtitle={`${totalCount} cadastrados • ${stats.totalUnits.toLocaleString("pt-BR")} unidades`}
       actions={
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={fetchData}>
@@ -276,6 +285,19 @@ const Medicamentos = () => {
         </Button>
       }
     >
+      {/* Tipo de item — abas */}
+      <Tabs value={tipoFilter} onValueChange={(v) => { setTipoFilter(v as any); setPage(0); }} className="mb-4">
+        <TabsList className="grid w-full grid-cols-5 sm:w-auto sm:inline-flex">
+          <TabsTrigger value="all" className="gap-1.5 text-xs">Tudo</TabsTrigger>
+          {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => (
+            <TabsTrigger key={t} value={t} className="gap-1.5 text-xs">
+              <span>{TIPO_ITEM_CONFIG[t].emoji}</span>
+              <span className="hidden sm:inline">{TIPO_ITEM_CONFIG[t].label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 mb-5">
         {[
@@ -338,13 +360,15 @@ const Medicamentos = () => {
             ))}
           </SelectContent>
         </Select>
-        <Select value={formaFilter} onValueChange={handleFormaFilter}>
-          <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas formas</SelectItem>
-            {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {tipoFilter === "medicamento" || tipoFilter === "all" ? (
+          <Select value={formaFilter} onValueChange={handleFormaFilter}>
+            <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas formas</SelectItem>
+              {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : null}
         <Button onClick={openNew} className="gradient-primary text-primary-foreground gap-2 rounded-xl h-10">
           <Plus className="h-4 w-4" /> Novo
         </Button>
@@ -428,12 +452,17 @@ const Medicamentos = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
-                        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", cfg.className.split(" ").slice(0, 1).join(" ") || "bg-primary/10")}>
-                          <Pill className="h-4 w-4" />
+                        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base", cfg.className.split(" ").slice(0, 1).join(" ") || "bg-primary/10")}>
+                          <span>{TIPO_ITEM_CONFIG[(med as any).tipo_item ?? "medicamento" as TipoItem].emoji}</span>
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-semibold truncate">{med.nome}</p>
+                            {((med as any).tipo_item ?? "medicamento") !== "medicamento" && (
+                              <Badge variant="outline" className={cn("text-[9px] h-4 px-1", TIPO_ITEM_CONFIG[(med as any).tipo_item as TipoItem].className)}>
+                                {TIPO_ITEM_CONFIG[(med as any).tipo_item as TipoItem].label}
+                              </Badge>
+                            )}
                             {med.controlado && (
                               <Tooltip>
                                 <TooltipTrigger>
@@ -459,10 +488,14 @@ const Medicamentos = () => {
                               </Tooltip>
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {med.concentracao && `${med.concentracao} • `}{med.forma_farmaceutica}
-                            {med.generico && ` • ${med.generico}`}
-                          </p>
+                          {((med as any).tipo_item ?? "medicamento") === "medicamento" ? (
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {med.concentracao && `${med.concentracao} • `}{med.forma_farmaceutica}
+                              {med.generico && ` • ${med.generico}`}
+                            </p>
+                          ) : (
+                            med.localizacao && <p className="text-[11px] text-muted-foreground truncate">{med.localizacao}</p>
+                          )}
                         </div>
                       </div>
                     </TableCell>
@@ -647,13 +680,13 @@ const Medicamentos = () => {
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-glow to-primary rounded-t-2xl" />
             <DialogHeader className="relative">
               <DialogTitle className="flex items-center gap-3 text-lg">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
-                  {editMed ? <Edit2 className="h-5 w-5 text-primary" /> : <Pill className="h-5 w-5 text-primary" />}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-xl">
+                  {editMed ? <Edit2 className="h-5 w-5 text-primary" /> : <span>{TIPO_ITEM_CONFIG[form.tipo_item].emoji}</span>}
                 </div>
                 <div>
-                  <span className="font-display font-bold">{editMed ? "Editar Medicamento" : "Novo Medicamento"}</span>
+                  <span className="font-display font-bold">{editMed ? `Editar ${TIPO_ITEM_CONFIG[form.tipo_item].label}` : `Novo ${TIPO_ITEM_CONFIG[form.tipo_item].label}`}</span>
                   <p className="text-xs text-muted-foreground font-normal mt-0.5">
-                    {editMed ? "Atualize as informações do medicamento" : "Preencha os dados para cadastrar um novo medicamento"}
+                    {editMed ? "Atualize as informações do item" : "Preencha os dados para cadastrar um novo item"}
                   </p>
                 </div>
               </DialogTitle>
@@ -669,50 +702,78 @@ const Medicamentos = () => {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Identificação</h4>
                 <div className="flex-1 h-px bg-border/50" />
               </div>
+              {/* Tipo de item — escolha primeiro */}
+              <div className="space-y-2 mb-4">
+                <Label className="text-xs font-semibold text-foreground/80">Tipo de Item <span className="text-destructive">*</span></Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => {
+                    const cfg = TIPO_ITEM_CONFIG[t];
+                    const active = form.tipo_item === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setForm({ ...form, tipo_item: t })}
+                        className={cn(
+                          "flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition-all text-xs font-medium",
+                          active ? "border-primary bg-primary/5 shadow-sm" : "border-border/40 hover:border-border bg-muted/20"
+                        )}
+                      >
+                        <span className="text-xl">{cfg.emoji}</span>
+                        <span>{cfg.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Nome Comercial <span className="text-destructive">*</span></Label>
+                  <Label className="text-xs font-semibold text-foreground/80">Nome {form.tipo_item === "medicamento" ? "Comercial" : ""} <span className="text-destructive">*</span></Label>
                   <Input
                     value={form.nome}
                     onChange={e => setForm({ ...form, nome: e.target.value })}
-                    placeholder="Ex: Risperidona 2mg"
+                    placeholder={form.tipo_item === "medicamento" ? "Ex: Risperidona 2mg" : form.tipo_item === "material" ? "Ex: Seringa descartável 10ml" : form.tipo_item === "epi" ? "Ex: Máscara cirúrgica" : "Ex: Álcool 70%"}
                     className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Nome Genérico</Label>
-                  <Input
-                    value={form.generico}
-                    onChange={e => setForm({ ...form, generico: e.target.value })}
-                    placeholder="Ex: Risperidona"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Princípio Ativo</Label>
-                  <Input
-                    value={form.principio_ativo}
-                    onChange={e => setForm({ ...form, principio_ativo: e.target.value })}
-                    placeholder="Ex: Risperidona"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Concentração</Label>
-                  <Input
-                    value={form.concentracao}
-                    onChange={e => setForm({ ...form, concentracao: e.target.value })}
-                    placeholder="Ex: 2mg/mL"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Forma Farmacêutica</Label>
-                  <Select value={form.forma_farmaceutica} onValueChange={v => setForm({ ...form, forma_farmaceutica: v })}>
-                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
-                    <SelectContent className="rounded-xl">{FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+                {form.tipo_item === "medicamento" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Nome Genérico</Label>
+                      <Input
+                        value={form.generico}
+                        onChange={e => setForm({ ...form, generico: e.target.value })}
+                        placeholder="Ex: Risperidona"
+                        className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Princípio Ativo</Label>
+                      <Input
+                        value={form.principio_ativo}
+                        onChange={e => setForm({ ...form, principio_ativo: e.target.value })}
+                        placeholder="Ex: Risperidona"
+                        className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Concentração</Label>
+                      <Input
+                        value={form.concentracao}
+                        onChange={e => setForm({ ...form, concentracao: e.target.value })}
+                        placeholder="Ex: 2mg/mL"
+                        className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Forma Farmacêutica</Label>
+                      <Select value={form.forma_farmaceutica} onValueChange={v => setForm({ ...form, forma_farmaceutica: v })}>
+                        <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-xl">{FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
                     <Barcode className="h-3 w-3 text-muted-foreground" /> Código de Barras
@@ -757,43 +818,47 @@ const Medicamentos = () => {
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
-                  <div className={cn(
-                    "flex items-center gap-4 rounded-xl border-2 p-4 transition-all duration-300 cursor-pointer",
-                    form.controlado
-                      ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)]"
-                      : "border-border/30 bg-muted/20 hover:border-border/50 hover:bg-muted/30"
-                  )} onClick={() => setForm({ ...form, controlado: !form.controlado })}>
-                    <Switch checked={form.controlado} onCheckedChange={v => setForm({ ...form, controlado: v })} id="ctrl" />
-                    <div className="flex-1">
-                      <label htmlFor="ctrl" className="text-sm font-semibold cursor-pointer flex items-center gap-2">
-                        <ShieldCheck className={cn("h-4 w-4 transition-colors", form.controlado ? "text-primary" : "text-muted-foreground")} />
-                        Substância Controlada
-                      </label>
-                      <p className="text-[11px] text-muted-foreground mt-1">Requer registro em livro de psicotrópicos (Portaria 344/98)</p>
-                    </div>
-                    {form.controlado && (
-                      <Badge className="bg-primary/15 text-primary border-primary/25 text-[10px] animate-fade-in">
-                        Ativo
-                      </Badge>
-                    )}
-                  </div>
-                  {form.controlado && (
-                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                      <Label className="text-xs">Lista 344/98 *</Label>
-                      <Select
-                        value={form.lista_controlada}
-                        onValueChange={(v) => setForm({ ...form, lista_controlada: v })}
-                      >
-                        <SelectTrigger className="mt-1 h-9">
-                          <SelectValue placeholder="Classificar (A1, B1, C1...)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["A1", "A2", "A3", "B1", "B2", "C1", "C2", "C3", "C4", "C5"].map((l) => (
-                            <SelectItem key={l} value={l}>{l}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  {form.tipo_item === "medicamento" && (
+                    <>
+                      <div className={cn(
+                        "flex items-center gap-4 rounded-xl border-2 p-4 transition-all duration-300 cursor-pointer",
+                        form.controlado
+                          ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)]"
+                          : "border-border/30 bg-muted/20 hover:border-border/50 hover:bg-muted/30"
+                      )} onClick={() => setForm({ ...form, controlado: !form.controlado })}>
+                        <Switch checked={form.controlado} onCheckedChange={v => setForm({ ...form, controlado: v })} id="ctrl" />
+                        <div className="flex-1">
+                          <label htmlFor="ctrl" className="text-sm font-semibold cursor-pointer flex items-center gap-2">
+                            <ShieldCheck className={cn("h-4 w-4 transition-colors", form.controlado ? "text-primary" : "text-muted-foreground")} />
+                            Substância Controlada
+                          </label>
+                          <p className="text-[11px] text-muted-foreground mt-1">Requer registro em livro de psicotrópicos (Portaria 344/98)</p>
+                        </div>
+                        {form.controlado && (
+                          <Badge className="bg-primary/15 text-primary border-primary/25 text-[10px] animate-fade-in">
+                            Ativo
+                          </Badge>
+                        )}
+                      </div>
+                      {form.controlado && (
+                        <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                          <Label className="text-xs">Lista 344/98 *</Label>
+                          <Select
+                            value={form.lista_controlada}
+                            onValueChange={(v) => setForm({ ...form, lista_controlada: v })}
+                          >
+                            <SelectTrigger className="mt-1 h-9">
+                              <SelectValue placeholder="Classificar (A1, B1, C1...)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["A1", "A2", "A3", "B1", "B2", "C1", "C2", "C3", "C4", "C5"].map((l) => (
+                                <SelectItem key={l} value={l}>{l}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
