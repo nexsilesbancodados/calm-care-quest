@@ -691,50 +691,78 @@ const Medicamentos = () => {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground/70">Identificação</h4>
                 <div className="flex-1 h-px bg-border/50" />
               </div>
+              {/* Tipo de item — escolha primeiro */}
+              <div className="space-y-2 mb-4">
+                <Label className="text-xs font-semibold text-foreground/80">Tipo de Item <span className="text-destructive">*</span></Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => {
+                    const cfg = TIPO_ITEM_CONFIG[t];
+                    const active = form.tipo_item === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setForm({ ...form, tipo_item: t })}
+                        className={cn(
+                          "flex flex-col items-center gap-1 rounded-xl border-2 p-3 transition-all text-xs font-medium",
+                          active ? "border-primary bg-primary/5 shadow-sm" : "border-border/40 hover:border-border bg-muted/20"
+                        )}
+                      >
+                        <span className="text-xl">{cfg.emoji}</span>
+                        <span>{cfg.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2 sm:col-span-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Nome Comercial <span className="text-destructive">*</span></Label>
+                  <Label className="text-xs font-semibold text-foreground/80">Nome {form.tipo_item === "medicamento" ? "Comercial" : ""} <span className="text-destructive">*</span></Label>
                   <Input
                     value={form.nome}
                     onChange={e => setForm({ ...form, nome: e.target.value })}
-                    placeholder="Ex: Risperidona 2mg"
+                    placeholder={form.tipo_item === "medicamento" ? "Ex: Risperidona 2mg" : form.tipo_item === "material" ? "Ex: Seringa descartável 10ml" : form.tipo_item === "epi" ? "Ex: Máscara cirúrgica" : "Ex: Álcool 70%"}
                     className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Nome Genérico</Label>
-                  <Input
-                    value={form.generico}
-                    onChange={e => setForm({ ...form, generico: e.target.value })}
-                    placeholder="Ex: Risperidona"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Princípio Ativo</Label>
-                  <Input
-                    value={form.principio_ativo}
-                    onChange={e => setForm({ ...form, principio_ativo: e.target.value })}
-                    placeholder="Ex: Risperidona"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Concentração</Label>
-                  <Input
-                    value={form.concentracao}
-                    onChange={e => setForm({ ...form, concentracao: e.target.value })}
-                    placeholder="Ex: 2mg/mL"
-                    className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-foreground/80">Forma Farmacêutica</Label>
-                  <Select value={form.forma_farmaceutica} onValueChange={v => setForm({ ...form, forma_farmaceutica: v })}>
-                    <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
-                    <SelectContent className="rounded-xl">{FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+                {form.tipo_item === "medicamento" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Nome Genérico</Label>
+                      <Input
+                        value={form.generico}
+                        onChange={e => setForm({ ...form, generico: e.target.value })}
+                        placeholder="Ex: Risperidona"
+                        className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Princípio Ativo</Label>
+                      <Input
+                        value={form.principio_ativo}
+                        onChange={e => setForm({ ...form, principio_ativo: e.target.value })}
+                        placeholder="Ex: Risperidona"
+                        className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Concentração</Label>
+                      <Input
+                        value={form.concentracao}
+                        onChange={e => setForm({ ...form, concentracao: e.target.value })}
+                        placeholder="Ex: 2mg/mL"
+                        className="h-11 rounded-xl bg-muted/30 border-border/40 focus:bg-background focus:border-primary/50 transition-all placeholder:text-muted-foreground/40"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-foreground/80">Forma Farmacêutica</Label>
+                      <Select value={form.forma_farmaceutica} onValueChange={v => setForm({ ...form, forma_farmaceutica: v })}>
+                        <SelectTrigger className="h-11 rounded-xl bg-muted/30 border-border/40"><SelectValue /></SelectTrigger>
+                        <SelectContent className="rounded-xl">{FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-foreground/80 flex items-center gap-1.5">
                     <Barcode className="h-3 w-3 text-muted-foreground" /> Código de Barras
