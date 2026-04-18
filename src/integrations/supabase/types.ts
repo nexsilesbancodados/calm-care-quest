@@ -531,6 +531,7 @@ export type Database = {
           ponto_pedido: number
           preco_unitario: number
           principio_ativo: string
+          tipo_item: string
           unidade_entrada: string
           unidade_estoque: string
           updated_at: string
@@ -555,6 +556,7 @@ export type Database = {
           ponto_pedido?: number
           preco_unitario?: number
           principio_ativo?: string
+          tipo_item?: string
           unidade_entrada?: string
           unidade_estoque?: string
           updated_at?: string
@@ -579,6 +581,7 @@ export type Database = {
           ponto_pedido?: number
           preco_unitario?: number
           principio_ativo?: string
+          tipo_item?: string
           unidade_entrada?: string
           unidade_estoque?: string
           updated_at?: string
