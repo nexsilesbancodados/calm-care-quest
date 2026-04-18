@@ -15,11 +15,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Search, ClipboardCheck, CheckCircle2, AlertTriangle, Save, RotateCcw, Download, Package } from "lucide-react";
-import type { Medicamento, Lote } from "@/types/database";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Medicamento, Lote, TipoItem } from "@/types/database";
+import { TIPO_ITEM_CONFIG } from "@/types/database";
 
 interface InventoryItem {
   medicamento_id: string;
   medicamento_nome: string;
+  tipo_item: TipoItem;
   lote_id: string;
   numero_lote: string;
   validade: string;
@@ -35,6 +38,7 @@ const Inventario = () => {
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -57,9 +61,12 @@ const Inventario = () => {
       const invItems: InventoryItem[] = [];
       medsWithLotes.forEach((m: any) => {
         m.lotes.forEach((l: any) => {
+          const isMed = (m.tipo_item ?? "medicamento") === "medicamento";
+          const label = isMed && m.concentracao ? `${m.nome} ${m.concentracao}` : m.nome;
           invItems.push({
             medicamento_id: m.id,
-            medicamento_nome: `${m.nome} ${m.concentracao}`,
+            medicamento_nome: label,
+            tipo_item: (m.tipo_item ?? "medicamento") as TipoItem,
             lote_id: l.id,
             numero_lote: l.numero_lote,
             validade: l.validade,
@@ -92,18 +99,28 @@ const Inventario = () => {
   };
 
   const filtered = items.filter(item => {
+    if (tipoFilter !== "all" && item.tipo_item !== tipoFilter) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return item.medicamento_nome.toLowerCase().includes(s) || item.numero_lote.toLowerCase().includes(s);
   });
 
-  const stats = useMemo(() => ({
-    total: items.length,
-    pendentes: items.filter(i => i.status === "pendente").length,
-    conferidos: items.filter(i => i.status === "conferido").length,
-    divergentes: items.filter(i => i.status === "divergente").length,
-    progress: items.length > 0 ? Math.round(((items.length - items.filter(i => i.status === "pendente").length) / items.length) * 100) : 0,
-  }), [items]);
+  const tipoCounts = useMemo(() => {
+    const c: Record<TipoItem | "all", number> = { all: items.length, medicamento: 0, material: 0, epi: 0, higiene: 0 };
+    items.forEach(i => { c[i.tipo_item] = (c[i.tipo_item] || 0) + 1; });
+    return c;
+  }, [items]);
+
+  const stats = useMemo(() => {
+    const scope = filtered;
+    return {
+      total: scope.length,
+      pendentes: scope.filter(i => i.status === "pendente").length,
+      conferidos: scope.filter(i => i.status === "conferido").length,
+      divergentes: scope.filter(i => i.status === "divergente").length,
+      progress: scope.length > 0 ? Math.round(((scope.length - scope.filter(i => i.status === "pendente").length) / scope.length) * 100) : 0,
+    };
+  }, [filtered]);
 
   const divergentItems = items.filter(i => i.status === "divergente");
 
@@ -163,8 +180,9 @@ const Inventario = () => {
   };
 
   const exportCSV = () => {
-    const headers = ["Medicamento", "Lote", "Validade", "Qtd Sistema", "Qtd Contada", "Diferença", "Status"];
-    const rows = items.map(i => [
+    const headers = ["Tipo", "Item", "Lote", "Validade", "Qtd Sistema", "Qtd Contada", "Diferença", "Status"];
+    const rows = filtered.map(i => [
+      TIPO_ITEM_CONFIG[i.tipo_item].label,
       i.medicamento_nome,
       i.numero_lote,
       new Date(i.validade).toLocaleDateString("pt-BR"),
@@ -181,10 +199,25 @@ const Inventario = () => {
     a.click();
   };
 
-  if (loading) return <AppLayout title="Inventário Físico"><div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div></AppLayout>;
+  if (loading) return <AppLayout title="Inventário Geral"><div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div></AppLayout>;
 
   return (
-    <AppLayout title="Inventário Físico" subtitle="Contagem e reconciliação de estoque">
+    <AppLayout title="Inventário Geral" subtitle="Medicamentos, materiais, EPI e higiene — contagem unificada">
+      {/* Filtro por tipo */}
+      <Tabs value={tipoFilter} onValueChange={(v) => setTipoFilter(v as any)} className="mb-4">
+        <TabsList className="grid w-full grid-cols-5 sm:w-auto sm:inline-flex">
+          <TabsTrigger value="all" className="gap-1.5 text-xs">
+            Tudo <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{tipoCounts.all}</Badge>
+          </TabsTrigger>
+          {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => (
+            <TabsTrigger key={t} value={t} className="gap-1.5 text-xs">
+              <span>{TIPO_ITEM_CONFIG[t].emoji}</span>
+              <span className="hidden sm:inline">{TIPO_ITEM_CONFIG[t].label}</span>
+              <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{tipoCounts[t] || 0}</Badge>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
@@ -217,7 +250,8 @@ const Inventario = () => {
         </div>
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all"
+            style={{ width: `${stats.progress}%` }}
           />
         </div>
       </Card>
@@ -226,7 +260,7 @@ const Inventario = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar medicamento ou lote..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
+          <Input placeholder="Buscar item ou lote..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={exportCSV}>
@@ -248,7 +282,8 @@ const Inventario = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+              <TableHead className="text-xs font-semibold w-[110px]">Tipo</TableHead>
+              <TableHead className="text-xs font-semibold">Item</TableHead>
               <TableHead className="text-xs font-semibold">Lote</TableHead>
               <TableHead className="text-xs font-semibold">Validade</TableHead>
               <TableHead className="text-xs font-semibold text-center">Sistema</TableHead>
@@ -259,7 +294,7 @@ const Inventario = () => {
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
             ) : filtered.map(item => (
               <TableRow
                 key={item.lote_id}
@@ -269,6 +304,12 @@ const Inventario = () => {
                   item.status === "conferido" && "bg-success/5",
                 )}
               >
+                <TableCell>
+                  <Badge variant="outline" className={cn("text-[10px] gap-1", TIPO_ITEM_CONFIG[item.tipo_item].className)}>
+                    <span>{TIPO_ITEM_CONFIG[item.tipo_item].emoji}</span>
+                    <span>{TIPO_ITEM_CONFIG[item.tipo_item].label}</span>
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-sm font-medium">{item.medicamento_nome}</TableCell>
                 <TableCell className="text-sm font-mono text-muted-foreground">{item.numero_lote}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{new Date(item.validade).toLocaleDateString("pt-BR")}</TableCell>
