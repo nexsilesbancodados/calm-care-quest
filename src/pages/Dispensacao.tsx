@@ -27,7 +27,8 @@ import {
   ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
   Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown, RotateCcw
 } from "lucide-react";
-import type { Medicamento, Lote, Prescricao } from "@/types/database";
+import type { Medicamento, Lote, Prescricao, TipoItem } from "@/types/database";
+import { TIPO_ITEM_CONFIG } from "@/types/database";
 
 const MOTIVOS_DEVOLUCAO = [
   "Alta hospitalar",
@@ -54,6 +55,7 @@ const Dispensacao = () => {
   const [histDateTo, setHistDateTo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [medSearch, setMedSearch] = useState("");
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tab, setTab] = useState("dispensar");
 
@@ -123,11 +125,24 @@ const Dispensacao = () => {
   const selectedLote = selectedMed?.lotes.find(l => l.id === form.lote_id);
 
   const filteredMeds = useMemo(() => {
-    const available = meds.filter(m => m.lotes.length > 0);
+    let available = meds.filter(m => m.lotes.length > 0);
+    if (tipoFilter !== "all") {
+      available = available.filter(m => (m.tipo_item ?? "medicamento") === tipoFilter);
+    }
     if (!medSearch) return available;
     const s = medSearch.toLowerCase();
     return available.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s) || m.principio_ativo.toLowerCase().includes(s));
-  }, [meds, medSearch]);
+  }, [meds, medSearch, tipoFilter]);
+
+  const tipoCounts = useMemo(() => {
+    const available = meds.filter(m => m.lotes.length > 0);
+    const c: Record<string, number> = { all: available.length, medicamento: 0, material: 0, epi: 0, higiene: 0 };
+    available.forEach(m => {
+      const t = (m.tipo_item ?? "medicamento") as string;
+      c[t] = (c[t] || 0) + 1;
+    });
+    return c;
+  }, [meds]);
 
   // 1a: Enhanced handleMedChange with proper FEFO
   const handleMedChange = (medId: string) => {
