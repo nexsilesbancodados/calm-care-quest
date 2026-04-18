@@ -92,7 +92,7 @@ export const AppLayout = memo(function AppLayout({ children, title, subtitle, ac
 
               <div className="h-6 w-px bg-border/40 hidden sm:block shrink-0" />
 
-              <div className="hidden sm:block shrink-0">
+              <div className="shrink-0">
                 <FilialSwitcher />
               </div>
 
