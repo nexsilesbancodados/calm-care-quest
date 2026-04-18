@@ -277,7 +277,7 @@ const Medicamentos = () => {
 
   return (
     <AppLayout
-      title="Medicamentos"
+      title="Itens / Estoque"
       subtitle={`${totalCount} cadastrados • ${stats.totalUnits.toLocaleString("pt-BR")} unidades`}
       actions={
         <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={fetchData}>
@@ -285,6 +285,19 @@ const Medicamentos = () => {
         </Button>
       }
     >
+      {/* Tipo de item — abas */}
+      <Tabs value={tipoFilter} onValueChange={(v) => { setTipoFilter(v as any); setPage(0); }} className="mb-4">
+        <TabsList className="grid w-full grid-cols-5 sm:w-auto sm:inline-flex">
+          <TabsTrigger value="all" className="gap-1.5 text-xs">Tudo</TabsTrigger>
+          {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => (
+            <TabsTrigger key={t} value={t} className="gap-1.5 text-xs">
+              <span>{TIPO_ITEM_CONFIG[t].emoji}</span>
+              <span className="hidden sm:inline">{TIPO_ITEM_CONFIG[t].label}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 mb-5">
         {[
