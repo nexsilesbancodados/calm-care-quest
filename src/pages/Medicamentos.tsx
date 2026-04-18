@@ -105,6 +105,12 @@ const Medicamentos = () => {
       medsQuery = medsQuery.eq("forma_farmaceutica", formaFilter);
     }
 
+    // Apply tipo_item filter at DB level
+    if (tipoFilter !== "all") {
+      countQuery = countQuery.eq("tipo_item", tipoFilter);
+      medsQuery = medsQuery.eq("tipo_item", tipoFilter);
+    }
+
     // Apply search filter at DB level
     if (debouncedSearch.trim()) {
       const term = `%${debouncedSearch.trim()}%`;
@@ -131,7 +137,7 @@ const Medicamentos = () => {
     setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, debouncedSearch, profile?.filial_id]);
+  useEffect(() => { fetchData(); }, [page, catFilter, formaFilter, tipoFilter, debouncedSearch, profile?.filial_id]);
 
   const now = new Date();
 
