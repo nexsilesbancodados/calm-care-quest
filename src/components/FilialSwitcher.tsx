@@ -32,7 +32,7 @@ export function FilialSwitcher() {
     load();
   }, [isAdmin]);
 
-  if (!isAdmin || filiais.length === 0) return null;
+  if (!isAdmin) return null;
 
   const currentFilial = filiais.find((f) => f.id === profile?.filial_id);
 
