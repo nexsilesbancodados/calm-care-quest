@@ -42,7 +42,7 @@ const AdministracaoMar = lazy(pages["/mar"]);
 const SegurancaConta = lazy(pages["/seguranca"]);
 const Prontuario = lazy(() => import("./pages/Prontuario"));
 const PassagemPlantao = lazy(pages["/plantao"]);
-const KitsProcedimento = lazy(pages["/kits"]);
+
 const PainelAtrasosPage = lazy(pages["/atrasos"]);
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -104,7 +104,7 @@ const App = () => (
                   <Route path="/seguranca" element={<P><S><SegurancaConta /></S></P>} />
                   <Route path="/prontuario/:id" element={<P><S><Prontuario /></S></P>} />
                   <Route path="/plantao" element={<P><S><PassagemPlantao /></S></P>} />
-                  <Route path="/kits" element={<P><S><KitsProcedimento /></S></P>} />
+                  
                   <Route path="/atrasos" element={<P><S><PainelAtrasosPage /></S></P>} />
                   <Route path="*" element={<S><NotFound /></S>} />
                 </Routes>

@@ -25,7 +25,7 @@ const pages = {
   "/mar": () => import("@/pages/AdministracaoMar"),
   "/seguranca": () => import("@/pages/SegurancaConta"),
   "/prontuario/:id": () => import("@/pages/Prontuario"),
-  "/kits": () => import("@/pages/KitsProcedimento"),
+  
   "/plantao": () => import("@/pages/PassagemPlantao"),
   "/atrasos": () => import("@/pages/PainelAtrasosPage"),
 } as Record<string, () => Promise<any>>;

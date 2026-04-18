@@ -39,7 +39,7 @@ const pages = [
   { title: "Passagem de Plantão", icon: ClipboardList, path: "/plantao" },
   { title: "Painel de Atrasos", icon: AlertTriangle, path: "/atrasos" },
   { title: "Inventário", icon: ClipboardCheck, path: "/inventario" },
-  { title: "Kits de Procedimento", icon: Package, path: "/kits" },
+  
   { title: "Solicitações", icon: ClipboardList, path: "/solicitacoes" },
 ];
 

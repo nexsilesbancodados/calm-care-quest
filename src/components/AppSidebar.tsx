@@ -82,7 +82,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"], badgeKey: "transfers" },
       { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"], badgeKey: null },
       { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"], badgeKey: null },
-      { title: "Kits de Procedimento", url: "/kits", icon: Package, roles: ["admin", "farmaceutico"], badgeKey: null },
+      
     ],
   },
   {
