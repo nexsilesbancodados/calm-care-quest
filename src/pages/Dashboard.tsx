@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 const DashboardCharts = lazy(() => import("@/components/DashboardCharts"));
 const AdvancedKpisPanel = lazy(() => import("@/components/AdvancedKpisPanel"));
 const PainelAtrasos = lazy(() => import("@/components/PainelAtrasos"));
+const TipoItemPanel = lazy(() => import("@/components/TipoItemPanel"));
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
@@ -188,6 +189,11 @@ const Dashboard = () => {
         <StatCard title="CMM" value={s.cmm} icon={TrendingUp} variant="default" />
         <StatCard title="Prescrições" value={s.prescricoesAtivas} icon={FileText} variant="info" onClick={() => navigate("/prescricoes")} />
       </div>
+
+      {/* ── DISTRIBUIÇÃO POR TIPO DE ITEM ── */}
+      <Suspense fallback={<Skeleton className="h-44 rounded-2xl mb-4 sm:mb-7" />}>
+        <TipoItemPanel />
+      </Suspense>
 
       {/* ── ADVANCED KPIs (lazy loaded) ── */}
       <Suspense fallback={<Skeleton className="h-28 rounded-2xl" />}>

@@ -27,7 +27,8 @@ import {
   ClipboardList, AlertTriangle, Search, ArrowUpCircle, Package, ShieldAlert,
   Calendar, CheckCircle2, History, User, Pill, Info, Syringe, FileText, X, Check, ChevronsUpDown, RotateCcw
 } from "lucide-react";
-import type { Medicamento, Lote, Prescricao } from "@/types/database";
+import type { Medicamento, Lote, Prescricao, TipoItem } from "@/types/database";
+import { TIPO_ITEM_CONFIG } from "@/types/database";
 
 const MOTIVOS_DEVOLUCAO = [
   "Alta hospitalar",
@@ -54,6 +55,7 @@ const Dispensacao = () => {
   const [histDateTo, setHistDateTo] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [medSearch, setMedSearch] = useState("");
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [tab, setTab] = useState("dispensar");
 
@@ -123,11 +125,24 @@ const Dispensacao = () => {
   const selectedLote = selectedMed?.lotes.find(l => l.id === form.lote_id);
 
   const filteredMeds = useMemo(() => {
-    const available = meds.filter(m => m.lotes.length > 0);
+    let available = meds.filter(m => m.lotes.length > 0);
+    if (tipoFilter !== "all") {
+      available = available.filter(m => (m.tipo_item ?? "medicamento") === tipoFilter);
+    }
     if (!medSearch) return available;
     const s = medSearch.toLowerCase();
     return available.filter(m => m.nome.toLowerCase().includes(s) || m.generico.toLowerCase().includes(s) || m.principio_ativo.toLowerCase().includes(s));
-  }, [meds, medSearch]);
+  }, [meds, medSearch, tipoFilter]);
+
+  const tipoCounts = useMemo(() => {
+    const available = meds.filter(m => m.lotes.length > 0);
+    const c: Record<string, number> = { all: available.length, medicamento: 0, material: 0, epi: 0, higiene: 0 };
+    available.forEach(m => {
+      const t = (m.tipo_item ?? "medicamento") as string;
+      c[t] = (c[t] || 0) + 1;
+    });
+    return c;
+  }, [meds]);
 
   // 1a: Enhanced handleMedChange with proper FEFO
   const handleMedChange = (medId: string) => {
@@ -408,23 +423,45 @@ const Dispensacao = () => {
                     </Select>
                   </div>
 
-                  {/* Medicamento */}
+                  {/* Item (medicamento/material/EPI/higiene) */}
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Medicamento *</Label>
+                    <Label className="text-xs">Item *</Label>
+                    <Tabs value={tipoFilter} onValueChange={(v) => setTipoFilter(v as any)} className="mb-2">
+                      <TabsList className="h-8 grid w-full grid-cols-5 sm:w-auto sm:inline-flex">
+                        <TabsTrigger value="all" className="text-[10px] gap-1 h-6 px-2">
+                          Tudo <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">{tipoCounts.all}</Badge>
+                        </TabsTrigger>
+                        {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => (
+                          <TabsTrigger key={t} value={t} className="text-[10px] gap-1 h-6 px-2">
+                            <span>{TIPO_ITEM_CONFIG[t].emoji}</span>
+                            <span className="hidden sm:inline">{TIPO_ITEM_CONFIG[t].label}</span>
+                            <Badge variant="secondary" className="h-4 px-1.5 text-[9px]">{tipoCounts[t] || 0}</Badge>
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+                    </Tabs>
                     <Select value={form.medicamento_id} onValueChange={handleMedChange}>
-                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar medicamento" /></SelectTrigger>
+                      <SelectTrigger className="bg-card"><SelectValue placeholder="Selecionar item" /></SelectTrigger>
                       <SelectContent>
                         <div className="px-2 pb-2">
                           <Input placeholder="Buscar..." value={medSearch} onChange={e => setMedSearch(e.target.value)} className="h-8 text-xs" />
                         </div>
-                        {filteredMeds.slice(0, 50).map(m => (
-                          <SelectItem key={m.id} value={m.id}>
-                            <span className="flex items-center gap-2">
-                              {m.nome} {m.concentracao}
-                              {m.controlado && <ShieldAlert className="h-3 w-3 text-warning shrink-0" />}
-                            </span>
-                          </SelectItem>
-                        ))}
+                        {filteredMeds.slice(0, 50).map(m => {
+                          const t = (m.tipo_item ?? "medicamento") as TipoItem;
+                          const isMed = t === "medicamento";
+                          return (
+                            <SelectItem key={m.id} value={m.id}>
+                              <span className="flex items-center gap-2">
+                                <span className="text-xs">{TIPO_ITEM_CONFIG[t].emoji}</span>
+                                {m.nome}{isMed && m.concentracao ? ` ${m.concentracao}` : ""}
+                                {m.controlado && <ShieldAlert className="h-3 w-3 text-warning shrink-0" />}
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
+                        {filteredMeds.length === 0 && (
+                          <p className="text-[10px] text-muted-foreground px-2 py-3 text-center">Nenhum item neste tipo com estoque.</p>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
