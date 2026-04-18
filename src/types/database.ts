@@ -22,6 +22,15 @@ export interface Categoria {
   ativo: boolean;
 }
 
+export type TipoItem = "medicamento" | "material" | "epi" | "higiene";
+
+export const TIPO_ITEM_CONFIG: Record<TipoItem, { label: string; emoji: string; className: string }> = {
+  medicamento: { label: "Medicamento", emoji: "💊", className: "bg-primary/10 text-primary border-primary/20" },
+  material:    { label: "Material",    emoji: "🩹", className: "bg-info/10 text-info border-info/20" },
+  epi:         { label: "EPI",         emoji: "🥽", className: "bg-warning/10 text-warning border-warning/20" },
+  higiene:     { label: "Higiene",     emoji: "🧴", className: "bg-success/10 text-success border-success/20" },
+};
+
 export interface Medicamento {
   id: string;
   nome: string;
@@ -38,6 +47,7 @@ export interface Medicamento {
   localizacao: string;
   preco_unitario: number;
   ativo: boolean;
+  tipo_item: TipoItem;
   created_at: string;
   updated_at: string;
   // Joined

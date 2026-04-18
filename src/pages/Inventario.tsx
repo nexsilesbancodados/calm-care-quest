@@ -15,11 +15,14 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Search, ClipboardCheck, CheckCircle2, AlertTriangle, Save, RotateCcw, Download, Package } from "lucide-react";
-import type { Medicamento, Lote } from "@/types/database";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Medicamento, Lote, TipoItem } from "@/types/database";
+import { TIPO_ITEM_CONFIG } from "@/types/database";
 
 interface InventoryItem {
   medicamento_id: string;
   medicamento_nome: string;
+  tipo_item: TipoItem;
   lote_id: string;
   numero_lote: string;
   validade: string;
@@ -35,6 +38,7 @@ const Inventario = () => {
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -57,9 +61,12 @@ const Inventario = () => {
       const invItems: InventoryItem[] = [];
       medsWithLotes.forEach((m: any) => {
         m.lotes.forEach((l: any) => {
+          const isMed = (m.tipo_item ?? "medicamento") === "medicamento";
+          const label = isMed && m.concentracao ? `${m.nome} ${m.concentracao}` : m.nome;
           invItems.push({
             medicamento_id: m.id,
-            medicamento_nome: `${m.nome} ${m.concentracao}`,
+            medicamento_nome: label,
+            tipo_item: (m.tipo_item ?? "medicamento") as TipoItem,
             lote_id: l.id,
             numero_lote: l.numero_lote,
             validade: l.validade,
