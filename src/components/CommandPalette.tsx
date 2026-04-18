@@ -34,18 +34,13 @@ const pages = [
   { title: "Configurações", icon: Settings, path: "/configuracoes" },
   { title: "Pacientes", icon: UserIcon, path: "/pacientes" },
   { title: "Prescrições", icon: FileText, path: "/prescricoes" },
-  { title: "Avaliação C-SSRS", icon: HeartPulse, path: "/cssrs" },
   { title: "Administração MAR", icon: ClipboardCheck, path: "/mar" },
-  { title: "BMPO — Controlados", icon: BarChart3, path: "/bmpo" },
-  { title: "Alergias", icon: AlertTriangle, path: "/alergias" },
-  { title: "Consentimento LGPD", icon: Shield, path: "/consentimento" },
   { title: "Segurança da Conta", icon: Lock, path: "/seguranca" },
-  { title: "Contenção", icon: Lock, path: "/contencao" },
-  { title: "Escalas Psiquiátricas", icon: BarChart3, path: "/escalas" },
-  { title: "Evolução Enfermagem", icon: ClipboardCheck, path: "/evolucao" },
-  { title: "Plano de Segurança", icon: HeartPulse, path: "/plano-seguranca" },
-  { title: "Reconciliação Medicamentosa", icon: ArrowLeftRight, path: "/reconciliacao" },
   { title: "Passagem de Plantão", icon: ClipboardList, path: "/plantao" },
+  { title: "Painel de Atrasos", icon: AlertTriangle, path: "/atrasos" },
+  { title: "Inventário", icon: ClipboardCheck, path: "/inventario" },
+  { title: "Kits de Procedimento", icon: Package, path: "/kits" },
+  { title: "Solicitações", icon: ClipboardList, path: "/solicitacoes" },
 ];
 
 export function CommandPalette() {

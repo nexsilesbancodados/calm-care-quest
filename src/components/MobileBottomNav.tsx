@@ -1,10 +1,10 @@
 import { memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Pill, Package, AlertTriangle, MoreHorizontal,
+  LayoutDashboard, Pill, AlertTriangle, MoreHorizontal,
   ArrowDownCircle, ArrowUpCircle, ClipboardList, ArrowLeftRight, ScanLine,
   Barcode, ClipboardCheck, FileText, Users, Factory, User, Settings, Shield,
-  MessageSquareText, BarChart3, Heart, Truck, Wrench,
+  MessageSquareText, BarChart3, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +15,7 @@ import {
 const mainTabs = [
   { title: "Início", url: "/", icon: LayoutDashboard },
   { title: "Medicamentos", url: "/medicamentos", icon: Pill },
-  { title: "Estoque", url: "/medicamentos", icon: Package },
+  { title: "Pacientes", url: "/pacientes", icon: User },
   { title: "Alertas", url: "/alertas", icon: AlertTriangle },
 ];
 
@@ -31,8 +31,8 @@ const moreGroups = [
   {
     label: "Clínico",
     items: [
-      { title: "Pacientes", url: "/pacientes", icon: User, roles: null },
       { title: "Prescrições", url: "/prescricoes", icon: FileText, roles: ["admin", "farmaceutico", "enfermeiro"] },
+      { title: "MAR", url: "/mar", icon: ClipboardCheck, roles: ["admin", "farmaceutico", "enfermeiro"] },
       { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"] },
       { title: "Plantão", url: "/plantao", icon: ClipboardList, roles: ["admin", "enfermeiro"] },
       { title: "Atrasos", url: "/atrasos", icon: AlertTriangle, roles: ["admin", "farmaceutico", "enfermeiro"] },
