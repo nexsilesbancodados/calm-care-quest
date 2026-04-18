@@ -25,7 +25,8 @@ import {
   AlertTriangle, Package, DollarSign, Clock, Copy, ArrowRight, Info,
   History, ChevronRight, Calendar, ShieldAlert, X, Edit2
 } from "lucide-react";
-import type { Medicamento, Fornecedor, Lote, Movimentacao } from "@/types/database";
+import type { Medicamento, Fornecedor, Lote, Movimentacao, TipoItem } from "@/types/database";
+import { TIPO_ITEM_CONFIG } from "@/types/database";
 
 interface EntradaItem {
   medicamento_id: string;
@@ -74,6 +75,8 @@ const Entrada = () => {
 
   // Active tab
   const [tab, setTab] = useState("entrada");
+  // Filtro por tipo de item
+  const [tipoFilter, setTipoFilter] = useState<"all" | TipoItem>("all");
 
   const qtdInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -107,17 +110,30 @@ const Entrada = () => {
 
   const selectedMed = meds.find(m => m.id === curMedId);
 
-  // Filtro de medicamentos na busca
+  // Filtro de medicamentos na busca + tipo
   const filteredMeds = useMemo(() => {
-    if (!medSearch) return meds;
+    let list = meds;
+    if (tipoFilter !== "all") {
+      list = list.filter(m => (m.tipo_item ?? "medicamento") === tipoFilter);
+    }
+    if (!medSearch) return list;
     const s = medSearch.toLowerCase();
-    return meds.filter(m =>
+    return list.filter(m =>
       m.nome.toLowerCase().includes(s) ||
       m.generico.toLowerCase().includes(s) ||
       m.principio_ativo.toLowerCase().includes(s) ||
       m.codigo_barras?.includes(medSearch)
     );
-  }, [meds, medSearch]);
+  }, [meds, medSearch, tipoFilter]);
+
+  const tipoCounts = useMemo(() => {
+    const c: Record<string, number> = { all: meds.length, medicamento: 0, material: 0, epi: 0, higiene: 0 };
+    meds.forEach(m => {
+      const t = (m.tipo_item ?? "medicamento") as string;
+      c[t] = (c[t] || 0) + 1;
+    });
+    return c;
+  }, [meds]);
 
   const resetForm = () => {
     setCurMedId("");
