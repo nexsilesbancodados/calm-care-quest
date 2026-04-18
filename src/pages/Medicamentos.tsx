@@ -452,12 +452,17 @@ const Medicamentos = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2.5">
-                        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", cfg.className.split(" ").slice(0, 1).join(" ") || "bg-primary/10")}>
-                          <Pill className="h-4 w-4" />
+                        <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-base", cfg.className.split(" ").slice(0, 1).join(" ") || "bg-primary/10")}>
+                          <span>{TIPO_ITEM_CONFIG[(med as any).tipo_item ?? "medicamento" as TipoItem].emoji}</span>
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-semibold truncate">{med.nome}</p>
+                            {((med as any).tipo_item ?? "medicamento") !== "medicamento" && (
+                              <Badge variant="outline" className={cn("text-[9px] h-4 px-1", TIPO_ITEM_CONFIG[(med as any).tipo_item as TipoItem].className)}>
+                                {TIPO_ITEM_CONFIG[(med as any).tipo_item as TipoItem].label}
+                              </Badge>
+                            )}
                             {med.controlado && (
                               <Tooltip>
                                 <TooltipTrigger>
@@ -483,10 +488,14 @@ const Medicamentos = () => {
                               </Tooltip>
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground truncate">
-                            {med.concentracao && `${med.concentracao} • `}{med.forma_farmaceutica}
-                            {med.generico && ` • ${med.generico}`}
-                          </p>
+                          {((med as any).tipo_item ?? "medicamento") === "medicamento" ? (
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {med.concentracao && `${med.concentracao} • `}{med.forma_farmaceutica}
+                              {med.generico && ` • ${med.generico}`}
+                            </p>
+                          ) : (
+                            med.localizacao && <p className="text-[11px] text-muted-foreground truncate">{med.localizacao}</p>
+                          )}
                         </div>
                       </div>
                     </TableCell>
