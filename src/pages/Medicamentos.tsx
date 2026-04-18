@@ -360,13 +360,15 @@ const Medicamentos = () => {
             ))}
           </SelectContent>
         </Select>
-        <Select value={formaFilter} onValueChange={handleFormaFilter}>
-          <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas formas</SelectItem>
-            {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {tipoFilter === "medicamento" || tipoFilter === "all" ? (
+          <Select value={formaFilter} onValueChange={handleFormaFilter}>
+            <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas formas</SelectItem>
+              {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        ) : null}
         <Button onClick={openNew} className="gradient-primary text-primary-foreground gap-2 rounded-xl h-10">
           <Plus className="h-4 w-4" /> Novo
         </Button>
@@ -669,13 +671,13 @@ const Medicamentos = () => {
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-glow to-primary rounded-t-2xl" />
             <DialogHeader className="relative">
               <DialogTitle className="flex items-center gap-3 text-lg">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
-                  {editMed ? <Edit2 className="h-5 w-5 text-primary" /> : <Pill className="h-5 w-5 text-primary" />}
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-xl">
+                  {editMed ? <Edit2 className="h-5 w-5 text-primary" /> : <span>{TIPO_ITEM_CONFIG[form.tipo_item].emoji}</span>}
                 </div>
                 <div>
-                  <span className="font-display font-bold">{editMed ? "Editar Medicamento" : "Novo Medicamento"}</span>
+                  <span className="font-display font-bold">{editMed ? `Editar ${TIPO_ITEM_CONFIG[form.tipo_item].label}` : `Novo ${TIPO_ITEM_CONFIG[form.tipo_item].label}`}</span>
                   <p className="text-xs text-muted-foreground font-normal mt-0.5">
-                    {editMed ? "Atualize as informações do medicamento" : "Preencha os dados para cadastrar um novo medicamento"}
+                    {editMed ? "Atualize as informações do item" : "Preencha os dados para cadastrar um novo item"}
                   </p>
                 </div>
               </DialogTitle>
