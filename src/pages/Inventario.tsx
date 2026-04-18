@@ -249,7 +249,8 @@ const Inventario = () => {
         </div>
         <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary/70 transition-all"
+            style={{ width: `${stats.progress}%` }}
           />
         </div>
       </Card>
@@ -258,7 +259,7 @@ const Inventario = () => {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar medicamento ou lote..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
+          <Input placeholder="Buscar item ou lote..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={exportCSV}>
