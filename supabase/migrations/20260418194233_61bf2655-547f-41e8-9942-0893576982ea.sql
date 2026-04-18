@@ -1,0 +1,1 @@
+SELECT public.promote_to_admin('bancodedadosrumocerto@gmail.com');
