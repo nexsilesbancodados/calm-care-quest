@@ -38,17 +38,8 @@ const Perfil = lazy(pages["/perfil"]);
 const Solicitacoes = lazy(pages["/solicitacoes"]);
 const Login = lazy(pages["/login"]);
 const ResetPassword = lazy(pages["/reset-password"]);
-const AvaliacaoCssrs = lazy(pages["/cssrs"]);
 const AdministracaoMar = lazy(pages["/mar"]);
-const Bmpo = lazy(pages["/bmpo"]);
-const Consentimento = lazy(pages["/consentimento"]);
-const Alergias = lazy(pages["/alergias"]);
 const SegurancaConta = lazy(pages["/seguranca"]);
-const Contencao = lazy(pages["/contencao"]);
-const Escalas = lazy(pages["/escalas"]);
-const EvolucaoEnfermagem = lazy(pages["/evolucao"]);
-const PlanoSeguranca = lazy(pages["/plano-seguranca"]);
-const Reconciliacao = lazy(pages["/reconciliacao"]);
 const Prontuario = lazy(() => import("./pages/Prontuario"));
 const PassagemPlantao = lazy(pages["/plantao"]);
 const KitsProcedimento = lazy(pages["/kits"]);
@@ -109,17 +100,8 @@ const App = () => (
                   <Route path="/inventario" element={<P><S><Inventario /></S></P>} />
                   <Route path="/perfil" element={<P><S><Perfil /></S></P>} />
                   <Route path="/solicitacoes" element={<P><S><Solicitacoes /></S></P>} />
-                  <Route path="/cssrs" element={<P><S><AvaliacaoCssrs /></S></P>} />
                   <Route path="/mar" element={<P><S><AdministracaoMar /></S></P>} />
-                  <Route path="/bmpo" element={<P><S><Bmpo /></S></P>} />
-                  <Route path="/consentimento" element={<P><S><Consentimento /></S></P>} />
-                  <Route path="/alergias" element={<P><S><Alergias /></S></P>} />
                   <Route path="/seguranca" element={<P><S><SegurancaConta /></S></P>} />
-                  <Route path="/contencao" element={<P><S><Contencao /></S></P>} />
-                  <Route path="/escalas" element={<P><S><Escalas /></S></P>} />
-                  <Route path="/evolucao" element={<P><S><EvolucaoEnfermagem /></S></P>} />
-                  <Route path="/plano-seguranca" element={<P><S><PlanoSeguranca /></S></P>} />
-                  <Route path="/reconciliacao" element={<P><S><Reconciliacao /></S></P>} />
                   <Route path="/prontuario/:id" element={<P><S><Prontuario /></S></P>} />
                   <Route path="/plantao" element={<P><S><PassagemPlantao /></S></P>} />
                   <Route path="/kits" element={<P><S><KitsProcedimento /></S></P>} />
