@@ -807,43 +807,47 @@ const Medicamentos = () => {
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
-                  <div className={cn(
-                    "flex items-center gap-4 rounded-xl border-2 p-4 transition-all duration-300 cursor-pointer",
-                    form.controlado
-                      ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)]"
-                      : "border-border/30 bg-muted/20 hover:border-border/50 hover:bg-muted/30"
-                  )} onClick={() => setForm({ ...form, controlado: !form.controlado })}>
-                    <Switch checked={form.controlado} onCheckedChange={v => setForm({ ...form, controlado: v })} id="ctrl" />
-                    <div className="flex-1">
-                      <label htmlFor="ctrl" className="text-sm font-semibold cursor-pointer flex items-center gap-2">
-                        <ShieldCheck className={cn("h-4 w-4 transition-colors", form.controlado ? "text-primary" : "text-muted-foreground")} />
-                        Substância Controlada
-                      </label>
-                      <p className="text-[11px] text-muted-foreground mt-1">Requer registro em livro de psicotrópicos (Portaria 344/98)</p>
-                    </div>
-                    {form.controlado && (
-                      <Badge className="bg-primary/15 text-primary border-primary/25 text-[10px] animate-fade-in">
-                        Ativo
-                      </Badge>
-                    )}
-                  </div>
-                  {form.controlado && (
-                    <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                      <Label className="text-xs">Lista 344/98 *</Label>
-                      <Select
-                        value={form.lista_controlada}
-                        onValueChange={(v) => setForm({ ...form, lista_controlada: v })}
-                      >
-                        <SelectTrigger className="mt-1 h-9">
-                          <SelectValue placeholder="Classificar (A1, B1, C1...)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["A1", "A2", "A3", "B1", "B2", "C1", "C2", "C3", "C4", "C5"].map((l) => (
-                            <SelectItem key={l} value={l}>{l}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  {form.tipo_item === "medicamento" && (
+                    <>
+                      <div className={cn(
+                        "flex items-center gap-4 rounded-xl border-2 p-4 transition-all duration-300 cursor-pointer",
+                        form.controlado
+                          ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_-5px_hsl(var(--primary)/0.2)]"
+                          : "border-border/30 bg-muted/20 hover:border-border/50 hover:bg-muted/30"
+                      )} onClick={() => setForm({ ...form, controlado: !form.controlado })}>
+                        <Switch checked={form.controlado} onCheckedChange={v => setForm({ ...form, controlado: v })} id="ctrl" />
+                        <div className="flex-1">
+                          <label htmlFor="ctrl" className="text-sm font-semibold cursor-pointer flex items-center gap-2">
+                            <ShieldCheck className={cn("h-4 w-4 transition-colors", form.controlado ? "text-primary" : "text-muted-foreground")} />
+                            Substância Controlada
+                          </label>
+                          <p className="text-[11px] text-muted-foreground mt-1">Requer registro em livro de psicotrópicos (Portaria 344/98)</p>
+                        </div>
+                        {form.controlado && (
+                          <Badge className="bg-primary/15 text-primary border-primary/25 text-[10px] animate-fade-in">
+                            Ativo
+                          </Badge>
+                        )}
+                      </div>
+                      {form.controlado && (
+                        <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                          <Label className="text-xs">Lista 344/98 *</Label>
+                          <Select
+                            value={form.lista_controlada}
+                            onValueChange={(v) => setForm({ ...form, lista_controlada: v })}
+                          >
+                            <SelectTrigger className="mt-1 h-9">
+                              <SelectValue placeholder="Classificar (A1, B1, C1...)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["A1", "A2", "A3", "B1", "B2", "C1", "C2", "C3", "C4", "C5"].map((l) => (
+                                <SelectItem key={l} value={l}>{l}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
