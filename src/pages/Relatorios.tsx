@@ -235,6 +235,7 @@ const Relatorios = () => {
           <TabsTrigger value="cmm" className="text-xs gap-1"><Activity className="h-3.5 w-3.5" /> CMM</TabsTrigger>
           <TabsTrigger value="curvaABC" className="text-xs gap-1"><BarChart3 className="h-3.5 w-3.5" /> Curva ABC</TabsTrigger>
           <TabsTrigger value="produtividade" className="text-xs gap-1"><Users className="h-3.5 w-3.5" /> Produtividade</TabsTrigger>
+          <TabsTrigger value="por-tipo" className="text-xs gap-1"><Boxes className="h-3.5 w-3.5" /> Por Tipo</TabsTrigger>
           <TabsTrigger value="ruptura" className="text-xs gap-1"><AlertCircle className="h-3.5 w-3.5" /> Previsão Ruptura</TabsTrigger>
         </TabsList>
 
@@ -866,6 +867,96 @@ const Relatorios = () => {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        {/* TAB: Por Tipo de Item */}
+        <TabsContent value="por-tipo" className="space-y-4">
+          {(() => {
+            const tipos: TipoItem[] = ["medicamento", "material", "epi", "higiene"];
+            // Consumo (saída/dispensação) por tipo no período
+            const consumoPorTipo = tipos.map((t) => {
+              const medsTipo = meds.filter((m) => ((m as any).tipo_item ?? "medicamento") === t);
+              const medIds = new Set(medsTipo.map((m) => m.id));
+              const movs = filteredMov.filter((m) => ["saida", "dispensacao"].includes(m.tipo) && medIds.has(m.medicamento_id));
+              const unidades = movs.reduce((s, m) => s + m.quantidade, 0);
+              const itens = medsTipo.length;
+              const estoque = medsTipo.reduce((s, m) => s + getEstoqueTotal(m.lotes), 0);
+              const valor = medsTipo.reduce((s, m) => s + m.lotes.reduce((sl, l) => sl + l.quantidade_atual * l.preco_unitario, 0), 0);
+              return { tipo: t, ...TIPO_ITEM_CONFIG[t], itens, estoque, valor, consumo: unidades, movs: movs.length };
+            });
+            const totalGeral = consumoPorTipo.reduce((s, c) => s + c.consumo, 0);
+            return (
+              <>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" onClick={() => {
+                    downloadCSV(
+                      ["Tipo", "Itens cadastrados", "Estoque (un.)", "Valor (R$)", "Consumo período (un.)", "Movimentações"],
+                      consumoPorTipo.map((c) => [c.label, c.itens, c.estoque, c.valor.toFixed(2), c.consumo, c.movs]),
+                      "consumo-por-tipo"
+                    );
+                  }}><Download className="h-3.5 w-3.5" />CSV</Button>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  {consumoPorTipo.map((c) => (
+                    <Card key={c.tipo} className="p-4 shadow-card">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">{c.emoji}</span>
+                        <Badge variant="outline" className={cn("text-[10px]", c.className)}>{c.label}</Badge>
+                      </div>
+                      <p className="text-2xl font-bold tabular-nums">{c.consumo.toLocaleString("pt-BR")}</p>
+                      <p className="text-[11px] text-muted-foreground">unidades consumidas</p>
+                      <div className="mt-3 pt-3 border-t border-border/40 grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                          <p className="text-muted-foreground">Itens</p>
+                          <p className="font-semibold">{c.itens}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Estoque</p>
+                          <p className="font-semibold">{c.estoque.toLocaleString("pt-BR")}</p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                <Card className="p-5 shadow-card">
+                  <h3 className="text-sm font-semibold mb-4">Consumo por Tipo no Período ({totalGeral.toLocaleString("pt-BR")} un.)</h3>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={consumoPorTipo.map((c) => ({ name: c.label, consumo: c.consumo, estoque: c.estoque }))} margin={{ left: 10, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Bar dataKey="consumo" fill="hsl(205, 85%, 55%)" radius={[4, 4, 0, 0]} barSize={40} name="Consumo (un.)" />
+                      <Bar dataKey="estoque" fill="hsl(152, 56%, 40%)" radius={[4, 4, 0, 0]} barSize={40} name="Estoque atual (un.)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </Card>
+
+                <Card className="p-5 shadow-card">
+                  <h3 className="text-sm font-semibold mb-4">Distribuição de Itens Cadastrados</h3>
+                  <div className="flex items-center">
+                    <ResponsiveContainer width="50%" height={240}>
+                      <PieChart>
+                        <Pie data={consumoPorTipo.filter((c) => c.itens > 0).map((c) => ({ name: c.label, value: c.itens }))} cx="50%" cy="50%" innerRadius={50} outerRadius={85} dataKey="value" stroke="none">
+                          {consumoPorTipo.filter((c) => c.itens > 0).map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="space-y-2 flex-1">{consumoPorTipo.map((c, i) => (
+                      <div key={c.tipo} className="flex items-center gap-2 text-xs">
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                        <span className="text-muted-foreground">{c.emoji} {c.label}</span>
+                        <span className="ml-auto font-medium">{c.itens} itens</span>
+                      </div>
+                    ))}</div>
+                  </div>
+                </Card>
+              </>
+            );
+          })()}
         </TabsContent>
 
         {/* TAB: Previsão de Ruptura */}
