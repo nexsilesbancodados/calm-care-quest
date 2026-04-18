@@ -198,10 +198,25 @@ const Inventario = () => {
     a.click();
   };
 
-  if (loading) return <AppLayout title="Inventário Físico"><div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div></AppLayout>;
+  if (loading) return <AppLayout title="Inventário Geral"><div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div></AppLayout>;
 
   return (
-    <AppLayout title="Inventário Físico" subtitle="Contagem e reconciliação de estoque">
+    <AppLayout title="Inventário Geral" subtitle="Medicamentos, materiais, EPI e higiene — contagem unificada">
+      {/* Filtro por tipo */}
+      <Tabs value={tipoFilter} onValueChange={(v) => setTipoFilter(v as any)} className="mb-4">
+        <TabsList className="grid w-full grid-cols-5 sm:w-auto sm:inline-flex">
+          <TabsTrigger value="all" className="gap-1.5 text-xs">
+            Tudo <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{tipoCounts.all}</Badge>
+          </TabsTrigger>
+          {(Object.keys(TIPO_ITEM_CONFIG) as TipoItem[]).map((t) => (
+            <TabsTrigger key={t} value={t} className="gap-1.5 text-xs">
+              <span>{TIPO_ITEM_CONFIG[t].emoji}</span>
+              <span className="hidden sm:inline">{TIPO_ITEM_CONFIG[t].label}</span>
+              <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">{tipoCounts[t] || 0}</Badge>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
