@@ -281,7 +281,8 @@ const Inventario = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="text-xs font-semibold">Medicamento</TableHead>
+              <TableHead className="text-xs font-semibold w-[110px]">Tipo</TableHead>
+              <TableHead className="text-xs font-semibold">Item</TableHead>
               <TableHead className="text-xs font-semibold">Lote</TableHead>
               <TableHead className="text-xs font-semibold">Validade</TableHead>
               <TableHead className="text-xs font-semibold text-center">Sistema</TableHead>
@@ -292,7 +293,7 @@ const Inventario = () => {
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
             ) : filtered.map(item => (
               <TableRow
                 key={item.lote_id}
@@ -302,6 +303,12 @@ const Inventario = () => {
                   item.status === "conferido" && "bg-success/5",
                 )}
               >
+                <TableCell>
+                  <Badge variant="outline" className={cn("text-[10px] gap-1", TIPO_ITEM_CONFIG[item.tipo_item].className)}>
+                    <span>{TIPO_ITEM_CONFIG[item.tipo_item].emoji}</span>
+                    <span>{TIPO_ITEM_CONFIG[item.tipo_item].label}</span>
+                  </Badge>
+                </TableCell>
                 <TableCell className="text-sm font-medium">{item.medicamento_nome}</TableCell>
                 <TableCell className="text-sm font-mono text-muted-foreground">{item.numero_lote}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{new Date(item.validade).toLocaleDateString("pt-BR")}</TableCell>
