@@ -180,8 +180,9 @@ const Inventario = () => {
   };
 
   const exportCSV = () => {
-    const headers = ["Medicamento", "Lote", "Validade", "Qtd Sistema", "Qtd Contada", "Diferença", "Status"];
-    const rows = items.map(i => [
+    const headers = ["Tipo", "Item", "Lote", "Validade", "Qtd Sistema", "Qtd Contada", "Diferença", "Status"];
+    const rows = filtered.map(i => [
+      TIPO_ITEM_CONFIG[i.tipo_item].label,
       i.medicamento_nome,
       i.numero_lote,
       new Date(i.validade).toLocaleDateString("pt-BR"),
