@@ -99,18 +99,28 @@ const Inventario = () => {
   };
 
   const filtered = items.filter(item => {
+    if (tipoFilter !== "all" && item.tipo_item !== tipoFilter) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return item.medicamento_nome.toLowerCase().includes(s) || item.numero_lote.toLowerCase().includes(s);
   });
 
-  const stats = useMemo(() => ({
-    total: items.length,
-    pendentes: items.filter(i => i.status === "pendente").length,
-    conferidos: items.filter(i => i.status === "conferido").length,
-    divergentes: items.filter(i => i.status === "divergente").length,
-    progress: items.length > 0 ? Math.round(((items.length - items.filter(i => i.status === "pendente").length) / items.length) * 100) : 0,
-  }), [items]);
+  const tipoCounts = useMemo(() => {
+    const c: Record<TipoItem | "all", number> = { all: items.length, medicamento: 0, material: 0, epi: 0, higiene: 0 };
+    items.forEach(i => { c[i.tipo_item] = (c[i.tipo_item] || 0) + 1; });
+    return c;
+  }, [items]);
+
+  const stats = useMemo(() => {
+    const scope = filtered;
+    return {
+      total: scope.length,
+      pendentes: scope.filter(i => i.status === "pendente").length,
+      conferidos: scope.filter(i => i.status === "conferido").length,
+      divergentes: scope.filter(i => i.status === "divergente").length,
+      progress: scope.length > 0 ? Math.round(((scope.length - scope.filter(i => i.status === "pendente").length) / scope.length) * 100) : 0,
+    };
+  }, [filtered]);
 
   const divergentItems = items.filter(i => i.status === "divergente");
 
