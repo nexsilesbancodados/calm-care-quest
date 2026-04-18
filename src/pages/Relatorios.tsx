@@ -12,13 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from "recharts";
-import { Download, FileDown, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users, AlertCircle } from "lucide-react";
+import { Download, FileDown, Pill, Package, TrendingUp, Clock, ArrowLeftRight, FileText, ShieldCheck, Activity, BarChart3, Users, AlertCircle, Boxes } from "lucide-react";
 import { generatePdfReport, statusText, type ReportSection } from "@/lib/pdf/reportGenerator";
 import { cn } from "@/lib/utils";
 import { useUserProductivity } from "@/hooks/useAdvancedKpis";
 import { RupturaTab } from "@/components/RupturaTab";
-import type { Medicamento, Lote, Categoria, Movimentacao } from "@/types/database";
-import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG } from "@/types/database";
+import type { Medicamento, Lote, Categoria, Movimentacao, TipoItem } from "@/types/database";
+import { getEstoqueTotal, getEstoqueStatus, ESTOQUE_STATUS_CONFIG, TIPO_ITEM_CONFIG } from "@/types/database";
 
 const COLORS = [
   "hsl(205, 60%, 24%)",
