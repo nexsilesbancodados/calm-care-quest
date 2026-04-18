@@ -44,7 +44,7 @@ const moreGroups = [
       { title: "Transferências", url: "/transferencias", icon: ArrowLeftRight, roles: ["admin", "farmaceutico"] },
       { title: "Fornecedores", url: "/fornecedores", icon: Factory, roles: ["admin", "farmaceutico"] },
       { title: "Inventário", url: "/inventario", icon: ClipboardCheck, roles: ["admin", "farmaceutico"] },
-      { title: "Kits", url: "/kits", icon: Package, roles: ["admin", "farmaceutico"] },
+      
     ],
   },
   {
