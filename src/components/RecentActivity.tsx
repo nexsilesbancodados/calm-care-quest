@@ -70,13 +70,27 @@ export const RecentActivity = () => {
           </h3>
           <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 font-medium">Últimas movimentações registradas</p>
         </div>
-        <button 
-          onClick={() => navigate("/movimentacoes")}
-          className="text-[10px] sm:text-xs font-bold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors px-2 py-1 rounded-md hover:bg-primary/5"
-        >
-          Ver todas
-          <ChevronRight className="h-3 w-3" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className={cn(
+              "p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 transition-all",
+              isFetching && "animate-spin text-primary/70"
+            )}
+            title="Atualizar"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <button 
+            onClick={() => navigate("/movimentacoes")}
+            className="text-[10px] sm:text-xs font-bold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors px-2 py-1 rounded-md hover:bg-primary/5"
+          >
+            Ver todas
+            <ChevronRight className="h-3 w-3" />
+          </button>
+        </div>
+
       </div>
 
       <div className="divide-y divide-border/5">
