@@ -235,7 +235,7 @@ const Alertas = () => {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="all" className="text-xs gap-1.5">
-              <Bell className="h-3.5 w-3.5" /> Todos
+              <Bell className="h-3.5 w-3.5" /> Todas
               {counts.all > 0 && <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[10px]">{counts.all}</Badge>}
             </TabsTrigger>
             <TabsTrigger value="vencido" className="text-xs gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Vencidos</TabsTrigger>
