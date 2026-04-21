@@ -349,7 +349,7 @@ const Medicamentos = () => {
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas categorias</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
             {categorias.map(c => (
               <SelectItem key={c.id} value={c.id}>
                 <div className="flex items-center gap-2">
@@ -364,7 +364,7 @@ const Medicamentos = () => {
           <Select value={formaFilter} onValueChange={handleFormaFilter}>
             <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas formas</SelectItem>
+              <SelectItem value="all">Todas</SelectItem>
               {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>

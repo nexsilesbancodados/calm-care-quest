@@ -235,12 +235,12 @@ const Alertas = () => {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="all" className="text-xs gap-1.5">
-              <Bell className="h-3.5 w-3.5" /> Todos
+              <Bell className="h-3.5 w-3.5" /> Todas
               {counts.all > 0 && <Badge variant="secondary" className="h-5 min-w-[20px] px-1.5 text-[10px]">{counts.all}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="vencido" className="text-xs gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Vencidos</TabsTrigger>
-            <TabsTrigger value="critico" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" /> Críticos</TabsTrigger>
-            <TabsTrigger value="esgotado" className="text-xs gap-1.5"><XCircle className="h-3.5 w-3.5" /> Esgotados</TabsTrigger>
+            <TabsTrigger value="vencido" className="text-xs gap-1.5"><ShieldAlert className="h-3.5 w-3.5" /> Vencidas</TabsTrigger>
+            <TabsTrigger value="critico" className="text-xs gap-1.5"><AlertTriangle className="h-3.5 w-3.5" /> Críticas</TabsTrigger>
+            <TabsTrigger value="esgotado" className="text-xs gap-1.5"><XCircle className="h-3.5 w-3.5" /> Esgotadas</TabsTrigger>
             <TabsTrigger value="validade" className="text-xs gap-1.5"><Clock className="h-3.5 w-3.5" /> Validade</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -250,7 +250,7 @@ const Alertas = () => {
             setResolvedIds(p => new Set([...p, ...filtered.map(a => a.id)]));
             toast.success(`${filtered.length} alertas resolvidos`);
           }}>
-            <CheckCircle2 className="h-3.5 w-3.5" /> Resolver todos ({filtered.length})
+            <CheckCircle2 className="h-3.5 w-3.5" /> Resolver todas ({filtered.length})
           </Button>
         )}
       </div>
