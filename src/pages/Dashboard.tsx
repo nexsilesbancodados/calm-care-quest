@@ -209,19 +209,27 @@ const Dashboard = () => {
         </Suspense>
       </div>
 
-      {/* ── CHARTS (lazy loaded) ── */}
-      <Suspense fallback={<Skeleton className="h-64 rounded-2xl" />}>
-        <DashboardCharts
-          consumoData={consumoData}
-          topStocked={topStocked}
-          catData={catData}
-          period={period}
-          setPeriod={setPeriod}
-          totalAlerts={totalAlerts}
-          stats={s}
-          navigate={navigate}
-        />
-      </Suspense>
+      {/* ── CHARTS & RECENT ACTIVITY ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-7 items-start">
+        <div className="lg:col-span-2">
+          <Suspense fallback={<Skeleton className="h-[450px] rounded-2xl" />}>
+            <DashboardCharts
+              consumoData={consumoData}
+              topStocked={topStocked}
+              catData={catData}
+              period={period}
+              setPeriod={setPeriod}
+              totalAlerts={totalAlerts}
+              stats={s}
+              navigate={navigate}
+            />
+          </Suspense>
+        </div>
+        <div className="lg:col-span-1 h-full">
+          <RecentActivity />
+        </div>
+      </div>
+
     </AppLayout>
   );
 };
