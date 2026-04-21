@@ -3,8 +3,9 @@ import {
   Settings, Barcode, ArrowLeftRight, Users, BarChart3, Factory,
   ScanLine, ArrowDownCircle, ArrowUpCircle, Shield, FileText,
   User, ClipboardCheck, ChevronDown, LogOut, MessageSquareText,
-  Heart, Truck, Wrench, Activity, LucideIcon,
+  Heart, Truck, Wrench, Activity, HelpCircle, LucideIcon,
 } from "lucide-react";
+
 import logoImg from "@/assets/logo.jpg";
 import { NavLink } from "@/components/NavLink";
 import { prefetchPage } from "@/lib/lazyPages";
