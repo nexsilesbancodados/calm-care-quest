@@ -312,6 +312,14 @@ export const AppSidebar = memo(function AppSidebar() {
                 <p className="text-[10px] text-sidebar-foreground/45 font-medium truncate">{displayRole}</p>
               </div>
               <button
+                onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }))}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/35 hover:text-primary hover:bg-primary/10 transition-colors"
+                title="Atalhos"
+                aria-label="Atalhos de teclado"
+              >
+                <HelpCircle className="h-3.5 w-3.5" />
+              </button>
+              <button
                 onClick={handleLogout}
                 className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/35 hover:text-destructive hover:bg-destructive/10 transition-colors"
                 title="Sair"
@@ -319,6 +327,7 @@ export const AppSidebar = memo(function AppSidebar() {
               >
                 <LogOut className="h-3.5 w-3.5" />
               </button>
+
             </>
           )}
         </div>
