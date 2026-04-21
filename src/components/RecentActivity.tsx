@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 export const RecentActivity = () => {
   const navigate = useNavigate();
 
-  const { data: activities, isLoading } = useQuery({
+  const { data: activities, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["recent-activities"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,6 +34,7 @@ export const RecentActivity = () => {
     },
     staleTime: 30 * 1000,
   });
+
 
   if (isLoading) {
     return (
