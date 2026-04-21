@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudit } from "@/contexts/AuditContext";
@@ -14,7 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Search, ClipboardCheck, CheckCircle2, AlertTriangle, Save, RotateCcw, Download, Package } from "lucide-react";
+import { Search, ClipboardCheck, CheckCircle2, AlertTriangle, Save, RotateCcw, Download, Package, Plus } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Medicamento, Lote, TipoItem } from "@/types/database";
 import { TIPO_ITEM_CONFIG } from "@/types/database";
@@ -33,6 +34,7 @@ interface InventoryItem {
 }
 
 const Inventario = () => {
+  const navigate = useNavigate();
   const { log } = useAudit();
   const { user, isAdmin, can, profile } = useAuth();
   const [meds, setMeds] = useState<(Medicamento & { lotes: Lote[] })[]>([]);
@@ -263,6 +265,9 @@ const Inventario = () => {
           <Input placeholder="Buscar item ou lote..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 bg-card" />
         </div>
         <div className="flex gap-2">
+          <Button variant="default" size="sm" className="gap-1.5 text-xs gradient-primary text-primary-foreground" onClick={() => navigate("/entrada")}>
+            <Plus className="h-3.5 w-3.5" /> Adicionar Item
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={exportCSV}>
             <Download className="h-3.5 w-3.5" /> Exportar
           </Button>
