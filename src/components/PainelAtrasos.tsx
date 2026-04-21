@@ -233,7 +233,7 @@ export function PainelAtrasos() {
               <AlertTriangle className="h-4 w-4 text-destructive" />
             </div>
             <div>
-              <CardTitle className="text-sm font-bold">Painel de Atrasos — MAR</CardTitle>
+              <CardTitle className="text-sm font-bold">Atrasos e Próximas Medicações — MAR</CardTitle>
               <p className="text-[10px] text-muted-foreground">
                 {format(now, "dd/MM/yyyy HH:mm", { locale: ptBR })} • Atualiza a cada minuto
               </p>
