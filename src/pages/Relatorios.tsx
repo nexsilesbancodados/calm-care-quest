@@ -371,7 +371,7 @@ const Relatorios = () => {
         {/* TAB: Vencimento */}
         <TabsContent value="vencimento" className="space-y-4">
           <div className="flex items-center gap-3 mb-2">
-            <Label className="text-xs">Próximos</Label>
+            <Label className="text-xs">Próximas Expirações</Label>
             <Select value={venDays} onValueChange={setVenDays}>
               <SelectTrigger className="w-[120px] h-8 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
