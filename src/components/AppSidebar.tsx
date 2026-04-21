@@ -72,7 +72,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Administração MAR", url: "/mar", icon: ClipboardCheck, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
       { title: "Solicitações", url: "/solicitacoes", icon: MessageSquareText, roles: ["admin", "farmaceutico", "enfermeiro", "auxiliar_farmacia"], badgeKey: null },
       { title: "Passagem de Plantão", url: "/plantao", icon: ClipboardList, roles: ["admin", "enfermeiro"], badgeKey: null },
-      { title: "Painel de Atrasos", url: "/atrasos", icon: Activity, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
+      { title: "Atrasos e Próximas", url: "/atrasos", icon: Activity, roles: ["admin", "farmaceutico", "enfermeiro"], badgeKey: null },
     ],
   },
   {

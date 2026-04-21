@@ -5,11 +5,11 @@ import { Timer } from "lucide-react";
 
 export default function PainelAtrasosPage() {
   return (
-    <AppLayout title="Painel de Atrasos">
+    <AppLayout title="Atrasos e Próximas">
       <div className="page-enter space-y-6 p-4 md:p-8">
         <PageHeader
-          title="Painel de Atrasos"
-          subtitle="Monitoramento em tempo real das medicações pendentes e atrasadas"
+          title="Atrasos e Próximas Medicações"
+          subtitle="Monitoramento em tempo real das medicações pendentes, atrasadas e próximas"
           icon={Timer}
           variant="default"
         />
