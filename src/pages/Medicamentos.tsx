@@ -350,8 +350,21 @@ const Medicamentos = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-...
-            <SelectItem value="all">Todas</SelectItem>
+            {categorias.map(c => (
+              <SelectItem key={c.id} value={c.id}>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: c.cor }} />
+                  {c.nome}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {tipoFilter === "medicamento" || tipoFilter === "all" ? (
+          <Select value={formaFilter} onValueChange={handleFormaFilter}>
+            <SelectTrigger className="w-[160px] bg-card rounded-xl h-10"><SelectValue placeholder="Forma" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
               {FORMAS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
             </SelectContent>
           </Select>
