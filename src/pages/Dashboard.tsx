@@ -23,6 +23,8 @@ const DashboardCharts = lazy(() => import("@/components/DashboardCharts"));
 const AdvancedKpisPanel = lazy(() => import("@/components/AdvancedKpisPanel"));
 const PainelAtrasos = lazy(() => import("@/components/PainelAtrasos"));
 const TipoItemPanel = lazy(() => import("@/components/TipoItemPanel"));
+import { RecentActivity } from "@/components/RecentActivity";
+
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
@@ -124,16 +126,16 @@ const Dashboard = () => {
                   <Activity className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   {s.totalMovements} mov
                 </span>
-                {totalAlerts > 0 && (
-                  <span className="flex items-center gap-1 text-warning/80">
-                    <AlertTriangle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    {totalAlerts} alerta{totalAlerts > 1 ? "s" : ""}
-                  </span>
-                )}
+                <span className="flex items-center gap-1 hidden sm:flex">
+                  <kbd className="pointer-events-none inline-flex h-4 select-none items-center gap-0.5 rounded border border-white/20 bg-white/5 px-1 font-mono text-[9px] font-medium text-white/40">
+                    Ctrl + K
+                  </kbd>
+                  <span className="text-[9px] text-white/30">busca rápida</span>
+                </span>
               </div>
             </div>
 
-            <div className="text-left sm:text-right">
+            <div className="text-left sm:text-right hidden sm:block">
               <p className="text-3xl sm:text-5xl font-extrabold tabular-nums tracking-tighter font-display leading-none" style={{ textShadow: '0 0 40px hsla(152,55%,48%,0.25)' }}>
                 {now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
               </p>
@@ -207,19 +209,27 @@ const Dashboard = () => {
         </Suspense>
       </div>
 
-      {/* ── CHARTS (lazy loaded) ── */}
-      <Suspense fallback={<Skeleton className="h-64 rounded-2xl" />}>
-        <DashboardCharts
-          consumoData={consumoData}
-          topStocked={topStocked}
-          catData={catData}
-          period={period}
-          setPeriod={setPeriod}
-          totalAlerts={totalAlerts}
-          stats={s}
-          navigate={navigate}
-        />
-      </Suspense>
+      {/* ── CHARTS & RECENT ACTIVITY ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-7 items-start">
+        <div className="lg:col-span-2">
+          <Suspense fallback={<Skeleton className="h-[450px] rounded-2xl" />}>
+            <DashboardCharts
+              consumoData={consumoData}
+              topStocked={topStocked}
+              catData={catData}
+              period={period}
+              setPeriod={setPeriod}
+              totalAlerts={totalAlerts}
+              stats={s}
+              navigate={navigate}
+            />
+          </Suspense>
+        </div>
+        <div className="lg:col-span-1 h-full">
+          <RecentActivity />
+        </div>
+      </div>
+
     </AppLayout>
   );
 };
