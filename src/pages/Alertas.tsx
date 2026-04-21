@@ -250,7 +250,7 @@ const Alertas = () => {
             setResolvedIds(p => new Set([...p, ...filtered.map(a => a.id)]));
             toast.success(`${filtered.length} alertas resolvidos`);
           }}>
-            <CheckCircle2 className="h-3.5 w-3.5" /> Resolver todos ({filtered.length})
+            <CheckCircle2 className="h-3.5 w-3.5" /> Resolver todas ({filtered.length})
           </Button>
         )}
       </div>
