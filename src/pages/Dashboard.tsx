@@ -23,6 +23,8 @@ const DashboardCharts = lazy(() => import("@/components/DashboardCharts"));
 const AdvancedKpisPanel = lazy(() => import("@/components/AdvancedKpisPanel"));
 const PainelAtrasos = lazy(() => import("@/components/PainelAtrasos"));
 const TipoItemPanel = lazy(() => import("@/components/TipoItemPanel"));
+import { RecentActivity } from "@/components/RecentActivity";
+
 
 const PERIOD_OPTIONS = [
   { value: "7", label: "7 dias" },
